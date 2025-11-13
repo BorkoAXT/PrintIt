@@ -1,0 +1,47 @@
+# Build results
+[Bb]in/
+[Oo]bj/
+Debug/
+Release/
+x64/
+x86/
+
+# Visual Studio files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vcxproj.user
+*.vcxproj.filters
+
+# Visual Studio Code settings
+.vscode/
+
+# Rider / JetBrains IDE
+.idea/
+
+# NuGet packages
+*.nupkg
+packages/
+# NuGet v3+
+*.nuget.props
+*.nuget.targets
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Resharper
+_ReSharper*/
+*.DotSettings.user
+
+# IIS Express
+IISExpress/
