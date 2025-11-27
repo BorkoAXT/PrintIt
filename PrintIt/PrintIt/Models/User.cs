@@ -9,7 +9,7 @@ namespace PrintIt.Models
         /// <summary>
         /// The user's role (User, Admin)
         /// </summary>
-        public Role Role { get; set; } = Role.User;
+        public RoleType Role { get; set; } = RoleType.User;
 
         /// <summary>
         /// Parameterless constructor for EF Core

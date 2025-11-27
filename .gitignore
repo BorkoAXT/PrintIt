@@ -17,6 +17,9 @@ x86/
 # Visual Studio Code settings
 .vscode/
 
+# Visual Studio cache files
+.vs/
+
 # Rider / JetBrains IDE
 .idea/
 
