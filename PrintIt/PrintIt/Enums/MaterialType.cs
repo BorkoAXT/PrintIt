@@ -3,6 +3,9 @@
     public enum MaterialType
     {
 
+        // Plastics 
+
+        PLA,
         ABS,
         PETG,
         Nylon,
