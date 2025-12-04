@@ -17,11 +17,10 @@ namespace PrintIt.Controllers
         public IActionResult Index()
         {
             string? userEmail = HttpContext.Session.GetString("UserEmail");
-            if (userEmail is null)
+            if (userEmail is not null)
             {
-                return View();
+                return View("Store");
             }
-
             return View();
         }
 

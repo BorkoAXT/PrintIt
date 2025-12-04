@@ -20,5 +20,8 @@ namespace PrintIt.ViewModels
 
         public string ImageUrl => $"/images/{Id}.png";
 
+        [Required]
+        public IFormFile File { get; set; }
+
     }
 }
