@@ -9,10 +9,10 @@ using PrintIt.Data;
 
 #nullable disable
 
-namespace PrintIt.Data.Migrations
+namespace PrintIt.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251204124006_InitialCreate")]
+    [Migration("20251204130853_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -104,12 +104,10 @@ namespace PrintIt.Data.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProviderKey")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("nvarchar(max)");
@@ -145,12 +143,10 @@ namespace PrintIt.Data.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("LoginProvider")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Value")
                         .HasColumnType("nvarchar(max)");
