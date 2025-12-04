@@ -1,6 +1,5 @@
 ﻿using PrintIt.Models;
 using System.ComponentModel.DataAnnotations;
-using System.Drawing;
 
 namespace PrintIt.ViewModels
 {
@@ -18,17 +17,8 @@ namespace PrintIt.ViewModels
         public string Description { get; set;  } = string.Empty;
 
         [Required]
-        public Image? Image => LoadImage();
 
-        private Image LoadImage()
-        {
-            string _imagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images", $"{Id}.png");
-            if (File.Exists(_imagePath))
-            {
-                return Image.FromFile(_imagePath);
-            }
-            return null;
-        }
+        public string ImageUrl => $"/images/{Id}.png";
 
     }
 }

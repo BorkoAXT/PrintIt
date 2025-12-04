@@ -1,20 +1,27 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using PrintIt.Models;
+using PrintIt.Data;
+using ErrorViewModel = PrintIt.ViewModels.ErrorViewModel;
 
 namespace PrintIt.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly ApplicationDbContext _context;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ApplicationDbContext context)
         {
-            _logger = logger;
+            _context = context;
         }
 
         public IActionResult Index()
         {
+            string? userEmail = HttpContext.Session.GetString("UserEmail");
+            if (userEmail is null)
+            {
+                return View();
+            }
+
             return View();
         }
 

@@ -1,4 +1,4 @@
-namespace PrintIt.Models
+namespace PrintIt.ViewModels
 {
     public class ErrorViewModel
     {
