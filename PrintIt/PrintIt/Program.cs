@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using PrintIt.Data;
 using PrintIt.Models;
 
@@ -15,6 +17,13 @@ namespace PrintIt
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
+
+            builder.Services.AddAuthentication()
+                .AddGoogle(options =>
+                {
+                    options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
+                    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+                });
 
             builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
                 {
