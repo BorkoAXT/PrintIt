@@ -29,3 +29,15 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+/* Color variables */
+:root {
+    --black: #000000;
+    --white: #fff;
+    --light-gray: #f0f0f0;
+    --beige: #faf0e6;
+    --dark-blue: #1861ac;
+    --medium-blue: #1b6ec2;
+    --light-blue: #0077cc;
+    --green: #229c58;
+}

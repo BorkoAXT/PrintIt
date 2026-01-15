@@ -15,6 +15,10 @@ namespace PrintIt.Models
         /// </summary>
         public string? Name { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Description of the Print
+        /// </summary>
+        public string? Description { get; set; } = string.Empty;
 
         /// <summary>
         /// The material type used to make the Print
@@ -25,9 +29,5 @@ namespace PrintIt.Models
         /// The weight of the Print
         /// </summary>
         public int Weight { get; set; }
-
-
-
-
     }
 }
