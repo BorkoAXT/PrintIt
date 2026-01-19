@@ -5,13 +5,10 @@ using ErrorViewModel = PrintIt.ViewModels.ErrorViewModel;
 
 namespace PrintIt.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : BaseController
     {
-        private readonly ApplicationDbContext _context;
-
-        public HomeController(ApplicationDbContext context)
+        public HomeController(ApplicationDbContext context) : base(context)
         {
-            _context = context;
         }
 
         public IActionResult Index()
@@ -21,6 +18,12 @@ namespace PrintIt.Controllers
             //{
             //    return View("Store");
             //}
+
+            return View();
+        }
+
+        public IActionResult Store()
+        {
             return View();
         }
 
