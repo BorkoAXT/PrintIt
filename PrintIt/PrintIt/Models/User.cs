@@ -5,7 +5,7 @@ namespace PrintIt.Models
     public class User : IdentityUser<Guid>
     {
         /// <summary>
-        /// The user's shopping cart containing Prints
+        /// Gets or sets the user's shop cart.
         /// </summary>
         public ShopCart? ShopCart { get; set; }
 
