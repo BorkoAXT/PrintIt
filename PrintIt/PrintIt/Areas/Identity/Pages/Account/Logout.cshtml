@@ -4,18 +4,43 @@
     ViewData["Title"] = "Log out";
 }
 
-<header>
-    <h1>@ViewData["Title"]</h1>
-    @{
-        if (User.Identity?.IsAuthenticated ?? false)
+<div class="flex flex-col items-center justify-center py-20">
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-200 p-8 md:p-10 text-center">
+
+        @if (User.Identity?.IsAuthenticated ?? false)
         {
-            <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
-                <button type="submit" class="nav-link btn btn-link text-dark">Click here to Logout</button>
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-amber-50 rounded-full mb-6">
+                <i class="bi bi-door-open text-brand-accent text-4xl"></i>
+            </div>
+
+            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight mb-2">@ViewData["Title"]</h1>
+            <p class="text-slate-500 mb-8">Are you sure you want to sign out of your session?</p>
+
+            <form class="flex flex-col gap-3" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
+                <button type="submit"
+                        class="w-full py-4 bg-brand-dark hover:bg-red-600 text-white font-bold rounded-xl shadow-lg transition-all active:scale-[0.98]">
+                    Confirm Log Out
+                </button>
+
+                <a href="javascript:history.back()"
+                   class="w-full py-3 text-sm font-bold text-slate-500 hover:text-brand-dark transition-colors">
+                    Stay Signed In
+                </a>
             </form>
         }
         else
         {
-            <p>You have successfully logged out of the application.</p>
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-green-50 rounded-full mb-6">
+                <i class="bi bi-check2-circle text-brand-green text-4xl"></i>
+            </div>
+
+            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight mb-2">Signed Out</h1>
+            <p class="text-slate-500 mb-8">You have successfully logged out of the application.</p>
+
+            <a asp-area="" asp-controller="Home" asp-action="Index"
+               class="inline-block px-8 py-3 bg-brand-primary text-white font-bold rounded-xl shadow-lg hover:bg-brand-dark transition-all">
+                Return to Home
+            </a>
         }
-    }
-</header>
+    </div>
+</div>

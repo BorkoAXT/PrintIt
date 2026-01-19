@@ -57,6 +57,27 @@
             background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px);
             background-size: 20px 20px;
         }
+
+        /* This targets the Identity 'Save' buttons inside the Manage area */
+        .manage-page-content button[type="submit"],
+        #update-profile-button {
+            width: 100%;
+            /* Responsive width for md and up is not possible in plain CSS, so use utility classes in markup if needed */
+            padding-left: 2rem;
+            padding-right: 2rem;
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+            background-color: #0f172a;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 0.75rem;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px 0 rgb(0 0 0 / 0.06);
+        }
+        .manage-page-content button[type="submit"]:hover,
+        #update-profile-button:hover {
+            background-color: #3b82f6;
+        }
     </style>
 </head>
 <body class="bg-brand-surface text-brand-dark font-sans antialiased min-h-screen flex flex-col">

@@ -1,0 +1,43 @@
+﻿@page
+@model PersonalDataModel
+@{
+    ViewData["Title"] = "Personal Data";
+    ViewData["ActivePage"] = ManageNavPages.PersonalData;
+}
+
+<div class="space-y-8">
+    <div class="flex items-center gap-4 border-b border-slate-100 pb-4">
+        <div class="p-3 bg-brand-primary/10 rounded-xl">
+            <i class="bi bi-file-earmark-lock-fill text-brand-primary text-2xl"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-brand-dark">@ViewData["Title"]</h3>
+    </div>
+
+    <div class="max-w-2xl space-y-6">
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6">
+            <p class="text-slate-600 leading-relaxed">
+                Your account contains personal data that you have given us. This page allows you to download or delete that data.
+            </p>
+            <div class="mt-4 p-4 bg-amber-50 border border-amber-100 rounded-xl flex gap-3">
+                <i class="bi bi-exclamation-triangle text-amber-600"></i>
+                <p class="text-xs text-amber-800 font-medium">
+                    <strong>Deleting this data will permanently remove your account</strong>, and this cannot be recovered.
+                </p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap gap-4">
+            <form id="download-data" asp-page="DownloadPersonalData" method="post" class="inline-block">
+                <button type="submit"
+                        class="px-6 py-3 bg-brand-dark hover:bg-brand-primary text-white font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 text-sm">
+                    <i class="bi bi-download"></i> Download My Data
+                </button>
+            </form>
+
+            <a id="delete" asp-page="DeletePersonalData"
+               class="px-6 py-3 bg-white border border-red-200 text-red-600 hover:bg-red-50 font-bold rounded-xl transition-all flex items-center gap-2 text-sm">
+                <i class="bi bi-trash3"></i> Delete Account
+            </a>
+        </div>
+    </div>
+</div>

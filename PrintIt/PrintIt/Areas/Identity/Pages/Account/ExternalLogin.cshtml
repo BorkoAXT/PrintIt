@@ -1,30 +1,48 @@
 ﻿@page
 @model ExternalLoginModel
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Confirm Registration";
 }
 
-<h1>@ViewData["Title"]</h1>
-<h2 id="external-login-title">Associate your @Model.ProviderDisplayName account.</h2>
-<hr />
+<div class="flex flex-col items-center justify-center py-10">
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-200 p-8 md:p-10">
 
-<p id="external-login-description" class="text-info">
-    You've successfully authenticated with <strong>@Model.ProviderDisplayName</strong>.
-    Please enter an email address for this site below and click the Register button to finish
-    logging in.
-</p>
-
-<div class="row">
-    <div class="col-md-4">
-        <form asp-page-handler="Confirmation" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email."/>
-                <label asp-for="Input.Email" class="form-label"></label>
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-green-50 rounded-full mb-4">
+                <i class="bi bi-check-all text-green-600 text-4xl"></i>
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Almost There!</h1>
+            <p class="text-slate-500 mt-2">
+                Successfully authenticated with <span class="font-bold text-brand-primary">@Model.ProviderDisplayName</span>.
+            </p>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-8">
+            <p class="text-sm text-blue-700 leading-relaxed">
+                Please confirm the email address you'd like to use for your 3D printing account to finish setting up your profile.
+            </p>
+        </div>
+
+        <form asp-page-handler="Confirmation" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="space-y-6">
+            <div asp-validation-summary="ModelOnly" class="text-red-500 text-xs bg-red-50 p-3 rounded-lg" role="alert"></div>
+
+            <div>
+                <label asp-for="Input.Email" class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-1 ml-1">Email Address</label>
+                <input asp-for="Input.Email"
+                       class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none transition-all placeholder:text-slate-400"
+                       autocomplete="email" placeholder="name@example.com" />
+                <span asp-validation-for="Input.Email" class="text-red-500 text-xs mt-1 block"></span>
+            </div>
+
+            <button type="submit"
+                    class="w-full py-4 bg-brand-dark hover:bg-brand-primary text-white font-bold rounded-xl shadow-lg hover:shadow-brand-primary/30 transition-all active:scale-[0.98]">
+                Complete Registration
+            </button>
         </form>
+
+        <p class="text-center text-xs text-slate-400 mt-8">
+            By clicking register, you agree to our terms of service for 3D model processing.
+        </p>
     </div>
 </div>
 

@@ -18,15 +18,16 @@ namespace PrintIt
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
 
-            builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
-            {
-                options.SignIn.RequireConfirmedAccount = false;
-                options.Password.RequiredUniqueChars = 0;
-                options.Password.RequireUppercase = false;
-                options.Password.RequiredLength = 6;
-                options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequireLowercase = false;
-            })
+            builder.Services
+                .AddIdentity<User, IdentityRole<Guid>>(options =>
+                {
+                    options.SignIn.RequireConfirmedAccount = false;
+                    options.Password.RequiredUniqueChars = 0;
+                    options.Password.RequireUppercase = false;
+                    options.Password.RequiredLength = 6;
+                    options.Password.RequireNonAlphanumeric = false;
+                    options.Password.RequireLowercase = false;
+                })
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders()
                 .AddDefaultUI();
