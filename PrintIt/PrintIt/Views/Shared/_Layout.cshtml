@@ -1,51 +1,197 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<User> SignInManager
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - PrintIt</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/PrintIt.styles.css" asp-append-version="true" />
+    <title>@ViewData["Title"] - PrintIt 3D</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                    colors: {
+                        'brand-dark': '#0f172a',
+                        'brand-primary': '#3b82f6',
+                        'brand-accent': '#f59e0b',
+                        'brand-surface': '#f8fafc',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        /* Modern Underline */
+        .nav-link {
+            position: relative;
+            padding: 0.5rem 0;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #3b82f6;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Blueprint grid background effect for main area */
+        .blueprint-bg {
+            background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px);
+            background-size: 20px 20px;
+        }
+    </style>
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">PrintIt</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                    <partial name="_LoginPartial" />
+<body class="bg-brand-surface text-brand-dark font-sans antialiased min-h-screen flex flex-col">
+
+    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20">
+
+                <div class="flex items-center gap-10">
+                    <a class="flex items-center gap-3 group" asp-area="" asp-controller="Home" asp-action="Index">
+                        <div class="relative">
+                            <div class="bg-brand-dark p-2 rounded-lg">
+                                <i class="bi bi-box-seam text-white text-xl"></i>
+                            </div>
+                            <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-brand-primary rounded-full border-2 border-white"></div>
+                        </div>
+                        <div class="flex flex-col leading-none">
+                            <span class="text-xl font-extrabold tracking-tight">PRINTIT<span class="text-brand-primary">3D</span></span>
+                            <span class="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400">Lab & Store</span>
+                        </div>
+                    </a>
+
+                    <div class="hidden md:flex items-center space-x-8">
+                        <a class="nav-link text-sm font-bold uppercase tracking-wider text-slate-600 hover:text-brand-primary transition-colors"
+                           asp-area="" asp-controller="Home" asp-action="Store">
+                            <i class="bi bi-grid-3x3-gap mr-1"></i> Артикули
+                        </a>
+                        
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <a class="nav-link text-sm font-bold uppercase tracking-wider text-slate-600 hover:text-brand-primary transition-colors"
+                               asp-area="" asp-controller="Home" asp-action="CustomRequest">
+                                <i class="bi bi-cpu mr-1"></i> Авторски Поръчки
+                            </a>
+                        }
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <div class="hidden md:block">
+                        <partial name="_LoginPartial" />
+                    </div>
+
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        // Retrieve the count from ViewData, defaulting to 0 if null
+                        var cartCount = ViewData["CartCount"] as int? ?? 0;
+
+                        <a asp-controller="Cart" asp-action="Index"
+                           class="p-2 hover:bg-slate-100 rounded-full transition-colors relative inline-block">
+                            <i class="bi bi-cart3 text-xl text-slate-700"></i>
+                            @if (cartCount > 0)
+                            {
+                                <span class="absolute top-1 right-1 flex h-4 w-4">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-4 w-4 bg-brand-primary text-[10px] text-white items-center justify-center font-bold">
+                                        @cartCount
+                                    </span>
+                                </span>
+                            }
+                        </a>
+                    }
+
+                    <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-slate-700 hover:bg-slate-100 rounded-lg">
+                        <i class="bi bi-list text-2xl"></i>
+                    </button>
                 </div>
             </div>
         </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - PrintIt - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-200 shadow-2xl">
+            <div class="px-6 py-8 space-y-6">
+                <a class="block text-xl font-bold text-brand-dark" asp-area="" asp-controller="Home" asp-action="Store">Артикули</a>
+                <a class="block text-xl font-bold text-brand-dark" asp-area="" asp-controller="Home" asp-action="Order">Поръчка</a>
+                <hr>
+                <partial name="_LoginPartial" />
+            </div>
+        </div>
+    </header>
+
+    <main role="main" class="flex-grow blueprint-bg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="bg-white/50 backdrop-blur-sm rounded-3xl p-4 md:p-8 shadow-sm border border-slate-200/60 min-h-[60vh]">
+                @RenderBody()
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-slate-950 text-slate-300 pt-20 pb-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 pb-16 border-b border-slate-800">
+
+                <div class="col-span-1 md:col-span-2">
+                    <span class="text-white text-2xl font-black">PRINTIT<span class="text-brand-primary">3D</span></span>
+                    <p class="mt-4 text-slate-400 max-w-sm leading-relaxed">
+                        От прототипи до готови продукти. Използваме най-новите FDM и Resin технологии, за да превърнем вашите 3D модели във физическа реалност.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-bold mb-6 text-sm uppercase tracking-widest">Магазин</h4>
+                    <ul class="space-y-4 text-sm">
+                        <li><a href="#" class="hover:text-brand-primary transition-colors">3D Фигури</a></li>
+                        <li><a href="#" class="hover:text-brand-primary transition-colors">Органайзери</a></li>
+                        <li><a href="#" class="hover:text-brand-primary transition-colors">Аксесоари</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-bold mb-6 text-sm uppercase tracking-widest">Контакт</h4>
+                    <ul class="space-y-4 text-sm">
+                        <li class="flex items-center gap-3"><i class="bi bi-geo-alt text-brand-primary"></i> София, България</li>
+                        <li class="flex items-center gap-3"><i class="bi bi-envelope text-brand-primary"></i> office@printit3d.bg</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-10 flex flex-col md:flex-row justify-between items-center gap-6">
+                <p class="text-xs">&copy; 2026 PrintIt 3D Shop. Всички права запазени.</p>
+                <div class="flex gap-8">
+                    <a href="#" class="text-slate-500 hover:text-white transition-colors"><i class="bi bi-instagram text-xl"></i></a>
+                    <a href="#" class="text-slate-500 hover:text-white transition-colors"><i class="bi bi-youtube text-xl"></i></a>
+                    <a href="#" class="text-slate-500 hover:text-white transition-colors"><i class="bi bi-facebook text-xl"></i></a>
+                </div>
+            </div>
         </div>
     </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
