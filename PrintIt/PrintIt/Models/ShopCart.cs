@@ -3,18 +3,22 @@
     public class ShopCart
     {
         /// <summary>
-        /// ShopCart Id
+        /// Gets or sets the id of the shop cart.
         /// </summary>
         public Guid Id { get; set; }
 
         /// <summary>
-        /// UserId of the owner of the ShopCart
+        /// Gets the user id from the shopping cart.
         /// </summary>
-        public Guid UserId { get; set; }
-        public User User { get; set; }
+        public Guid UserId { get; private set; }
 
         /// <summary>
-        /// Shopping cart containing Prints
+        /// Gets the user from the shopping cart.
+        /// </summary>
+        public User User { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the items in the shopping cart of the user.
         /// </summary>
         public List<CartItem> Items { get; set; } = new();
     }

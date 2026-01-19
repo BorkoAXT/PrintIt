@@ -6,27 +6,27 @@ namespace PrintIt.Models
     {
 
         /// <summary>
-        /// The Print's Id
+        /// Gets or sets the id of the print.
         /// </summary>
         public Guid Id { get; set; }
 
         /// <summary>
-        /// The name of the Print
+        /// Gets or sets the name of the print.
         /// </summary>
         public string? Name { get; set; } = string.Empty;
 
         /// <summary>
-        /// Description of the Print
+        /// Gets or sets the description of the print.
         /// </summary>
         public string? Description { get; set; } = string.Empty;
 
         /// <summary>
-        /// The material type used to make the Print
+        /// Gets or sets the material used to make the print.
         /// </summary>
         public MaterialType MaterialType { get; set; } = MaterialType.PLA;
 
         /// <summary>
-        /// The weight of the Print
+        /// Gets or sets the weight of the print.
         /// </summary>
         public int Weight { get; set; }
     }
