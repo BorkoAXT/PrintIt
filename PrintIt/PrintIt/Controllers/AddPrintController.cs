@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using PrintIt.Data;
 using PrintIt.Models;
 using PrintIt.ViewModels;
@@ -27,11 +26,10 @@ namespace PrintIt.Controllers
         /// Action to redirect admin users to the CreateMenu view.
         /// </summary>
         /// <returns></returns>
-        
         [HttpGet]
         public IActionResult CreateMenu()
         {
-            return View("~/Views/Home/CreateMenu.cshtml", new PrintsViewModel());
+            return View("~/Views/Store/AddStoreMenu.cshtml", new PrintsViewModel());
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -39,36 +37,44 @@ namespace PrintIt.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return View("~/Views/Home/CreateMenu.cshtml", model);
+                return View("~/Views/Store/AddStoreMenu.cshtml", model);
             }
 
-            var newPrint = new Print
-            {
-                Id = Guid.NewGuid(),
-                Name = model.Name,
-                Description = model.Description,
-                MaterialType = model.MaterialType,
-                Weight = model.Weight
-            };
+            var newPrint = new Print(
+                model.Name,
+                model.Description,
+                model.MaterialType,
+                model.Weight,
+                model.Price,
+                null,
+                model.PrintType,
+                model.PrintColors
+            );
 
             if (model.File != null && model.File.Length > 0)
             {
-                string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
-                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+                string figuresFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "Figures");
+
+                if (!Directory.Exists(figuresFolder))
+                {
+                    Directory.CreateDirectory(figuresFolder);
+                }
 
                 string fileName = newPrint.Id.ToString() + Path.GetExtension(model.File.FileName);
-                string filePath = Path.Combine(uploadsFolder, fileName);
+                string fullPath = Path.Combine(figuresFolder, fileName);
 
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                using (var fileStream = new FileStream(fullPath, FileMode.Create))
                 {
                     await model.File.CopyToAsync(fileStream);
                 }
+
+                newPrint.FilePath = "/images/Figures/" + fileName;
             }
 
             _context.Add(newPrint);
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("Store", "Home");
+            return RedirectToAction("Store", "Store");
         }
     }
 }

@@ -19,15 +19,6 @@ namespace PrintIt.Controllers
         {
             return View();
         }
-
-        public IActionResult Store()
-        {
-            List<Print> StoreItems = new List<Print>(_context.Prints);
-
-            ViewData["Items"] = StoreItems;
-
-            return View();
-        }
         public IActionResult Privacy()
         {
             return View();

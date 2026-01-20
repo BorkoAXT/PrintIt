@@ -57,10 +57,12 @@ namespace PrintIt.Data.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    MaterialType = table.Column<int>(type: "int", nullable: false),
+                    MaterialType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Weight = table.Column<double>(type: "float", nullable: false),
                     Price = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
-                    FilePath = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    FilePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PrintType = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PrintColors = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {

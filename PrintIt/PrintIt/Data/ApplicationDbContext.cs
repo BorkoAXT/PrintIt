@@ -1,8 +1,11 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using PrintIt.Enums;
 using PrintIt.Models;
 using System.Reflection.Emit;
+using System.Text.Json;
 
 namespace PrintIt.Data
 {
@@ -43,6 +46,18 @@ namespace PrintIt.Data
             builder.Entity<Print>()
                 .Property(p => p.Price)
                 .HasPrecision(18, 4);
+
+            builder.Entity<Print>()
+            .Property(p => p.PrintColors)
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
+                v => JsonSerializer.Deserialize<List<PrintColor>>(v, (JsonSerializerOptions)null) ?? new List<PrintColor>(),
+                new ValueComparer<List<PrintColor>>(
+                    (c1, c2) => c1.SequenceEqual(c2),
+                    c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                    c => c.ToList()
+                )
+            );
         }
 
     }
