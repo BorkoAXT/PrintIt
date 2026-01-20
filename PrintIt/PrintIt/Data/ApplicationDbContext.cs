@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using PrintIt.Models;
+using System.Reflection.Emit;
 
 namespace PrintIt.Data
 {
@@ -38,6 +39,10 @@ namespace PrintIt.Data
             builder.Entity<CartItem>()
                 .HasIndex(ci => new { ci.ShopCartId, ci.PrintId })
                 .IsUnique();
+
+            builder.Entity<Print>()
+                .Property(p => p.Price)
+                .HasPrecision(18, 4);
         }
 
     }

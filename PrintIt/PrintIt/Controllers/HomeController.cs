@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using PrintIt.Data;
+using PrintIt.Models;
 using ErrorViewModel = PrintIt.ViewModels.ErrorViewModel;
 
 namespace PrintIt.Controllers
@@ -24,6 +25,10 @@ namespace PrintIt.Controllers
 
         public IActionResult Store()
         {
+            List<Print> StoreItems = new List<Print>(_context.Prints);
+
+            ViewData["Items"] = StoreItems;
+
             return View();
         }
 

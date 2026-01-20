@@ -28,6 +28,16 @@ namespace PrintIt.Models
         /// <summary>
         /// Gets or sets the weight of the print.
         /// </summary>
-        public int Weight { get; set; }
+        public double Weight { get; set; }
+
+        /// <summary>
+        /// Gets or sets the price of the print.
+        /// </summary>
+        public decimal Price { get; set; }
+
+        /// <summary>
+        /// Gets or sets the file path of the print.
+        /// </summary>
+        public string? FilePath { get; set; } = string.Empty;
     }
 }
