@@ -19,5 +19,21 @@ namespace PrintIt.Controllers
 
             return View();
         }
+        
+        [HttpGet]
+        public async Task<IActionResult> Details(Guid id)
+        {
+            Print? print = await _context.Prints.FindAsync(id);
+            if (print == null)
+            {
+                return NotFound();
+            }
+            return View(print);
+        }
+
+        public void AddToCart()
+        {
+
+        }
     }
 }

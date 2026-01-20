@@ -2,6 +2,9 @@
 
 namespace PrintIt.Models
 {
+    /// <summary>
+    /// Represents an application user.
+    /// </summary>
     public class User : IdentityUser<Guid>
     {
         /// <summary>

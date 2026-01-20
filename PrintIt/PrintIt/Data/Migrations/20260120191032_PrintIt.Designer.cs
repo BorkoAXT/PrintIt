@@ -12,7 +12,7 @@ using PrintIt.Data;
 namespace PrintIt.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260120180918_PrintIt")]
+    [Migration("20260120191032_PrintIt")]
     partial class PrintIt
     {
         /// <inheritdoc />
@@ -188,16 +188,17 @@ namespace PrintIt.Data.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FilePath")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("MaterialType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("MaterialType")
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Price")
@@ -208,9 +209,8 @@ namespace PrintIt.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("PrintType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("PrintType")
+                        .HasColumnType("int");
 
                     b.Property<double>("Weight")
                         .HasColumnType("float");

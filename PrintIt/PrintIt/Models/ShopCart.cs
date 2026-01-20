@@ -1,5 +1,8 @@
 ﻿namespace PrintIt.Models
 {
+    /// <summary>
+    /// Represents the official shopping cart used in the store.
+    /// </summary>
     public class ShopCart
     {
         /// <summary>

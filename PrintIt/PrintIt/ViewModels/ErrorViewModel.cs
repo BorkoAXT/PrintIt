@@ -1,5 +1,8 @@
 namespace PrintIt.ViewModels
 {
+    /// <summary>
+    /// View model used for error handling.
+    /// </summary>
     public class ErrorViewModel
     {
 

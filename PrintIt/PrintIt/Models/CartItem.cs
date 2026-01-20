@@ -1,35 +1,37 @@
 ﻿namespace PrintIt.Models
 {
+    /// <summary>
+    /// Represents an item in a shopping cart.
+    /// </summary>
     public class CartItem
     {
-
         /// <summary>
-        /// Gets or sets the Guid of the Cart Item.
+        /// Gets or sets the unique identifier of the cart item.
         /// </summary>
         public Guid Id { get; set; }
 
         /// <summary>
-        /// Gets pr sets the Guid of the Shopping Cart.
+        /// Gets or sets the unique identifier of the shopping cart.
         /// </summary>
         public Guid ShopCartId { get; set; }
-        
+
         /// <summary>
-        /// Gets or sets the Shopping Cart.
+        /// Gets or sets the shopping cart this item belongs to.
         /// </summary>
         public ShopCart ShopCart { get; set; }
 
         /// <summary>
-        /// Gets or sets the print's id.
+        /// Gets or sets the unique identifier of the print.
         /// </summary>
         public Guid PrintId { get; set; }
 
         /// <summary>
-        /// Gets or sets the Print.
+        /// Gets or sets the print associated with this cart item.
         /// </summary>
         public Print Print { get; set; }
 
         /// <summary>
-        /// Gets or sets the quantity of the items in the shopping cart.
+        /// Gets or sets the quantity of this item in the shopping cart.
         /// </summary>
         public int Quantity { get; set; }
     }
