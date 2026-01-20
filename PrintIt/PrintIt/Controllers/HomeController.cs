@@ -1,6 +1,10 @@
-using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using PrintIt.Data;
+using PrintIt.Models;
+using PrintIt.ViewModels;
+using System.Diagnostics;
 using ErrorViewModel = PrintIt.ViewModels.ErrorViewModel;
 
 namespace PrintIt.Controllers
@@ -13,12 +17,6 @@ namespace PrintIt.Controllers
 
         public IActionResult Index()
         {
-            //string? userEmail = HttpContext.Session.GetString("UserEmail");
-            //if (userEmail is not null)
-            //{
-            //    return View("Store");
-            //}
-
             return View();
         }
 
@@ -26,7 +24,6 @@ namespace PrintIt.Controllers
         {
             return View();
         }
-
         public IActionResult Privacy()
         {
             return View();
