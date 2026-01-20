@@ -1,0 +1,107 @@
+﻿@model PrintIt.ViewModels.PrintsViewModel
+@using PrintIt.Enums
+
+@{
+    ViewData["Title"] = "Add New Print";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@* Container: min-h-screen gives it a dedicated "app" feel. 
+   Using 'isolation' to ensure no global styles leak in. 
+*@
+<div class="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto">
+
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">New Print Listing</h1>
+                <p class="mt-2 text-sm text-slate-500">Add a new 3D model to your store's inventory.</p>
+            </div>
+            <a asp-controller="Home" asp-action="Store" class="group flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Store
+            </a>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-200 overflow-hidden">
+            <form asp-controller="AddPrint" asp-action="CreateMenu" method="post" enctype="multipart/form-data" class="divide-y divide-slate-100">
+                <div asp-validation-summary="ModelOnly" class="p-4 bg-red-50 text-red-600 text-sm"></div>
+
+                <div class="p-8 space-y-6">
+                    <div>
+                        <label asp-for="Name" class="block text-sm font-semibold text-slate-700 mb-2">Product Name</label>
+                        <input asp-for="Name" type="text" placeholder="e.g. Low-Poly Dragon"
+                               class="block w-full rounded-xl border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-all border" />
+                        <span asp-validation-for="Name" class="mt-2 text-xs text-red-500"></span>
+                    </div>
+
+                    <div>
+                        <label asp-for="Description" class="block text-sm font-semibold text-slate-700 mb-2">Description</label>
+                        <textarea asp-for="Description" rows="4" placeholder="Mention print time, material used, or detail level..."
+                                  class="block w-full rounded-xl border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-all border"></textarea>
+                        <span asp-validation-for="Description" class="mt-2 text-xs text-red-500"></span>
+                    </div>
+                </div>
+
+                <div class="p-8 bg-slate-50/30">
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div>
+                            <label asp-for="Price" class="block text-sm font-semibold text-slate-700 mb-2">Price (BGN)</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">лв.</span>
+                                <input asp-for="Price" type="number" step="0.01"
+                                       class="block w-full rounded-xl border-slate-200 bg-white pl-12 pr-4 py-3 text-slate-900 focus:border-blue-500 focus:ring-blue-500 sm:text-sm border" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label asp-for="Weight" class="block text-sm font-semibold text-slate-700 mb-2">Weight (Grams)</label>
+                            <input asp-for="Weight" type="number"
+                                   class="block w-full rounded-xl border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-blue-500 focus:ring-blue-500 sm:text-sm border" />
+                        </div>
+
+                        <div>
+                            <label asp-for="MaterialType" class="block text-sm font-semibold text-slate-700 mb-2">Material</label>
+                            <select asp-for="MaterialType" asp-items="Html.GetEnumSelectList<MaterialType>()"
+                                    class="block w-full rounded-xl border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-blue-500 focus:ring-blue-500 sm:text-sm border">
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Upload File</label>
+                            <input asp-for="File" type="file"
+                                   class="block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <div class="flex items-center">
+                        <div class="flex h-6 items-center">
+                            <input asp-for="IsAvailable" type="checkbox"
+                                   class="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                        </div>
+                        <div class="ml-3">
+                            <label asp-for="IsAvailable" class="text-sm font-bold text-slate-700 cursor-pointer">Live on Store</label>
+                            <p class="text-xs text-slate-400">Enable to make visible to customers.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 w-full sm:w-auto">
+                        <button type="submit" class="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 transition-all active:scale-95">
+                            Publish Product
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
