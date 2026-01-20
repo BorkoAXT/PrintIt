@@ -9,18 +9,18 @@ using PrintIt.Data;
 
 #nullable disable
 
-namespace PrintIt.Migrations
+namespace PrintIt.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251204130853_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260120063110_PrintItCreate")]
+    partial class PrintItCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.10")
+                .HasAnnotation("ProductVersion", "9.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -156,6 +156,71 @@ namespace PrintIt.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("PrintIt.Models.CartItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PrintId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("ShopCartId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PrintId");
+
+                    b.HasIndex("ShopCartId", "PrintId")
+                        .IsUnique();
+
+                    b.ToTable("CartItems");
+                });
+
+            modelBuilder.Entity("PrintIt.Models.Print", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("MaterialType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Weight")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Prints");
+                });
+
+            modelBuilder.Entity("PrintIt.Models.ShopCart", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("ShopCarts");
+                });
+
             modelBuilder.Entity("PrintIt.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -271,6 +336,46 @@ namespace PrintIt.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("PrintIt.Models.CartItem", b =>
+                {
+                    b.HasOne("PrintIt.Models.Print", "Print")
+                        .WithMany()
+                        .HasForeignKey("PrintId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PrintIt.Models.ShopCart", "ShopCart")
+                        .WithMany("Items")
+                        .HasForeignKey("ShopCartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Print");
+
+                    b.Navigation("ShopCart");
+                });
+
+            modelBuilder.Entity("PrintIt.Models.ShopCart", b =>
+                {
+                    b.HasOne("PrintIt.Models.User", "User")
+                        .WithOne("ShopCart")
+                        .HasForeignKey("PrintIt.Models.ShopCart", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PrintIt.Models.ShopCart", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("PrintIt.Models.User", b =>
+                {
+                    b.Navigation("ShopCart");
                 });
 #pragma warning restore 612, 618
         }
