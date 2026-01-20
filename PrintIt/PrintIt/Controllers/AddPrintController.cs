@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PrintIt.Data;
+using PrintIt.Enums;
 using PrintIt.Models;
 using PrintIt.ViewModels;
 
@@ -53,7 +54,7 @@ namespace PrintIt.Controllers
 
             if (model.File != null && model.File.Length > 0)
             {
-                string figuresFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "Figures");
+                string figuresFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", model.PrintType.ToString());
 
                 if (!Directory.Exists(figuresFolder))
                 {
@@ -68,7 +69,7 @@ namespace PrintIt.Controllers
                     await model.File.CopyToAsync(fileStream);
                 }
 
-                newPrint.FilePath = "/images/Figures/" + fileName;
+                newPrint.FilePath = $"/images/{model.PrintType.ToString()}/" + fileName;
             }
 
             _context.Add(newPrint);
