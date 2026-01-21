@@ -12,11 +12,11 @@
 
 @* Create helper function for sections *@
 @functions {
-    async Task RenderStoreSection(string title, List<Print> sectionItems, string gridId, string itemLabel)
+    async Task RenderStoreSection(string title, List<Print> sectionItems, string gridId, string itemLabel, string sectionId)
     {
-        await Task.CompletedTask; 
+        await Task.CompletedTask;
 
-        <div class="relative group/section mb-16">
+        <div id="@sectionId" class="relative group/section mb-16 scroll-mt-20">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-xl font-bold tracking-tight text-slate-400 uppercase tracking-widest">@title</h2>
             </div>
@@ -116,9 +116,9 @@
 
     @* Call helper function *@
     @{
-        await RenderStoreSection("Фигурки", figures, "grid-figures", "Figure");
-        await RenderStoreSection("Играчки", fidgetToys, "grid-fidget", "Toy");
-        await RenderStoreSection("Аксесоари", accessories, "grid-accessories", "Accessory");
+        await RenderStoreSection("Фигурки", figures, "grid-figures", "Figure", "figures-section");
+        await RenderStoreSection("Играчки", fidgetToys, "grid-fidget", "Toy", "toys-section");
+        await RenderStoreSection("Аксесоари", accessories, "grid-accessories", "Accessory", "accessories-section");
     }
 </div>
 
