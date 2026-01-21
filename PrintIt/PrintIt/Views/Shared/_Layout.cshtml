@@ -126,7 +126,7 @@
                         // Retrieve the count from ViewData, defaulting to 0 if null
                         var cartCount = ViewData["CartCount"] as int? ?? 0;
 
-                        <a asp-controller="Cart" asp-action="Index"
+                        <a asp-controller="Cart" asp-action="Cart"
                            class="p-2 hover:bg-slate-100 rounded-full transition-colors relative inline-block">
                             <i class="bi bi-cart3 text-xl text-slate-700"></i>
                             @if (cartCount > 0)
@@ -180,9 +180,15 @@
                 <div>
                     <h4 class="text-white font-bold mb-6 text-sm uppercase tracking-widest">Магазин</h4>
                     <ul class="space-y-4 text-sm">
-                        <li><a href="#" class="hover:text-brand-primary transition-colors">3D Фигури</a></li>
-                        <li><a href="#" class="hover:text-brand-primary transition-colors">Органайзери</a></li>
-                        <li><a href="#" class="hover:text-brand-primary transition-colors">Аксесоари</a></li>
+                        <li>
+                            <a asp-controller="Store" asp-action="Articles" asp-fragment="figures-section" class="hover:text-brand-primary transition-colors">3D Фигури</a>
+                        </li>
+                        <li>
+                            <a asp-controller="Store" asp-action="Articles" asp-fragment="toys-section" class="hover:text-brand-primary transition-colors">Играчки</a>
+                        </li>
+                        <li>
+                            <a asp-controller="Store" asp-action="Articles" asp-fragment="accessories-section" class="hover:text-brand-primary transition-colors">Аксесоари</a>
+                        </li>
                     </ul>
                 </div>
 
