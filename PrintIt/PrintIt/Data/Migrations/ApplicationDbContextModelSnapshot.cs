@@ -300,6 +300,24 @@ namespace PrintIt.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("PrintIt.Models.UserWishlistItem", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PrintId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("UserId", "PrintId");
+
+                    b.HasIndex("PrintId");
+
+                    b.ToTable("UserWishlistItems");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
@@ -356,7 +374,7 @@ namespace PrintIt.Data.Migrations
                     b.HasOne("PrintIt.Models.Print", "Print")
                         .WithMany()
                         .HasForeignKey("PrintId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("PrintIt.Models.ShopCart", "ShopCart")
@@ -381,6 +399,25 @@ namespace PrintIt.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("PrintIt.Models.UserWishlistItem", b =>
+                {
+                    b.HasOne("PrintIt.Models.Print", "Print")
+                        .WithMany()
+                        .HasForeignKey("PrintId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PrintIt.Models.User", "User")
+                        .WithMany("Wishlist")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Print");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("PrintIt.Models.ShopCart", b =>
                 {
                     b.Navigation("Items");
@@ -389,6 +426,8 @@ namespace PrintIt.Data.Migrations
             modelBuilder.Entity("PrintIt.Models.User", b =>
                 {
                     b.Navigation("ShopCart");
+
+                    b.Navigation("Wishlist");
                 });
 #pragma warning restore 612, 618
         }

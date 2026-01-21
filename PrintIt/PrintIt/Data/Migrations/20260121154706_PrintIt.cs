@@ -194,6 +194,31 @@ namespace PrintIt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserWishlistItems",
+                columns: table => new
+                {
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PrintId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserWishlistItems", x => new { x.UserId, x.PrintId });
+                    table.ForeignKey(
+                        name: "FK_UserWishlistItems_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserWishlistItems_Prints_PrintId",
+                        column: x => x.PrintId,
+                        principalTable: "Prints",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "CartItems",
                 columns: table => new
                 {
@@ -210,7 +235,7 @@ namespace PrintIt.Data.Migrations
                         column: x => x.PrintId,
                         principalTable: "Prints",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_CartItems_ShopCarts_ShopCartId",
                         column: x => x.ShopCartId,
@@ -274,6 +299,11 @@ namespace PrintIt.Data.Migrations
                 table: "ShopCarts",
                 column: "UserId",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserWishlistItems_PrintId",
+                table: "UserWishlistItems",
+                column: "PrintId");
         }
 
         /// <inheritdoc />
@@ -298,13 +328,16 @@ namespace PrintIt.Data.Migrations
                 name: "CartItems");
 
             migrationBuilder.DropTable(
+                name: "UserWishlistItems");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "Prints");
+                name: "ShopCarts");
 
             migrationBuilder.DropTable(
-                name: "ShopCarts");
+                name: "Prints");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

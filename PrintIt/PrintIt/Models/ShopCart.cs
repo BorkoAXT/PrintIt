@@ -8,7 +8,7 @@
         /// <summary>
         /// Gets or sets the id of the shop cart.
         /// </summary>
-        public Guid Id { get; set; }
+        public Guid Id { get; private set; }
 
         /// <summary>
         /// Gets the user id from the shopping cart.
@@ -18,11 +18,19 @@
         /// <summary>
         /// Gets the user from the shopping cart.
         /// </summary>
-        public User User { get; private set; }
+        public User? User { get; private set; }
 
         /// <summary>
         /// Gets or sets the items in the shopping cart of the user.
         /// </summary>
-        public List<CartItem> Items { get; set; } = new();
+        public ICollection<CartItem> Items { get; set; } = new List<CartItem>();
+
+        protected ShopCart() { }
+
+        public ShopCart(Guid userId)
+        {
+            Id = Guid.NewGuid();
+            UserId = userId;
+        }
     }
 }

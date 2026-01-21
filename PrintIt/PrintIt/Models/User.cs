@@ -13,6 +13,11 @@ namespace PrintIt.Models
         public ShopCart? ShopCart { get; set; }
 
         /// <summary>
+        /// Gets or sets the list of whitelisted prints for the user.
+        /// </summary>
+        public ICollection<UserWishlistItem> Wishlist { get; set; } = new List<UserWishlistItem>();
+
+        /// <summary>
         /// Parameterless constructor for EF Core
         /// </summary>
         public User() : base() { }

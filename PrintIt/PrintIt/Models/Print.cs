@@ -10,7 +10,7 @@ namespace PrintIt.Models
         /// <summary>
         /// Gets or sets the unique identifier of the print.
         /// </summary>
-        public Guid Id { get; set; }
+        public Guid Id { get; private set; }
 
         /// <summary>
         /// Gets or sets the name of the print.
@@ -50,12 +50,12 @@ namespace PrintIt.Models
         /// <summary>
         /// Gets or sets the available colors for the print.
         /// </summary>
-        public List<PrintColor> PrintColors { get; set; } = new() { PrintColor.None };
+        public List<PrintColor> PrintColors { get; set; } = new();
 
         /// <summary>
         /// Parameterless constructor required by EF Core.
         /// </summary>
-        private Print() { }
+        protected Print() { }
 
         /// <summary>
         /// Creates a new <see cref="Print"/>.

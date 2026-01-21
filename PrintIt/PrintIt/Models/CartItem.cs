@@ -8,7 +8,7 @@
         /// <summary>
         /// Gets or sets the unique identifier of the cart item.
         /// </summary>
-        public Guid Id { get; set; }
+        public Guid Id { get; private set; }
 
         /// <summary>
         /// Gets or sets the unique identifier of the shopping cart.
@@ -18,7 +18,7 @@
         /// <summary>
         /// Gets or sets the shopping cart this item belongs to.
         /// </summary>
-        public ShopCart ShopCart { get; set; }
+        public ShopCart? ShopCart { get; set; }
 
         /// <summary>
         /// Gets or sets the unique identifier of the print.
@@ -28,11 +28,13 @@
         /// <summary>
         /// Gets or sets the print associated with this cart item.
         /// </summary>
-        public Print Print { get; set; }
+        public Print? Print { get; set; }
 
         /// <summary>
         /// Gets or sets the quantity of this item in the shopping cart.
         /// </summary>
         public int Quantity { get; set; }
+
+        protected CartItem() { }
     }
 }
