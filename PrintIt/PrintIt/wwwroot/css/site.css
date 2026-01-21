@@ -1,4 +1,4 @@
-/* --- 1. CORE VARIABLES & BASE STYLES --- */
+/* --- Variables and base styles --- */
 :root {
     --black: #000000;
     --white: #ffffff;
@@ -30,10 +30,9 @@ body {
     box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--light-blue);
 }
 
-/* --- 2. THE LOCK SCREEN WRAPPER --- */
+/* --- Lock screen wrapper --- */
 .auth-page-wrapper {
     background: radial-gradient(circle at top left, var(--white), var(--beige));
-    /* Center everything perfectly */
     flex: 1;
     display: flex;
     justify-content: center;
@@ -45,15 +44,12 @@ body {
 
 .auth-card-modern {
     width: 100%;
-    /* INCREASED SIZE: 520px provides a much more solid desktop presence */
     max-width: 520px;
     background: var(--white);
-    /* INCREASED PADDING: More whitespace makes the UI feel premium */
     padding: 3.5rem;
     border-radius: 28px;
     border: 1px solid rgba(27, 110, 194, 0.1);
     box-shadow: 0 20px 50px rgba(24, 97, 172, 0.15);
-    /* Visual balance adjustment to offset the navbar weight */
     margin-bottom: 2rem;
 }
 
@@ -89,12 +85,12 @@ body {
     margin-bottom: 1.25rem;
 }
 
-    .input-modern:focus {
-        outline: none;
-        border-color: var(--light-blue);
-        background-color: var(--white);
-        box-shadow: 0 0 0 5px rgba(0, 119, 204, 0.08);
-    }
+.input-modern:focus {
+    outline: none;
+    border-color: var(--light-blue);
+    background-color: var(--white);
+    box-shadow: 0 0 0 5px rgba(0, 119, 204, 0.08);
+}
 
 /* Buttons */
 .btn-primary-modern {
@@ -110,11 +106,11 @@ body {
     transition: all 0.2s ease;
 }
 
-    .btn-primary-modern:hover {
-        background-color: var(--dark-blue);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(24, 97, 172, 0.2);
-    }
+.btn-primary-modern:hover {
+    background-color: var(--dark-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(24, 97, 172, 0.2);
+}
 
 .btn-social {
     width: 100%;
@@ -132,10 +128,10 @@ body {
     transition: all 0.2s ease;
 }
 
-    .btn-social:hover {
-        border-color: var(--light-blue);
-        background-color: rgba(0, 119, 204, 0.02);
-    }
+.btn-social:hover {
+    border-color: var(--light-blue);
+    background-color: rgba(0, 119, 204, 0.02);
+}
 
 /* --- 5. UI DECORATION --- */
 .divider-text {
@@ -149,19 +145,19 @@ body {
     text-transform: uppercase;
 }
 
-    .divider-text::before, .divider-text::after {
-        content: '';
-        flex: 1;
-        border-bottom: 2px solid var(--light-gray);
-    }
+.divider-text::before, .divider-text::after {
+    content: '';
+    flex: 1;
+    border-bottom: 2px solid var(--light-gray);
+}
 
-    .divider-text:not(:empty)::before {
-        margin-right: 1.5rem;
-    }
+.divider-text:not(:empty)::before {
+    margin-right: 1.5rem;
+}
 
-    .divider-text:not(:empty)::after {
-        margin-left: 1.5rem;
-    }
+.divider-text:not(:empty)::after {
+    margin-left: 1.5rem;
+}
 
 .auth-footer-link {
     color: var(--green);
@@ -202,7 +198,8 @@ body {
         box-shadow: 0 0 0 0 rgba(27, 110, 194, 0);
     }
 }
-/* --- ADMIN FORM SPECIFIC STYLES --- */
+
+/* --- Admin styles --- */
 .admin-form-container {
     max-width: 850px;
     margin: 40px auto;

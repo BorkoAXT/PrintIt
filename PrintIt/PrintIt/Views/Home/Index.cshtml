@@ -1,8 +1,63 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@using PrintIt.Models
+@{
+    ViewData["Title"] = "Начало";
+
+    var wishlist = ViewData["WishlistItems"] as List<Print> ?? new List<Print>();
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container mx-auto px-4 py-12">
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="mb-10 text-center">
+            <h1 class="text-4xl font-black text-brand-dark">Добре дошли, @User.Identity.Name!</h1>
+        </div>
+
+        @if (wishlist.Any())
+        {
+            <div class="mb-16">
+                <h2 class="text-xl font-bold text-slate-400 uppercase tracking-widest mb-8">Твоят списък с желания</h2>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    @foreach (var item in wishlist)
+                    {
+                        <div class="group relative flex flex-col">
+                            <div class="aspect-square w-full overflow-hidden rounded-3xl bg-slate-100 border border-slate-200 transition-all duration-300 group-hover:shadow-2xl group-hover:-translate-y-2">
+                                <img src="@(string.IsNullOrEmpty(item.FilePath) ? "/images/placeholder.jpg" : item.FilePath)"
+                                     class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+
+                                <div class="absolute inset-0 bg-brand-dark/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
+                                    <a asp-controller="Store" asp-action="Details" asp-route-id="@item.Id"
+                                       class="bg-white text-brand-dark px-6 py-3 rounded-xl font-bold text-sm shadow-xl transform translate-y-8 group-hover:translate-y-0 transition-all duration-300 hover:bg-brand-primary hover:text-white">
+                                        Виж детайли
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="mt-5 px-2">
+                                <h3 class="text-lg font-bold text-brand-dark leading-tight">@item.Name</h3>
+                                <p class="text-xl font-black text-brand-primary mt-1">@item.Price.ToString("0.00") лв.</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            @* Empty wishlist *@
+            <div class="py-16 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 text-center">
+                <p class="text-slate-500 font-bold text-xl">Списъкът ти с желания е все още празен.</p>
+                <a asp-controller="Store" asp-action="Store" class="mt-4 inline-block text-brand-primary font-bold hover:underline">Разгледай продуктите тук →</a>
+            </div>
+        }
+    }
+    else
+    {
+        @* Section for not logged users *@
+        <div class="text-center py-24 bg-brand-dark rounded-[3rem] text-white px-6">
+            <h1 class="text-6xl font-black mb-6 tracking-tighter">Където идеите оживяват.</h1>
+            <p class="text-slate-400 text-xl mb-10 max-w-xl mx-auto">Открийте магията на 3D принтирането с нашите детайлни модели и аксесоари.</p>
+            <a asp-controller="Store" asp-action="Index" class="bg-brand-primary text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-lg hover:scale-105 transition-all">Към магазина</a>
+        </div>
+    }
 </div>

@@ -25,21 +25,21 @@ namespace PrintIt.Data
         {
             base.OnModelCreating(builder);
 
-            // User ↔ ShopCart (1–1)
+            // User <-> ShopCart (1–1)
             builder.Entity<User>()
                 .HasOne(u => u.ShopCart)
                 .WithOne(c => c.User)
                 .HasForeignKey<ShopCart>(c => c.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // ShopCart ↔ CartItem (1–N)
+            // ShopCart <-> CartItem (1–N)
             builder.Entity<CartItem>()
                 .HasOne(ci => ci.ShopCart)
                 .WithMany(c => c.Items)
                 .HasForeignKey(ci => ci.ShopCartId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // CartItem ↔ Print (N–1)
+            // CartItem <-> Print (N–1)
             builder.Entity<CartItem>()
                 .HasOne(ci => ci.Print)
                 .WithMany()
