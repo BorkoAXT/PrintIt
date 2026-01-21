@@ -29,8 +29,7 @@
   <ItemGroup>
     <Folder Include="Data\Migrations\" />
     <Folder Include="Services\NewFolder\" />
-    <Folder Include="wwwroot\images\Figures\" />
-    <Folder Include="wwwroot\images\Figure\" />
+    <Folder Include="wwwroot\images\" />
   </ItemGroup>
 
 </Project>

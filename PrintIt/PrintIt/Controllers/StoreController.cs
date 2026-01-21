@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrintIt.Data;
+using PrintIt.Enums;
 using PrintIt.Models;
 using PrintIt.ViewModels;
 
@@ -50,14 +51,16 @@ namespace PrintIt.Controllers
         {
             if (ModelState.IsValid)
             {
-                string uniqueFileName = "placeholder-figure.jpg";
+                string filePath = "/images/placeholder-figure.jpg"; // Път по подразбиране
 
                 if (model.File != null && model.File.Length > 0)
                 {
-                    uniqueFileName = await UploadImage(model.File);
+                    filePath = await UploadImage(model.File, model.PrintType);
                 }
 
-                var newPrint = new Print(model.Name, model.Description, model.MaterialType, model.Weight, model.Price, model.FilePath, model.PrintType,  model.PrintColors);
+                var newPrint = new Print(model.Name, model.Description, model.MaterialType,
+                    model.Weight, model.Price, filePath,
+                    model.PrintType, model.PrintColors);
 
                 _context.Prints.Add(newPrint);
                 await _context.SaveChangesAsync();
@@ -117,7 +120,7 @@ namespace PrintIt.Controllers
                 {
                     DeleteOldImage(existingPrint.FilePath);
 
-                    string newFileName = await UploadImage(model.File);
+                    string newFileName = await UploadImage(model.File, model.PrintType);
                     existingPrint.FilePath = "/images/prints/" + newFileName;
                 }
 
@@ -145,10 +148,20 @@ namespace PrintIt.Controllers
         }
 
         // Helper методи за снимките
-        private async Task<string> UploadImage(IFormFile file)
+        private async Task<string> UploadImage(IFormFile file, PrintType printType)
         {
-            string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images/prints");
-            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+            string categoryFolder = string.Empty;
+            switch (printType)
+            {
+                case PrintType.Accessory: categoryFolder = "Accessories"; break;
+                case PrintType.FidgetToy: categoryFolder = "FidgetToys"; break;
+                case PrintType.Figure: categoryFolder = "Figures"; break;
+            };
+
+            string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", categoryFolder);
+
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
 
             string uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
             string filePath = Path.Combine(uploadsFolder, uniqueFileName);
@@ -157,7 +170,7 @@ namespace PrintIt.Controllers
             {
                 await file.CopyToAsync(fileStream);
             }
-            return uniqueFileName;
+            return $"/images/{categoryFolder}/{uniqueFileName}";
         }
 
         private void DeleteOldImage(string? filePath)
