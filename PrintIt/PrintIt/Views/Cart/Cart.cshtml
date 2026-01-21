@@ -1,29 +1,36 @@
 ﻿@using PrintIt.Models
+@using System.Globalization
 @{
-    ViewData["Title"] = "Количка";
+    ViewData["Title"] = "Shopping Cart";
     var cartItems = ViewData["CartItems"] as List<CartItem> ?? new List<CartItem>();
-    decimal subtotal = cartItems.Sum(item => (item.Print?.Price ?? 0) * item.Quantity);
-    decimal shipping = subtotal > 100 || subtotal == 0 ? 0 : 5.00m; // Delivery is free for orders over 100
+
+    decimal subtotal = cartItems.Sum(item => (item.Print?.Price ?? 0) * (item.Quantity > 0 ? item.Quantity : 1));
+    decimal shippingLimit = 50.00m;
+    decimal shipping = (subtotal > shippingLimit || subtotal == 0) ? 0 : 5.00m;
     decimal total = subtotal + shipping;
 }
 
-<div class="max-w-7xl mx-auto px-4 py-8">
-    <div class="flex items-center gap-4 mb-10">
-        <div class="h-12 w-12 bg-brand-primary rounded-2xl flex items-center justify-center shadow-lg shadow-brand-primary/20">
-            <i class="bi bi-cart-fill text-white text-2xl"></i>
-        </div>
-        <h1 class="text-4xl font-black text-brand-dark tracking-tight">Твоята количка</h1>
-    </div>
+@Html.AntiForgeryToken() 
 
+<div class="max-w-7xl mx-auto px-4 py-12">
     @if (cartItems.Any())
     {
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div class="flex items-center gap-4 mb-10">
+            <div class="h-12 w-12 bg-brand-primary rounded-2xl flex items-center justify-center shadow-lg shadow-brand-primary/20">
+                <i class="bi bi-cart-fill text-white text-2xl"></i>
+            </div>
+            <h1 class="text-4xl font-black text-brand-dark tracking-tight">Твоята количка</h1>
+        </div>
 
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            @* Списък с продукти *@
             <div class="lg:col-span-2 space-y-6">
                 @foreach (var item in cartItems)
                 {
-                    <div class="group bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-center gap-6">
+                    int displayQty = item.Quantity > 0 ? item.Quantity : 1;
+                    decimal unitPrice = item.Print?.Price ?? 0;
 
+                    <div class="group bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-center gap-6">
                         <div class="h-32 w-32 shrink-0 overflow-hidden rounded-2xl bg-slate-50 border border-slate-100">
                             <img src="@(string.IsNullOrEmpty(item.Print?.FilePath) ? "/images/placeholder.jpg" : item.Print.FilePath)"
                                  class="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -32,19 +39,42 @@
                         <div class="flex-grow text-center sm:text-left">
                             <h3 class="text-xl font-bold text-brand-dark">@item.Print?.Name</h3>
                             <p class="text-slate-400 text-sm mb-2 uppercase font-bold tracking-tighter">
-                                <i class="bi bi-cpu"></i> 3D Принт • @item.Print?.MaterialType
+                                <i class="bi bi-cpu"></i> 3D Print • @item.Print?.MaterialType
                             </p>
                             <div class="flex items-center justify-center sm:justify-start gap-4">
-                                <span class="text-lg font-black text-brand-primary">@item.Print?.Price.ToString("0.00") лв.</span>
+                                <span class="text-lg font-black text-brand-primary item-total-price"
+                                      data-unit-price="@unitPrice.ToString("0.00", CultureInfo.InvariantCulture)"
+                                      id="price-@item.PrintId">
+                                    €@((unitPrice * displayQty).ToString("0.00"))
+                                </span>
                                 <span class="text-slate-300">|</span>
-                                <span class="text-slate-500 font-medium">Количество: @item.Quantity</span>
+                                <span class="text-slate-500 font-medium">
+                                    Общо: <span id="qty-display-@item.PrintId">@displayQty</span> бр.
+                                </span>
                             </div>
                         </div>
 
-                        <div class="flex sm:flex-col items-center gap-2">
-                            <button class="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors" title="Премахни">
-                                <i class="bi bi-trash3-fill text-xl"></i>
-                            </button>
+                        <div class="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                            <div class="flex items-center bg-white rounded-xl border border-slate-200 overflow-hidden">
+                                <button type="button" onclick="changeQty('@item.PrintId', -1)"
+                                        class="px-3 py-1 hover:bg-slate-50 text-slate-400 transition-colors">
+                                    <i class="bi bi-dash-lg"></i>
+                                </button>
+                                <input type="number" id="qty-@item.PrintId"
+                                       class="w-10 text-center font-bold text-brand-dark bg-transparent border-none focus:ring-0 text-sm"
+                                       value="@displayQty" readonly />
+                                <button type="button" onclick="changeQty('@item.PrintId', 1)"
+                                        class="px-3 py-1 hover:bg-slate-50 text-slate-400 transition-colors">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
+
+                            <form asp-controller="Cart" asp-action="RemoveFromCart" method="post">
+                                <input type="hidden" name="id" value="@item.PrintId" />
+                                <button type="submit" class="p-3 text-slate-400 hover:text-white hover:bg-red-500 rounded-xl transition-all shadow-sm active:scale-90">
+                                    <i class="bi bi-trash3-fill text-xl"></i>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 }
@@ -55,65 +85,145 @@
                     <h2 class="text-2xl font-bold mb-8 flex items-center gap-2">
                         <i class="bi bi-receipt"></i> Резюме
                     </h2>
-
                     <div class="space-y-4 mb-8">
                         <div class="flex justify-between text-slate-400 font-medium">
                             <span>Междинна сума:</span>
-                            <span class="text-white">@subtotal.ToString("0.00") лв.</span>
+                            <span id="subtotal">€@subtotal.ToString("0.00")</span>
                         </div>
                         <div class="flex justify-between text-slate-400 font-medium">
                             <span>Доставка:</span>
-                            @if (shipping == 0 && subtotal > 0)
-                            {
-                                <span class="text-green-400 uppercase text-xs font-bold bg-green-400/10 px-2 py-1 rounded">Безплатна</span>
-                            }
-                            else
-                            {
-                                <span class="text-white">@shipping.ToString("0.00") лв.</span>
-                            }
+                            <span id="shipping">@((shipping == 0 && subtotal > 0) ? "Безплатна" : "€" + shipping.ToString("0.00"))</span>
                         </div>
                         <div class="pt-4 border-t border-white/10 flex justify-between items-end">
                             <span class="text-lg">Общо:</span>
-                            <span class="text-3xl font-black text-brand-primary">@total.ToString("0.00") лв.</span>
+                            <span id="grand-total" class="text-3xl font-black text-brand-primary">€@total.ToString("0.00")</span>
                         </div>
                     </div>
+
+                    @if (subtotal < shippingLimit)
+                    {
+                        <div id="free-shipping-promo" class="mb-6 p-4 bg-white/5 rounded-2xl border border-white/10">
+                            <p class="text-xs text-center text-slate-300">
+                                Добави още <b id="remaining-for-free" class="text-brand-primary">€@((shippingLimit - subtotal).ToString("0.00"))</b> за безплатна доставка!
+                            </p>
+                        </div>
+                    }
 
                     <button class="w-full bg-brand-primary hover:bg-blue-500 text-white py-5 rounded-2xl font-bold text-lg shadow-lg shadow-brand-primary/20 transition-all active:scale-95 flex items-center justify-center gap-3">
                         Завърши поръчката
                         <i class="bi bi-arrow-right"></i>
                     </button>
-
-                    @if (subtotal < 100 && subtotal > 0)
-                    {
-                        <p class="mt-6 text-xs text-center text-slate-400 italic">
-                            Добави още <b>@((100 - subtotal).ToString("0.00")) лв.</b> за безплатна доставка!
-                        </p>
-                    }
                 </div>
             </div>
         </div>
     }
     else
     {
-        <div class="bg-brand-soft/30 backdrop-blur-sm rounded-[3rem] border-2 border-dashed border-slate-200/60 py-24 text-center">
-            <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm mx-auto mb-6">
-                <i class="bi bi-cart-x text-slate-300 text-4xl"></i>
+        @* ПРАЗНА КОЛИЧКА *@
+        <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+            <div class="relative mb-8">
+                @* Анимирани кръгове за фон *@
+                <div class="absolute inset-0 bg-brand-primary/10 rounded-full blur-3xl animate-pulse"></div>
+                <div class="relative h-40 w-40 bg-white rounded-full flex items-center justify-center shadow-2xl border border-slate-50">
+                    <i class="bi bi-cart-x text-slate-200 text-7xl animate-bounce" style="animation-duration: 3s;"></i>
+                </div>
             </div>
-            <h2 class="text-2xl font-black text-brand-dark mb-2">Количката ти е празна</h2>
-            <p class="text-slate-500 mb-10 max-w-sm mx-auto">Изглежда още не си избрал нищо. Разгледай нашите уникални 3D модели и напълни количката!</p>
+
+            <h2 class="text-3xl font-black text-brand-dark mb-3">Количката ти е празна</h2>
+            <p class="text-slate-500 mb-10 max-w-md mx-auto leading-relaxed">
+                Изглежда още не си избрал нищо от нашите уникални 3D принтирани модели.
+                Върни се в магазина и намери нещо специално!
+            </p>
+
             <a asp-controller="Store" asp-action="Articles"
-               class="inline-flex items-center gap-2 bg-brand-primary text-white px-10 py-4 rounded-2xl font-bold hover:scale-105 transition-transform shadow-xl shadow-brand-primary/20">
+               class="group relative inline-flex items-center gap-3 bg-brand-dark text-white px-10 py-5 rounded-2xl font-bold transition-all hover:bg-brand-primary hover:scale-105 active:scale-95 shadow-xl shadow-brand-dark/20">
+                <i class="bi bi-arrow-left text-xl group-hover:-translate-x-1 transition-transform"></i>
                 Към магазина
-                <i class="bi bi-shop"></i>
             </a>
         </div>
     }
 </div>
 
 @section Scripts {
-    <style>
-        .bg-brand-dark {
-            background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+    <script>
+        async function changeQty(printId, delta) {
+            const input = document.getElementById('qty-' + printId);
+            const display = document.getElementById('qty-display-' + printId);
+            let currentVal = parseInt(input.value) || 1;
+            let newVal = currentVal + delta;
+
+            if (newVal >= 1 && newVal <= 100) {
+                // Вземаме Anti-Forgery Token
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                try {
+                    const response = await fetch('/Cart/UpdateQuantity', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': token
+                        },
+                        body: `id=${printId}&quantity=${newVal}`
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        input.value = newVal;
+                        display.textContent = newVal;
+
+                        const priceEl = document.getElementById('price-' + printId);
+                        const unitPrice = parseFloat(priceEl.dataset.unitPrice);
+                        priceEl.textContent = '€' + (unitPrice * newVal).toFixed(2);
+
+                        updateTotals();
+                    }
+                } catch (error) {
+                    console.error("AJAX Error:", error);
+                }
+            }
         }
-    </style>
+
+        function updateTotals() {
+            let subtotal = 0;
+            document.querySelectorAll('.item-total-price').forEach(el => {
+                let val = el.textContent.replace('€', '').trim();
+                subtotal += parseFloat(val) || 0;
+            });
+
+            const shippingLimit = 50;
+            const shipping = (subtotal > shippingLimit || subtotal === 0) ? 0 : 5;
+
+            document.getElementById('subtotal').textContent = '€' + subtotal.toFixed(2);
+            document.getElementById('shipping').textContent = shipping > 0 ? '€' + shipping.toFixed(2) : 'Безплатна';
+            document.getElementById('grand-total').textContent = '€' + (subtotal + shipping).toFixed(2);
+
+            const promoEl = document.getElementById('remaining-for-free');
+            const promoDiv = document.getElementById('free-shipping-promo');
+            if (promoEl && promoDiv) {
+                if (subtotal >= shippingLimit) {
+                    promoDiv.classList.add('hidden');
+                } else {
+                    promoDiv.classList.remove('hidden');
+                    promoEl.textContent = '€' + (shippingLimit - subtotal).toFixed(2);
+                }
+            }
+        }
+    </script>
 }
+
+<style>
+    .bg-brand-dark {
+        background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+    }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .hidden {
+        display: none;
+    }
+</style>

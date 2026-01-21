@@ -5,17 +5,16 @@ using PrintIt.Data;
 using PrintIt.Enums;
 using PrintIt.Models;
 using PrintIt.ViewModels;
+using System.Security.Claims;
 
 namespace PrintIt.Controllers
 {
-    public class StoreController : Controller
+    public class StoreController : BaseController
     {
-        private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public StoreController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment)
+        public StoreController(IWebHostEnvironment webHostEnvironment, ApplicationDbContext context) : base(context)
         {
-            _context = context;
             _webHostEnvironment = webHostEnvironment;
         }
 
@@ -32,6 +31,24 @@ namespace PrintIt.Controllers
         {
             var print = await _context.Prints.FindAsync(id);
             if (print == null) return NotFound();
+
+            bool isFavorite = false;
+
+            // Проверка дали потребителят е логнат
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (Guid.TryParse(userIdString, out Guid userId))
+                {
+                    // Проверяваме в базата дали съществува запис за този потребител и този продукт
+                    isFavorite = await _context.Set<UserWishlistItem>()
+                        .AnyAsync(w => w.PrintId == id && w.UserId == userId);
+                }
+            }
+
+            // Използваме ViewBag, за да предадем информацията на изгледа
+            ViewBag.IsFavorite = isFavorite;
+
             return View(print);
         }
 
@@ -181,6 +198,34 @@ namespace PrintIt.Controllers
             if (System.IO.File.Exists(fullPath))
             {
                 System.IO.File.Delete(fullPath);
+            }
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleWishlist(Guid id)
+        {
+            if (User.Identity?.IsAuthenticated != true)
+            {
+                return Json(new { success = false, message = "Unauthorized" });
+            }
+
+            string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdString, out Guid userId)) return Json(new { success = false });
+
+            var wishlistItem = await _context.Set<UserWishlistItem>()
+                .FirstOrDefaultAsync(w => w.PrintId == id && w.UserId == userId);
+
+            if (wishlistItem != null)
+            {
+                _context.Set<UserWishlistItem>().Remove(wishlistItem);
+                await _context.SaveChangesAsync();
+                return Json(new { success = true, isFavorite = false });
+            }
+            else
+            {
+                _context.Set<UserWishlistItem>().Add(new UserWishlistItem (userId, id));
+                await _context.SaveChangesAsync();
+                return Json(new { success = true, isFavorite = true });
             }
         }
     }

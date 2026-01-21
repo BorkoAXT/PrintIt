@@ -12,7 +12,7 @@ using PrintIt.Data;
 namespace PrintIt.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260121154706_PrintIt")]
+    [Migration("20260121192140_PrintIt")]
     partial class PrintIt
     {
         /// <inheritdoc />

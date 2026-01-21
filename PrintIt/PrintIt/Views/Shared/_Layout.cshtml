@@ -37,20 +37,20 @@
             padding: 0.5rem 0;
         }
 
-        .nav-link::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: #3b82f6;
-            transition: width 0.3s ease;
-        }
-        
-        .nav-link:hover::after {
-            width: 100%;
-        }
+            .nav-link::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 0;
+                height: 2px;
+                background: #3b82f6;
+                transition: width 0.3s ease;
+            }
+
+            .nav-link:hover::after {
+                width: 100%;
+            }
 
         /* Blueprint grid background effect for main area */
         .blueprint-bg {
@@ -58,25 +58,37 @@
             background-size: 20px 20px;
         }
 
-        /* This targets the Identity 'Save' buttons inside the Manage area */
+        /* Identity 'Save' buttons styling */
         .manage-page-content button[type="submit"],
         #update-profile-button {
             width: 100%;
-            /* Responsive width for md and up is not possible in plain CSS, so use utility classes in markup if needed */
-            padding-left: 2rem;
-            padding-right: 2rem;
-            padding-top: 0.75rem;
-            padding-bottom: 0.75rem;
+            padding: 0.75rem 2rem;
             background-color: #0f172a;
             color: #fff;
             font-weight: bold;
             border-radius: 0.75rem;
             transition: all 0.2s;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px 0 rgb(0 0 0 / 0.06);
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
         }
-        .manage-page-content button[type="submit"]:hover,
-        #update-profile-button:hover {
-            background-color: #3b82f6;
+
+            .manage-page-content button[type="submit"]:hover,
+            #update-profile-button:hover {
+                background-color: #3b82f6;
+            }
+
+        /* Cart Bounce Animation */
+        .cart-bounce {
+            animation: bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @@keyframes bounce {
+            0%, 100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.3);
+            }
         }
     </style>
 </head>
@@ -89,7 +101,7 @@
                 <div class="flex items-center gap-10">
                     <a class="flex items-center gap-3 group" asp-area="" asp-controller="Home" asp-action="Index">
                         <div class="relative">
-                            <div class="bg-brand-dark p-2 rounded-lg">
+                            <div class="bg-brand-dark p-2 rounded-lg transition-transform group-hover:scale-105">
                                 <i class="bi bi-box-seam text-white text-xl"></i>
                             </div>
                             <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-brand-primary rounded-full border-2 border-white"></div>
@@ -105,11 +117,11 @@
                            asp-area="" asp-controller="Store" asp-action="Articles">
                             <i class="bi bi-grid-3x3-gap mr-1"></i> Артикули
                         </a>
-                        
+
                         @if (SignInManager.IsSignedIn(User))
                         {
                             <a class="nav-link text-sm font-bold uppercase tracking-wider text-slate-600 hover:text-brand-primary transition-colors"
-                               asp-area="" asp-controller="Home" asp-action="CustomRequest">
+                               asp-area="" asp-controller="Order" asp-action="Index">
                                 <i class="bi bi-cpu mr-1"></i> Авторски Поръчки
                             </a>
                         }
@@ -123,22 +135,29 @@
 
                     @if (SignInManager.IsSignedIn(User))
                     {
-                        // Retrieve the count from ViewData, defaulting to 0 if null
                         var cartCount = ViewData["CartCount"] as int? ?? 0;
 
-                        <a asp-controller="Cart" asp-action="Cart"
-                           class="p-2 hover:bg-slate-100 rounded-full transition-colors relative inline-block">
-                            <i class="bi bi-cart3 text-xl text-slate-700"></i>
-                            @if (cartCount > 0)
-                            {
-                                <span class="absolute top-1 right-1 flex h-4 w-4">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary opacity-75"></span>
-                                    <span class="relative inline-flex rounded-full h-4 w-4 bg-brand-primary text-[10px] text-white items-center justify-center font-bold">
-                                        @cartCount
+                        <div class="relative flex flex-col items-center">
+                            <a asp-controller="Cart" asp-action="Cart" id="cart-nav-link"
+                               class="p-2 hover:bg-slate-100 rounded-full transition-all relative inline-block group">
+                                <i class="bi bi-cart3 text-xl text-slate-700 transition-transform"></i>
+
+                                @if (cartCount > 0)
+                                {
+                                    <span id="cart-badge" class="absolute top-1 right-1 flex h-4 w-4">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-4 w-4 bg-brand-primary text-[10px] text-white items-center justify-center font-bold">
+                                            @cartCount
+                                        </span>
                                     </span>
-                                </span>
-                            }
-                        </a>
+                                }
+                            </a>
+
+                            <span id="cart-status-msg"
+                                  class="absolute top-full mt-1 whitespace-nowrap text-[10px] font-bold text-green-500 opacity-0 transition-all duration-300 translate-y-[-5px] pointer-events-none">
+                                +1 добавен!
+                            </span>
+                        </div>
                     }
 
                     <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-slate-700 hover:bg-slate-100 rounded-lg">
@@ -150,8 +169,8 @@
 
         <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-200 shadow-2xl">
             <div class="px-6 py-8 space-y-6">
-                <a class="block text-xl font-bold text-brand-dark" asp-area="" asp-controller="Home" asp-action="Articles">Артикули</a>
-                <a class="block text-xl font-bold text-brand-dark" asp-area="" asp-controller="Home" asp-action="Order">Поръчка</a>
+                <a class="block text-xl font-bold text-brand-dark" asp-area="" asp-controller="Store" asp-action="Articles">Артикули</a>
+                <a class="block text-xl font-bold text-brand-dark" asp-area="" asp-controller="Order" asp-action="Index">Поръчка</a>
                 <hr>
                 <partial name="_LoginPartial" />
             </div>
@@ -180,15 +199,9 @@
                 <div>
                     <h4 class="text-white font-bold mb-6 text-sm uppercase tracking-widest">Магазин</h4>
                     <ul class="space-y-4 text-sm">
-                        <li>
-                            <a asp-controller="Store" asp-action="Articles" asp-fragment="figures-section" class="hover:text-brand-primary transition-colors">3D Фигури</a>
-                        </li>
-                        <li>
-                            <a asp-controller="Store" asp-action="Articles" asp-fragment="toys-section" class="hover:text-brand-primary transition-colors">Играчки</a>
-                        </li>
-                        <li>
-                            <a asp-controller="Store" asp-action="Articles" asp-fragment="accessories-section" class="hover:text-brand-primary transition-colors">Аксесоари</a>
-                        </li>
+                        <li><a asp-controller="Store" asp-action="Articles" class="hover:text-brand-primary transition-colors">3D Фигури</a></li>
+                        <li><a asp-controller="Store" asp-action="Articles" class="hover:text-brand-primary transition-colors">Играчки</a></li>
+                        <li><a asp-controller="Store" asp-action="Articles" class="hover:text-brand-primary transition-colors">Аксесоари</a></li>
                     </ul>
                 </div>
 

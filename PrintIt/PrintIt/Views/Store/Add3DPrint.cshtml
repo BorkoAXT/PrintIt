@@ -4,11 +4,54 @@
 @{
     ViewData["Title"] = "Добавяне на нов артикул";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // Функция за превод на имената на цветовете
+    string TranslateColor(PrintColor color) => color switch
+    {
+        PrintColor.Red => "Червен",
+        PrintColor.Blue => "Син",
+        PrintColor.Green => "Зелен",
+        PrintColor.Yellow => "Жълт",
+        PrintColor.Black => "Черен",
+        PrintColor.White => "Бял",
+        PrintColor.Gray => "Сив",
+        PrintColor.Orange => "Оранжев",
+        PrintColor.Purple => "Лилав",
+        PrintColor.Pink => "Розов",
+        PrintColor.Brown => "Кафяв",
+        PrintColor.Cyan => "Циан",
+        PrintColor.Magenta => "Магента",
+        PrintColor.Lime => "Лайм",
+        PrintColor.Multiple => "Многоцветен",
+        _ => color.ToString()
+    };
+
+    // Функция за визуализация на цветното кръгче (Tailwind класове)
+    string GetColorHex(PrintColor color) => color switch
+    {
+        PrintColor.Red => "bg-red-500",
+        PrintColor.Blue => "bg-blue-600",
+        PrintColor.Green => "bg-emerald-500",
+        PrintColor.Yellow => "bg-yellow-400",
+        PrintColor.Black => "bg-slate-900",
+        PrintColor.White => "bg-white border border-slate-300",
+        PrintColor.Gray => "bg-slate-400",
+        PrintColor.Orange => "bg-orange-500",
+        PrintColor.Purple => "bg-purple-600",
+        PrintColor.Pink => "bg-pink-400",
+        PrintColor.Brown => "bg-amber-800",
+        PrintColor.Cyan => "bg-cyan-400",
+        PrintColor.Magenta => "bg-pink-600",
+        PrintColor.Lime => "bg-lime-400",
+        PrintColor.Multiple => "bg-gradient-to-tr from-red-500 via-green-500 to-blue-500",
+        _ => "bg-slate-200"
+    };
 }
 
 <div class="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-3xl mx-auto">
 
+        @* Хедър секция *@
         <div class="mb-8 flex items-center justify-between">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Нова обява за печат</h1>
@@ -26,12 +69,12 @@
             <form asp-controller="Store" asp-action="Add3DPrint" method="post" enctype="multipart/form-data" class="divide-y divide-slate-100">
                 <div asp-validation-summary="ModelOnly" class="p-4 bg-red-50 text-red-600 text-sm"></div>
 
-                @* Basic Info Section *@
+                @* Секция: Основна информация *@
                 <div class="p-8 space-y-6">
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div class="sm:col-span-2">
                             <label asp-for="Name" class="block text-sm font-semibold text-slate-700 mb-2">Име на продукта</label>
-                            <input asp-for="Name" type="text" placeholder="напр. Dragon Figurine"
+                            <input asp-for="Name" type="text" placeholder="напр. Фигурка на дракон"
                                    class="block w-full rounded-xl border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-all border" />
                             <span asp-validation-for="Name" class="mt-2 text-xs text-red-500"></span>
                         </div>
@@ -45,11 +88,11 @@
                     </div>
                 </div>
 
-                @* Technical Specs Section *@
+                @* Секция: Технически спецификации *@
                 <div class="p-8 bg-slate-50/30 space-y-6">
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div>
-                            <label asp-for="PrintType" class="block text-sm font-semibold text-slate-700 mb-2">Категория (Print Type)</label>
+                            <label asp-for="PrintType" class="block text-sm font-semibold text-slate-700 mb-2">Тип печат</label>
                             <select asp-for="PrintType" asp-items="Html.GetEnumSelectList<PrintType>()"
                                     class="block w-full rounded-xl border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-blue-500 focus:ring-blue-500 sm:text-sm border">
                             </select>
@@ -63,7 +106,7 @@
                         </div>
 
                         <div>
-                            <label asp-for="Price" class="block text-sm font-semibold text-slate-700 mb-2">Цена (BGN)</label>
+                            <label asp-for="Price" class="block text-sm font-semibold text-slate-700 mb-2">Цена (EUR)</label>
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">лв.</span>
                                 <input asp-for="Price" type="number" step="0.01"
@@ -81,21 +124,23 @@
                     </div>
                 </div>
 
-                @* Colors & File Section *@
+                @* Секция: Цветове и Файлове *@
                 <div class="p-8 space-y-6">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-3">Налични цветове</label>
                         <div class="flex flex-wrap gap-3">
                             @foreach (var color in Enum.GetValues(typeof(PrintColor)).Cast<PrintColor>())
                             {
-                                <label class="relative flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm focus:outline-none hover:bg-slate-50 transition-all has-[:checked]:border-blue-600 has-[:checked]:ring-1 has-[:checked]:ring-blue-600">
+                                <label class="relative flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm hover:bg-slate-50 transition-all has-[:checked]:border-blue-600 has-[:checked]:ring-1 has-[:checked]:ring-blue-600">
                                     <input type="checkbox"
                                            name="PrintColors"
                                            value="@color"
                                            class="sr-only"
                                            @(Model.PrintColors.Contains(color) ? "checked" : "") />
-                                    <span class="flex items-center gap-2">
-                                        <span class="text-xs font-medium text-slate-900">@color</span>
+                                    <span class="flex items-center gap-2 text-slate-900">
+                                        @* Цветно кръгче *@
+                                        <span class="h-3.5 w-3.5 rounded-full shadow-inner @GetColorHex(color)"></span>
+                                        <span class="text-xs font-medium">@TranslateColor(color)</span>
                                     </span>
                                 </label>
                             }
@@ -116,12 +161,12 @@
                                     <button type="button"
                                             onclick="document.getElementById('file-upload').click()"
                                             class="relative cursor-pointer bg-white rounded-md font-bold text-blue-600 hover:text-blue-500">
-                                        Качете файл
+                                        Изберете файл
                                     </button>
 
-                                    <input id="file-upload" asp-for="File" type="file" class="hidden" />
+                                    <input id="file-upload" asp-for="File" type="file" class="hidden" accept="image/*" />
 
-                                    <p id="file-name" class="pl-1">или дръпнете тук</p>
+                                    <p id="file-name" class="pl-1">или го пуснете тук</p>
                                 </div>
 
                                 <p class="text-xs text-slate-500">PNG, JPG до 10MB</p>
@@ -131,7 +176,7 @@
                     </div>
                 </div>
 
-                @* Submission Section *@
+                @* Бутон за изпращане *@
                 <div class="p-8 flex items-center justify-center bg-slate-50/50">
                     <button type="submit" class="w-full sm:w-auto bg-blue-600 text-white px-10 py-4 rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 transition-all active:scale-95 flex items-center justify-center gap-2">
                         <i class="bi bi-cloud-arrow-up-fill text-xl"></i>
@@ -152,7 +197,7 @@
             const fileNameEl = document.getElementById('file-name');
 
             if (!this.files || this.files.length === 0) {
-                fileNameEl.innerText = "или дръпнете тук";
+                fileNameEl.innerText = "или го пуснете тук";
                 fileNameEl.classList.remove('text-blue-600', 'font-bold');
                 return;
             }

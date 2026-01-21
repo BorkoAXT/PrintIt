@@ -35,6 +35,11 @@
         /// </summary>
         public int Quantity { get; set; }
 
-        protected CartItem() { }
+        public CartItem(Guid shopCartId, Guid printId)
+        {
+            Id = Guid.NewGuid();
+            ShopCartId = shopCartId;
+            PrintId = printId;
+        }
     }
 }

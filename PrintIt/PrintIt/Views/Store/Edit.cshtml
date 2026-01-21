@@ -9,7 +9,7 @@
 <div class="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-3xl mx-auto">
 
-        @* Header Section *@
+        @* Секция с хедър *@
         <div class="mb-8 flex items-center justify-between">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Редактиране на артикул</h1>
@@ -24,7 +24,7 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-200 overflow-hidden">
-            @* Формата сочи към Articles/Edit/{id} *@
+            @* Формата сочи към Store/Edit/{id} *@
             <form asp-controller="Store" asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="divide-y divide-slate-100">
 
                 @* Важни скрити полета *@
@@ -33,12 +33,13 @@
 
                 <div asp-validation-summary="ModelOnly" class="p-4 bg-red-50 text-red-600 text-sm"></div>
 
-                @* Basic Info Section *@
+                @* Секция: Основна информация *@
                 <div class="p-8 space-y-6">
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div class="sm:col-span-2">
                             <label asp-for="Name" class="block text-sm font-semibold text-slate-700 mb-2">Име на продукта</label>
                             <input asp-for="Name" type="text"
+                                   placeholder="Въведете име..."
                                    class="block w-full rounded-xl border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-all border" />
                             <span asp-validation-for="Name" class="mt-2 text-xs text-red-500"></span>
                         </div>
@@ -46,13 +47,14 @@
                         <div class="sm:col-span-2">
                             <label asp-for="Description" class="block text-sm font-semibold text-slate-700 mb-2">Описание</label>
                             <textarea asp-for="Description" rows="3"
+                                      placeholder="Опишете вашия модел..."
                                       class="block w-full rounded-xl border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-all border"></textarea>
                             <span asp-validation-for="Description" class="mt-2 text-xs text-red-500"></span>
                         </div>
                     </div>
                 </div>
 
-                @* Technical Specs Section *@
+                @* Секция: Технически спецификации *@
                 <div class="p-8 bg-slate-50/30 space-y-6">
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div>
@@ -88,7 +90,7 @@
                     </div>
                 </div>
 
-                @* Colors & Image Section *@
+                @* Секция: Цветове и Изображение *@
                 <div class="p-8 space-y-6">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-3">Налични цветове</label>
@@ -110,11 +112,11 @@
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-4">Снимка на продукта</label>
 
-                        @* Текуща снимка *@
+                        @* Показване на текущата снимка *@
                         @if (!string.IsNullOrEmpty(Model.FilePath))
                         {
                             <div class="mb-4 flex items-center space-x-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                                <img src="@Model.FilePath" class="h-20 w-20 object-cover rounded-lg shadow-sm" alt="Current" />
+                                <img src="@Model.FilePath" class="h-20 w-20 object-cover rounded-lg shadow-sm" alt="Текуща снимка" />
                                 <div class="text-xs text-slate-500">
                                     <p class="font-bold text-slate-700">Текущо изображение</p>
                                     <p>Оставете празно, за да запазите текущата снимка</p>
@@ -131,15 +133,16 @@
                                     <button type="button" onclick="document.getElementById('file-upload').click()" class="font-bold text-blue-600 hover:text-blue-500">
                                         Качете нов файл
                                     </button>
-                                    <input id="file-upload" asp-for="File" type="file" class="hidden" />
+                                    <input id="file-upload" asp-for="File" type="file" class="hidden" accept="image/*" />
                                     <p id="file-name" class="pl-1 text-slate-400">или дръпнете тук</p>
                                 </div>
+                                <p class="text-xs text-slate-400">PNG, JPG, GIF до 10MB</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                @* Submission Section *@
+                @* Бутон за изпращане *@
                 <div class="p-8 flex items-center justify-center bg-slate-50/50">
                     <button type="submit" class="w-full sm:w-auto bg-blue-600 text-white px-10 py-4 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-all active:scale-95 flex items-center justify-center gap-2">
                         <i class="bi bi-check-circle-fill"></i>
