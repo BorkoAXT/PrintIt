@@ -97,7 +97,7 @@
         @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
         {
             <div class="flex-shrink-0">
-                <a asp-controller="AddPrint" asp-action="CreateMenu"
+                <a asp-controller="Store" asp-action="Add3DPrint"
                    title="Add New Print"
                    class="group relative flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 border-2 border-[#1861ac]"
                    style="background-color: #1b6ec2;">
@@ -126,7 +126,7 @@
     <script>
         function scrollGrid(id, direction) {
             const grid = document.getElementById(id);
-            const scrollAmount = grid.clientWidth * 0.8;
+            const scrollAmount = grid.clientWidth;
             grid.scrollBy({ left: scrollAmount * direction, behavior: 'smooth' });
         }
     </script>

@@ -14,7 +14,7 @@
                 <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Нова обява за печат</h1>
                 <p class="mt-2 text-sm text-slate-500">Добавете нов 3D модел към инвентара на магазина.</p>
             </div>
-            <a asp-controller="Store" asp-action="Store" class="group flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+            <a asp-controller="Store" asp-action="Articles" class="group flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
@@ -23,7 +23,7 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-200 overflow-hidden">
-            <form asp-controller="AddPrint" asp-action="CreateMenu" method="post" enctype="multipart/form-data" class="divide-y divide-slate-100">
+            <form asp-controller="Store" asp-action="Add3DPrint" method="post" enctype="multipart/form-data" class="divide-y divide-slate-100">
                 <div asp-validation-summary="ModelOnly" class="p-4 bg-red-50 text-red-600 text-sm"></div>
 
                 @* Basic Info Section *@
