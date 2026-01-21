@@ -1,7 +1,7 @@
 ﻿@page
 @model ExternalLoginModel
 @{
-    ViewData["Title"] = "Потвърждение на регистрация";
+    ViewData["Title"] = "Confirm Registration";
 }
 
 <div class="flex flex-col items-center justify-center py-10">
@@ -11,15 +11,15 @@
             <div class="inline-flex items-center justify-center w-16 h-16 bg-green-50 rounded-full mb-4">
                 <i class="bi bi-check-all text-green-600 text-4xl"></i>
             </div>
-            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Почти приключихме!</h1>
+            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Almost There!</h1>
             <p class="text-slate-500 mt-2">
-                Успешно се удостоверихте чрез <span class="font-bold text-brand-primary">@Model.ProviderDisplayName</span>.
+                Successfully authenticated with <span class="font-bold text-brand-primary">@Model.ProviderDisplayName</span>.
             </p>
         </div>
 
         <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-8">
             <p class="text-sm text-blue-700 leading-relaxed">
-                Моля, потвърдете имейл адреса, който искате да използвате за вашия профил, за да завършите регистрацията си.
+                Please confirm the email address you'd like to use for your 3D printing account to finish setting up your profile.
             </p>
         </div>
 
@@ -27,7 +27,7 @@
             <div asp-validation-summary="ModelOnly" class="text-red-500 text-xs bg-red-50 p-3 rounded-lg" role="alert"></div>
 
             <div>
-                <label asp-for="Input.Email" class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-1 ml-1">Имейл адрес</label>
+                <label asp-for="Input.Email" class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-1 ml-1">Email Address</label>
                 <input asp-for="Input.Email"
                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none transition-all placeholder:text-slate-400"
                        autocomplete="email" placeholder="name@example.com" />
@@ -36,12 +36,12 @@
 
             <button type="submit"
                     class="w-full py-4 bg-brand-dark hover:bg-brand-primary text-white font-bold rounded-xl shadow-lg hover:shadow-brand-primary/30 transition-all active:scale-[0.98]">
-                Завърши регистрацията
+                Complete Registration
             </button>
         </form>
 
         <p class="text-center text-xs text-slate-400 mt-8">
-            Натискайки бутона за регистрация, вие се съгласявате с нашите общи условия за обработка на 3D модели.
+            By clicking register, you agree to our terms of service for 3D model processing.
         </p>
     </div>
 </div>

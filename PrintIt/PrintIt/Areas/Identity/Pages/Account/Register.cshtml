@@ -8,8 +8,8 @@
     <div class="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-200 p-8 md:p-10">
 
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Започни</h1>
-            <p class="text-slate-500 mt-2">Присъединете се към PrintId 3D и намерете това, което търсите</p>
+            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Get Started</h1>
+            <p class="text-slate-500 mt-2">Join PrintIt 3D and start creating today</p>
         </div>
 
         <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="space-y-4">
@@ -49,7 +49,7 @@
         {
             <div class="relative my-8">
                 <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-slate-200"></span></div>
-                <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-4 text-slate-400 font-semibold tracking-widest">Влезни със</span></div>
+                <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-4 text-slate-400 font-semibold tracking-widest">Or join with</span></div>
             </div>
 
             <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
@@ -75,8 +75,8 @@
         }
 
         <p class="text-center text-slate-500 text-sm mt-8">
-            Вече имаш акаунт?
-            <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="text-brand-primary font-bold hover:underline">Влезни</a>
+            Already have an account?
+            <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="text-brand-primary font-bold hover:underline">Sign in</a>
         </p>
     </div>
 </div>

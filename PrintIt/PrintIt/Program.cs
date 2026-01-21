@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.Build.Framework;
 using PrintIt.Data;
 using PrintIt.Models;
 
@@ -15,19 +14,9 @@ namespace PrintIt
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-            var supportedCultures = new[] { "en", "bg", "de" };
-            //builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
-            //builder.Services.Configure<RequestLocalizationOptions>(options =>
-            //{
-            //    options.SetDefaultCulture("en")
-            //        .AddSupportedCultures(supportedCultures)
-            //        .AddSupportedUICultures(supportedCultures);
-            //});
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
-
-            builder.Services.AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ApplicationDbContext>();
 
             builder.Services
                 .AddIdentity<User, IdentityRole<Guid>>(options =>
@@ -73,7 +62,6 @@ namespace PrintIt
             app.UseHttpsRedirection();
             app.UseRouting();
 
-            //app.UseRequestLocalization();
             app.UseAuthentication();
             app.UseAuthorization();
 

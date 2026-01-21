@@ -9,7 +9,6 @@
 <div class="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-3xl mx-auto">
 
-        @* Header Section *@
         <div class="mb-8 flex items-center justify-between">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Нова обява за печат</h1>
@@ -89,46 +88,6 @@
                         <div class="flex flex-wrap gap-3">
                             @foreach (var color in Enum.GetValues(typeof(PrintColor)).Cast<PrintColor>())
                             {
-                                if (color == PrintColor.None || color == PrintColor.Multiple) continue;
-
-                                var colorBgClass = color switch
-                                {
-                                    PrintColor.Red => "bg-red-500",
-                                    PrintColor.Blue => "bg-blue-600",
-                                    PrintColor.Green => "bg-emerald-500",
-                                    PrintColor.Yellow => "bg-yellow-400",
-                                    PrintColor.Black => "bg-slate-900",
-                                    PrintColor.White => "bg-white border border-slate-200",
-                                    PrintColor.Gray => "bg-slate-400",
-                                    PrintColor.Orange => "bg-orange-500",
-                                    PrintColor.Purple => "bg-purple-600",
-                                    PrintColor.Pink => "bg-pink-400",
-                                    PrintColor.Brown => "bg-amber-800",
-                                    PrintColor.Cyan => "bg-cyan-400",
-                                    PrintColor.Magenta => "bg-fuchsia-600",
-                                    PrintColor.Lime => "bg-lime-400",
-                                    _ => "bg-slate-200"
-                                };
-
-                                var colorBulgarian = color switch
-                                {
-                                    PrintColor.Red => "Червен",
-                                    PrintColor.Blue => "Син",
-                                    PrintColor.Green => "Зелен",
-                                    PrintColor.Yellow => "Жълт",
-                                    PrintColor.Black => "Черен",
-                                    PrintColor.White => "Бял",
-                                    PrintColor.Gray => "Сив",
-                                    PrintColor.Orange => "Оранжев",
-                                    PrintColor.Purple => "Лилав",
-                                    PrintColor.Pink => "Розов",
-                                    PrintColor.Brown => "Кафяв",
-                                    PrintColor.Cyan => "Циан",
-                                    PrintColor.Magenta => "Магента",
-                                    PrintColor.Lime => "Лайм",
-                                    _ => color.ToString()
-                                };
-
                                 <label class="relative flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm focus:outline-none hover:bg-slate-50 transition-all has-[:checked]:border-blue-600 has-[:checked]:ring-1 has-[:checked]:ring-blue-600">
                                     <input type="checkbox"
                                            name="PrintColors"
@@ -136,8 +95,7 @@
                                            class="sr-only"
                                            @(Model.PrintColors.Contains(color) ? "checked" : "") />
                                     <span class="flex items-center gap-2">
-                                        <span class="h-3 w-3 rounded-full @colorBgClass"></span>
-                                        <span class="text-xs font-medium text-slate-900">@colorBulgarian</span>
+                                        <span class="text-xs font-medium text-slate-900">@color</span>
                                     </span>
                                 </label>
                             }
@@ -176,9 +134,7 @@
                 @* Submission Section *@
                 <div class="p-8 flex items-center justify-center bg-slate-50/50">
                     <button type="submit" class="w-full sm:w-auto bg-blue-600 text-white px-10 py-4 rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 transition-all active:scale-95 flex items-center justify-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                        </svg>
+                        <i class="bi bi-cloud-arrow-up-fill text-xl"></i>
                         Публикувай продукта
                     </button>
                 </div>
