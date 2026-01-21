@@ -1,29 +1,28 @@
 ﻿@{
-    // Inherit from the main site layout we already styled
-    Layout = "/Views/Shared/_Layout.cshtml";
+	Layout = "/Views/Shared/_Layout.cshtml";
 }
 
 <div class="max-w-6xl mx-auto">
-    <div class="mb-10">
-        <h1 class="text-4xl font-extrabold text-brand-dark tracking-tight">Account Settings</h1>
-        <p class="text-slate-500 mt-2">Manage your 3D printing profile and security preferences.</p>
-    </div>
+	<div class="mb-10">
+		<h1 class="text-4xl font-extrabold text-brand-dark tracking-tight">Настройки на профила</h1>
+		<p class="text-slate-500 mt-2">Управлявайте вашия 3D профил и предпочитания за сигурност.</p>
+	</div>
 
-    <div class="flex flex-col lg:flex-row gap-12">
-        <aside class="w-full lg:w-72 shrink-0">
-            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm sticky top-24">
-                <partial name="_ManageNav" />
-            </div>
-        </aside>
+	<div class="flex flex-col lg:flex-row gap-12">
+		<aside class="w-full lg:w-72 shrink-0">
+			<div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm sticky top-24">
+				<partial name="_ManageNav" />
+			</div>
+		</aside>
 
-        <main class="flex-grow">
-            <div class="bg-white border border-slate-200 rounded-3xl p-8 md:p-10 shadow-sm min-h-[500px]">
-                @RenderBody()
-            </div>
-        </main>
-    </div>
+		<main class="flex-grow">
+			<div class="bg-white border border-slate-200 rounded-3xl p-8 md:p-10 shadow-sm min-h-[500px]">
+				@RenderBody()
+			</div>
+		</main>
+	</div>
 </div>
 
 @section Scripts {
-    @RenderSection("Scripts", required: false)
+	@RenderSection("Scripts", required: false)
 }
