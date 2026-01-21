@@ -1,4 +1,5 @@
 ﻿@using PrintIt.Models
+@using PrintIt.ViewModels
 @{
     ViewData["Title"] = "Артикули";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -6,6 +7,7 @@
 }
 
 <div class="relative min-h-[60vh] pb-24">
+    @* Header Section *@
     <div class="border-b border-slate-100 pb-6 mb-8 flex items-center justify-between">
         <div>
             <h1 class="text-5xl font-extrabold text-brand-dark tracking-tight">Артикули</h1>
@@ -15,7 +17,7 @@
         @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
         {
             <div class="flex-shrink-0">
-                <a asp-controller="AddPrint" asp-action="CreateMenu"
+                <a asp-controller="Store" asp-action="Add3DPrint"
                    title="Add New Print"
                    class="group relative flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 border-2 border-[#1861ac]"
                    style="background-color: #1b6ec2;">
@@ -32,6 +34,7 @@
         }
     </div>
 
+    @* Grid Section *@
     <div class="relative group">
         <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-bold tracking-tight text-slate-400 uppercase tracking-widest">Фигурки</h2>
@@ -64,6 +67,7 @@
                 @foreach (var item in items)
                 {
                     <div class="snap-start shrink-0 w-full sm:w-[calc(50%-1rem)] lg:w-[calc(25%-1.5rem)] group relative flex flex-col">
+                        @* Image Container *@
                         <div class="aspect-square w-full overflow-hidden rounded-2xl bg-slate-100 border border-slate-200 transition-all group-hover:shadow-xl group-hover:shadow-brand-primary/10 group-hover:-translate-y-1">
                             @{
                                 var imagePath = !string.IsNullOrEmpty(item.FilePath) ? item.FilePath : "/images/placeholder-figure.jpg";
@@ -77,6 +81,7 @@
                             </div>
                         </div>
 
+                        @* Item Info *@
                         <div class="mt-4 flex justify-between items-start px-1">
                             <div>
                                 <h3 class="text-base font-bold text-brand-dark">
@@ -89,9 +94,26 @@
                             <p class="text-lg font-black text-brand-primary whitespace-nowrap">@item.Price.ToString("0.00") лв.</p>
                         </div>
 
-                        <button class="mt-3 w-full py-2 bg-slate-50 hover:bg-brand-primary hover:text-white border border-slate-200 text-slate-600 font-bold rounded-xl transition-all text-sm z-10">
-                            Добави в количката
-                        </button>
+                        @* Action Buttons Logic *@
+                        @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
+                        {
+                            <div class="mt-3 flex gap-2">
+                                <a asp-action="Details" asp-route-id="@item.Id"
+                                   class="flex-1 py-2 bg-slate-50 hover:bg-slate-200 border border-slate-200 text-slate-600 font-bold rounded-xl transition-all text-sm text-center">
+                                    Детайли
+                                </a>
+                                <a asp-controller="Store" asp-action="Edit" asp-route-id="@item.Id"
+                                   class="flex-1 py-2 bg-brand-primary hover:bg-brand-dark text-white font-bold rounded-xl transition-all text-sm text-center">
+                                    Редактирай
+                                </a>
+                            </div>
+                        }
+                        else
+                        {
+                            <button class="mt-3 w-full py-2 bg-slate-50 hover:bg-brand-primary hover:text-white border border-slate-200 text-slate-600 font-bold rounded-xl transition-all text-sm z-10">
+                                Добави в количката
+                            </button>
+                        }
                     </div>
                 }
             </div>
