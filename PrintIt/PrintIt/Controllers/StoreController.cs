@@ -34,7 +34,6 @@ namespace PrintIt.Controllers
 
             bool isFavorite = false;
 
-            // Проверка дали потребителят е логнат
             if (User.Identity?.IsAuthenticated == true)
             {
                 string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -135,10 +134,12 @@ namespace PrintIt.Controllers
 
                 if (model.File != null && model.File.Length > 0)
                 {
+                    // 1. Delete the physical file of the old image
                     DeleteOldImage(existingPrint.FilePath);
 
-                    string newFileName = await UploadImage(model.File, model.PrintType);
-                    existingPrint.FilePath = "/images/prints/" + newFileName;
+                    // 2. Upload the new file and get the correct relative path
+                    // The helper already returns "/images/Category/filename.jpg"
+                    existingPrint.FilePath = await UploadImage(model.File, model.PrintType);
                 }
 
                 _context.Update(existingPrint);
