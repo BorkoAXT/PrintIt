@@ -7,25 +7,20 @@
     ViewData["Title"] = Model.Name;
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    // Проверка за статус "Любими"
     bool isFav = ViewBag.IsFavorite ?? false;
-
-    // Генериране на токени за сигурност
     var tokens = Antiforgery.GetAndStoreTokens(Context);
 
-    // Логика за пътя на изображението
     var imageSrc = !string.IsNullOrEmpty(Model.FilePath)
                    ? Model.FilePath
                    : $"/images/{Model.Id}.png";
 }
 
-@* Скрит елемент за Anti-Forgery токена, необходим за JS *@
 <input type="hidden" id="af-token" value="@tokens.RequestToken" />
 
 <div class="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-6xl mx-auto">
 
-        @* Секция с хедър и бутон за връщане *@
+        @* Header Section *@
         <div class="mb-8 flex items-center justify-between">
             <div>
                 <nav class="flex text-sm font-medium text-slate-500 mb-2">
@@ -48,7 +43,7 @@
 
         <div class="lg:grid lg:grid-cols-2 lg:gap-x-12 lg:items-start">
 
-            @* Секция с изображение и спецификации *@
+            @* Image and Specs Section *@
             <div class="flex flex-col">
                 <div class="w-full aspect-square rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-xl shadow-slate-200/50">
                     <img src="@imageSrc" alt="@Model.Name" class="w-full h-full object-center object-cover hover:scale-105 transition-transform duration-700">
@@ -76,7 +71,7 @@
                 </div>
             </div>
 
-            @* Секция с детайли и действия *@
+            @* Details and Actions Section *@
             <div class="mt-10 lg:mt-0 px-4">
                 <div class="border-b border-slate-100 pb-6">
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-slate-900 text-white mb-4 uppercase tracking-tighter">
@@ -94,7 +89,11 @@
                 </div>
 
                 <div class="mt-10">
-                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Налични цветове</h3>
+                    <div class="flex justify-between items-end mb-4">
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest">Избери цветове</h3>
+                        <span id="selection-count" class="text-[10px] font-black bg-blue-100 text-blue-600 px-2 py-1 rounded-md hidden">0 ИЗБРАНИ</span>
+                    </div>
+
                     <div class="flex flex-wrap gap-4">
                         @foreach (var color in Model.PrintColors)
                         {
@@ -119,9 +118,14 @@
                             };
 
                             <div class="group relative">
-                                <div class="@colorClass w-12 h-12 rounded-xl shadow-md border-2 border-transparent group-hover:border-blue-500 group-hover:scale-110 transition-all cursor-pointer ring-offset-2 hover:ring-2 ring-blue-500/30"
-                                     title="@color">
-                                </div>
+                                <button type="button"
+                                        onclick="toggleColor(this, '@color')"
+                                        class="color-swatch @colorClass w-12 h-12 rounded-xl shadow-md border-2 border-transparent hover:scale-110 transition-all cursor-pointer ring-offset-2 flex items-center justify-center">
+                                    @* Checkmark icon hidden by default *@
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white check-icon hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </button>
                                 <span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-slate-400 uppercase opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                                     @color
                                 </span>
@@ -130,18 +134,20 @@
                     </div>
                 </div>
 
-                @* Бутони за действие *@
+                @* Action Buttons *@
                 <div class="mt-16 space-y-4">
-                    @* Добавяне в количката *@
-                    <form asp-controller="Cart" asp-action="AddToCart" method="post">
+                    <form asp-controller="Cart" asp-action="AddToCart" method="post" id="add-to-cart-form">
                         <input type="hidden" name="id" value="@Model.Id" />
+                        @* Hidden inputs for colors will be injected here by JS *@
+                        <div id="selected-colors-container"></div>
+
                         <button type="submit" class="w-full bg-blue-600 text-white py-5 rounded-2xl text-xl font-black uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
                             Добави в количката
                         </button>
                     </form>
 
-                    @* Бутон за любими *@
+                    @* Wishlist Button *@
                     <button type="button"
                             onclick="handleWishlistClick('@Model.Id')"
                             id="wishlist-btn"
@@ -155,7 +161,7 @@
                     </button>
                 </div>
 
-                @* Секция с доверие и предимства *@
+                @* Trust Badges *@
                 <div class="mt-10 pt-10 border-t border-slate-100 grid grid-cols-1 gap-4">
                     <div class="flex items-center gap-3 text-emerald-600 bg-emerald-50/50 p-3 rounded-xl border border-emerald-100/50">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
@@ -164,12 +170,7 @@
 
                     <div class="flex items-center gap-3 text-emerald-600 bg-emerald-50/50 p-3 rounded-xl border border-emerald-100/50">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
-                        <span class="text-sm font-bold">Бърза доставка за цяла България — <span class="font-medium opacity-80">Гарантирана в рамките на 2-4 работни дни</span></span>
-                    </div>
-
-                    <div class="flex items-center gap-3 text-emerald-600 bg-emerald-50/50 p-3 rounded-xl border border-emerald-100/50">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
-                        <span class="text-sm font-bold">Сигурна опаковка — <span class="font-medium opacity-80">Пристига невредимо или връщаме парите</span></span>
+                        <span class="text-sm font-bold">Бърза доставка — <span class="font-medium opacity-80">2-4 работни дни</span></span>
                     </div>
                 </div>
             </div>
@@ -179,10 +180,62 @@
 
 @section Scripts {
     <script>
+        // Array to store selected color strings
+        let selectedColors = [];
+
+        function toggleColor(element, colorName) {
+            const checkIcon = element.querySelector('.check-icon');
+            const index = selectedColors.indexOf(colorName);
+
+            if (index > -1) {
+                // Remove color
+                selectedColors.splice(index, 1);
+                element.classList.remove('ring-4', 'ring-blue-500', 'border-white');
+                checkIcon.classList.add('hidden');
+            } else {
+                // Add color
+                selectedColors.push(colorName);
+                element.classList.add('ring-4', 'ring-blue-500', 'border-white');
+                checkIcon.classList.remove('hidden');
+
+                // If it's the white swatch, make the checkmark dark
+                if(colorName === 'White') {
+                    checkIcon.classList.remove('text-white');
+                    checkIcon.classList.add('text-slate-900');
+                }
+            }
+
+            updateColorInputs();
+            updateSelectionUI();
+        }
+
+        function updateColorInputs() {
+            const container = document.getElementById('selected-colors-container');
+            container.innerHTML = ''; // Clear existing
+
+            selectedColors.forEach(color => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'selectedColors'; // This should match your controller parameter name
+                input.value = color;
+                container.appendChild(input);
+            });
+        }
+
+        function updateSelectionUI() {
+            const badge = document.getElementById('selection-count');
+            if (selectedColors.length > 0) {
+                badge.textContent = `${selectedColors.length} ИЗБРАНИ`;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // --- Existing Wishlist Script ---
         async function handleWishlistClick(printId) {
             const token = document.getElementById('af-token').value;
             const btn = document.getElementById('wishlist-btn');
-
             btn.style.pointerEvents = 'none';
 
             try {
@@ -201,7 +254,6 @@
                 }
 
                 const data = await response.json();
-
                 if (data.success) {
                     const icon = document.getElementById('wishlist-icon');
                     const text = document.getElementById('wishlist-text');
@@ -225,7 +277,6 @@
             } catch (error) {
                 console.error("Error toggling wishlist:", error);
             } finally {
-                // Отключване на бутона
                 btn.style.pointerEvents = 'auto';
             }
         }
