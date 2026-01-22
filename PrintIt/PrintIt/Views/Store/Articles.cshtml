@@ -27,14 +27,25 @@
             }
             else
             {
-                <div class="px-2">
-                    @* Grid layout: 1 колона за мобилни, 2 за таблет, 4 за десктоп *@
-                    <div id="@gridId" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="relative px-2">
+                    @if (sectionItems.Count > 4)
+                    {
+                        <button onclick="scrollGrid('@gridId', -1)"
+                                class="absolute -left-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full border border-slate-200 bg-white shadow-lg text-slate-600 hover:bg-brand-primary hover:text-white transition-all opacity-0 group-hover/section:opacity-100">
+                            <i class="bi bi-chevron-left text-lg"></i>
+                        </button>
+
+                        <button onclick="scrollGrid('@gridId', 1)"
+                                class="absolute -right-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full border border-slate-200 bg-white shadow-lg text-slate-600 hover:bg-brand-primary hover:text-white transition-all opacity-0 group-hover/section:opacity-100">
+                            <i class="bi bi-chevron-right text-lg"></i>
+                        </button>
+                    }
+
+                    <div id="@gridId" class="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-8 pb-4 scroll-smooth">
                         @foreach (var item in sectionItems)
                         {
-                            <div class="group relative flex flex-col h-full">
-                                @* Снимка *@
-                                <div class="aspect-square w-full overflow-hidden rounded-2xl bg-white border border-slate-200 transition-all group-hover:shadow-xl group-hover:shadow-brand-primary/10 group-hover:-translate-y-1">
+                            <div class="snap-start shrink-0 w-full sm:w-[calc(50%-1rem)] lg:w-[calc(25%-1.5rem)] group relative flex flex-col">
+                                <div class="aspect-square w-full overflow-hidden rounded-2xl bg-slate-100 border border-slate-200 transition-all group-hover:shadow-xl group-hover:shadow-brand-primary/10 group-hover:-translate-y-1">
                                     @{
                                         var imagePath = !string.IsNullOrEmpty(item.FilePath) ? item.FilePath : "/images/placeholder-figure.jpg";
                                     }
@@ -131,6 +142,21 @@
 
 @section Scripts {
     <script>
+        function scrollGrid(gridId, direction) {
+            const grid = document.getElementById(gridId);
+            if (!grid) return;
+
+            // Determine how far to scroll (scrolling by one full card width + gap)
+            const cardWidth = grid.querySelector('.snap-start').offsetWidth;
+            const gap = 32; // This matches your 'gap-8' (8 * 4px)
+            const scrollAmount = (cardWidth + gap) * direction;
+
+            grid.scrollBy({
+                left: scrollAmount,
+                behavior: 'smooth'
+            });
+        }
+
         let addCount = 0;
         let hideTimeout;
 
@@ -190,10 +216,24 @@
     </script>
 
     <style>
-        .truncate {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .scrollbar-hide {
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+
+        /* Ensure buttons don't flicker on hover */
+        .group\/section:hover .group-hover\/section\:opacity-100 {
+            opacity: 1;
+        }
+
+        .group-hover\/section\:opacity-100 {
+            transition: opacity 0.3s ease-in-out;
         }
 
         #cart-nav-link i {
