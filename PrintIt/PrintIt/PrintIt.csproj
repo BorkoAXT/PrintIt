@@ -30,6 +30,7 @@
     <Folder Include="Data\Migrations\" />
     <Folder Include="Services\NewFolder\" />
     <Folder Include="wwwroot\images\" />
+    <Folder Include="wwwroot\images\Figures\" />
   </ItemGroup>
 
 </Project>
