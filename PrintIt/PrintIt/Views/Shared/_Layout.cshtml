@@ -1,4 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Identity
+@using PrintIt.Enums
 @inject SignInManager<User> SignInManager
 
 <!DOCTYPE html>
@@ -113,10 +114,36 @@
                     </a>
 
                     <div class="hidden md:flex items-center space-x-8">
-                        <a class="nav-link text-sm font-bold uppercase tracking-wider text-slate-600 hover:text-brand-primary transition-colors"
-                           asp-area="" asp-controller="Store" asp-action="Articles">
-                            <i class="bi bi-grid-3x3-gap mr-1"></i> Артикули
-                        </a>
+                        @* Dropdown Container *@
+                        <div class="relative group">
+                            <a class="nav-link text-sm font-bold uppercase tracking-wider text-slate-600 hover:text-brand-primary transition-colors flex items-center gap-1 py-4"
+                               asp-area="" asp-controller="Store" asp-action="Articles">
+                                <i class="bi bi-grid-3x3-gap"></i>
+                                Артикули
+                                <i class="bi bi-chevron-down text-[10px] transition-transform group-hover:rotate-180"></i>
+                            </a>
+
+                            @* Dropdown Menu *@
+                            <div class="absolute left-0 top-full w-48 bg-white border border-slate-100 shadow-xl rounded-2xl py-2 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all z-50">
+                                <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-brand-primary transition-colors"
+                                   asp-controller="Store" asp-action="Category" asp-route-type="@PrintType.Figure.ToString()">
+                                    <i class="bi bi-person-bounding-box text-brand-primary"></i> Фигурки
+                                </a>
+                                <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-brand-primary transition-colors"
+                                   asp-controller="Store" asp-action="Category" asp-route-type="@PrintType.FidgetToy.ToString()">
+                                    <i class="bi bi-controller text-brand-primary"></i> Играчки
+                                </a>
+                                <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-brand-primary transition-colors"
+                                   asp-controller="Store" asp-action="Category" asp-route-type="@PrintType.Accessory.ToString()">
+                                    <i class="bi bi-watch text-brand-primary"></i> Аксесоари
+                                </a>
+                                <div class="border-t border-slate-50 my-1"></div>
+                                <a class="flex items-center gap-3 px-4 py-3 text-xs font-black uppercase tracking-tighter text-brand-dark hover:bg-brand-primary/5 transition-colors"
+                                   asp-controller="Store" asp-action="Articles">
+                                    Всички Артикули
+                                </a>
+                            </div>
+                        </div>
 
                         @if (SignInManager.IsSignedIn(User))
                         {

@@ -13,6 +13,11 @@ namespace PrintIt.Models
         public Guid Id { get; private set; }
 
         /// <summary>
+        /// Gets or sets the date and time when the print was added to the catalog.
+        /// </summary>
+        public DateTime AddedOn { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
         /// Gets or sets the name of the print.
         /// </summary>
         public string Name { get; set; } = string.Empty;
@@ -71,6 +76,7 @@ namespace PrintIt.Models
             List<PrintColor> colors)
         {
             Id = Guid.NewGuid();
+            AddedOn = DateTime.UtcNow;
             Name = name;
             Description = description;
             MaterialType = materialType;
