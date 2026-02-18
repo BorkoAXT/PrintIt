@@ -1,0 +1,43 @@
+﻿@model dynamic
+@{
+	Layout = "_Layout";
+	ViewData["Title"] = "Пренасочване към myPOS...";
+}
+
+<div class="min-h-[60vh] flex items-center justify-center px-4">
+	<div class="max-w-md w-full bg-white rounded-[2.5rem] p-10 shadow-2xl border border-slate-50 text-center">
+		@* Animated Icon *@
+		<div class="relative w-24 h-24 mx-auto mb-8 bg-slate-50 rounded-full flex items-center justify-center">
+			<div class="absolute inset-0 bg-brand-primary/10 rounded-full animate-ping opacity-25"></div>
+			<i class="bi bi-credit-card-2-front text-brand-primary text-4xl"></i>
+		</div>
+
+		<h2 class="text-2xl font-black text-brand-dark mb-4">Обработка на поръчката</h2>
+		<p class="text-slate-500 mb-8">
+			Свързваме се с <span class="font-bold text-brand-dark">myPOS Checkout</span> за обработка на Вашата карта...
+		</p>
+
+		@* Hidden Form *@
+		<form method="POST" action="@ViewBag.Endpoint">
+			<input type="hidden" name="SID" value="@ViewBag.Sid" />
+			<input type="hidden" name="ORDER_ID" value="@ViewBag.Order" />
+			<input type="hidden" name="AMOUNT" value="@ViewBag.Amount" />
+			<input type="hidden" name="CURRENCY" value="@ViewBag.Currency" />
+			<input type="hidden" name="WALLET_NUMBER" value="@ViewBag.Wallet" />
+			<input type="hidden" name="KEY_INDEX" value="@ViewBag.KeyIndex" />
+			<input type="hidden" name="SIGNATURE" value="@ViewBag.Signature" />
+
+			<button type="submit" class="bg-brand-dark text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-brand-primary transition-colors">
+				Продължи ръчно
+			</button>
+		</form>
+	</div>
+</div>
+
+<script>
+    window.onload = function() {
+        setTimeout(() => {
+            document.forms[0].submit();
+        }, 1200);
+    };
+</script>

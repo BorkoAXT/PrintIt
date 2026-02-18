@@ -65,7 +65,7 @@ namespace PrintIt.Controllers
         {
             if (ModelState.IsValid)
             {
-                string filePath = "/images/placeholder-figure.jpg"; // Път по подразбиране
+                string filePath = "/images/placeholder-figure.jpg"; 
 
                 if (model.File != null && model.File.Length > 0)
                 {
