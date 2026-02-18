@@ -111,9 +111,6 @@
 
                     @* Replace the current button with this form *@
                     <form asp-controller="Order" asp-action="Create" method="post">
-	                    @* We pass the amount and email. 
-       Note: It's safer to recalculate the amount on the server, 
-       but for this flow, we'll send the current total. *@
 	                    @Html.AntiForgeryToken() <input type="hidden" name="amount" value="@total.ToString("0.00", CultureInfo.InvariantCulture)" />
 	                    <input type="hidden" name="email" value="@User.Identity.Name" />
 

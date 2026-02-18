@@ -100,14 +100,11 @@ namespace PrintIt.Controllers
                 _context.Orders.Add(order);
                 _context.SaveChanges();
 
-                // DON'T clear the cart here yet. 
-                // Clear it only AFTER the user successfully pays in the Success action.
 
                 return RedirectToAction("PayEpay", new { orderId = order.Id, amount = order.Amount });
             }
             catch (Exception ex)
             {
-                // This will stop the redirect and show you the error on screen
                 return Content($"Error: {ex.Message} inner: {ex.InnerException?.Message}");
             }
         }
@@ -116,30 +113,25 @@ namespace PrintIt.Controllers
         [HttpGet]
         public IActionResult MockPaymentGate(string encoded, string checksum)
         {
-            // Check if the data actually arrived
             if (string.IsNullOrEmpty(encoded))
             {
                 return Content("Error: No encoded data received from the cart.");
             }
 
             ViewBag.Encoded = encoded;
-            ViewBag.Checksum = checksum; // Optional, for display
+            ViewBag.Checksum = checksum;
 
             return View();
         }
 
-        // This action simulates the notification the bank sends back to your site
         [HttpPost]
         public IActionResult SimulateCallback(string encoded)
         {
             if (string.IsNullOrEmpty(encoded)) return BadRequest();
 
-            // 1. Decode the Base64 string
             var decodedBytes = Convert.FromBase64String(encoded);
             var decodedText = System.Text.Encoding.UTF8.GetString(decodedBytes);
 
-            // 2. Extract the Invoice ID (Order.Id)
-            // Epay format usually looks like: MIN=123\nINVOICE=456\n...
             var lines = decodedText.Split('\n');
             var invoiceLine = lines.FirstOrDefault(l => l.StartsWith("INVOICE="));
 
@@ -148,7 +140,6 @@ namespace PrintIt.Controllers
                 var orderIdStr = invoiceLine.Replace("INVOICE=", "").Trim();
                 if (int.TryParse(orderIdStr, out int orderId))
                 {
-                    // 3. Update the Database
                     MarkOrderAsPaid(orderId);
                     return RedirectToAction("Success");
                 }
@@ -179,8 +170,6 @@ namespace PrintIt.Controllers
             var decoded = Encoding.UTF8.GetString(
                 Convert.FromBase64String(encoded));
 
-            // Example decoded line:
-            // INVOICE=1001:STATUS=PAID
 
             var lines = decoded.Split('\n');
 
@@ -198,11 +187,6 @@ namespace PrintIt.Controllers
 
             return Content("OK");
         }
-
-        // =====================================================
-        // MYPOS PAYMENT
-        // =====================================================
-
         public IActionResult PayMyPos(int orderId, decimal amount)
         {
             var mypos = _payments.MyPos;
@@ -244,10 +228,6 @@ namespace PrintIt.Controllers
             return Convert.ToBase64String(signature);
         }
 
-        // =====================================================
-        // SUCCESS / CANCEL
-        // =====================================================
-
         public IActionResult Success()
         {
             return View();
@@ -258,10 +238,6 @@ namespace PrintIt.Controllers
             return View();
         }
 
-        // =====================================================
-        // ORDER STATUS UPDATE
-        // =====================================================
-
         private void MarkOrderAsPaid(int orderId)
         {
             var order = _context.Orders.FirstOrDefault(o => o.Id == orderId);
@@ -270,12 +246,10 @@ namespace PrintIt.Controllers
             order.Status = "Paid";
             order.PaidAt = DateTime.UtcNow;
 
-            // Finding the cart by the User associated with the order
             var user = _context.Users.FirstOrDefault(u => u.Email == order.CustomerEmail);
 
             if (user != null)
             {
-                // 1. Find the specific CartId for this user
                 var cart = _context.ShopCarts
                     .FirstOrDefault(c => c.UserId == user.Id);
 
@@ -289,9 +263,6 @@ namespace PrintIt.Controllers
                     if (itemsToRemove.Any())
                     {
                         _context.CartItems.RemoveRange(itemsToRemove);
-
-                        // Optional: If you want to delete the cart itself too
-                        // _context.ShopCarts.Remove(cart);
                     }
                 }
             }
