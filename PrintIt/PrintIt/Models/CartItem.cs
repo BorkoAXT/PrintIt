@@ -1,4 +1,6 @@
-﻿namespace PrintIt.Models
+﻿using PrintIt.Enums;
+
+namespace PrintIt.Models
 {
     /// <summary>
     /// Represents an item in a shopping cart.
@@ -34,6 +36,8 @@
         /// Gets or sets the quantity of this item in the shopping cart.
         /// </summary>
         public int Quantity { get; set; }
+
+        public List<PrintColor> Colours { get; set; } = new List<PrintColor>();
 
         public CartItem(Guid shopCartId, Guid printId)
         {

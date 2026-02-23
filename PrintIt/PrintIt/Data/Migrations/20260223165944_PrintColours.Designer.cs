@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PrintIt.Data;
 
@@ -11,9 +12,11 @@ using PrintIt.Data;
 namespace PrintIt.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260223165944_PrintColours")]
+    partial class PrintColours
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -159,9 +162,9 @@ namespace PrintIt.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Colours")
+                    b.PrimitiveCollection<string>("Colours")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("PrintId")
                         .HasColumnType("uniqueidentifier");
@@ -177,9 +180,6 @@ namespace PrintIt.Data.Migrations
                     b.HasIndex("PrintId");
 
                     b.HasIndex("ShopCartId", "PrintId")
-                        .IsUnique();
-
-                    b.HasIndex("ShopCartId", "PrintId", "Colours")
                         .IsUnique();
 
                     b.ToTable("CartItems");
