@@ -1,43 +1,95 @@
-﻿@model dynamic
-@{
-	Layout = "_Layout";
-	ViewData["Title"] = "Пренасочване към myPOS...";
+﻿@{
+    ViewData["Title"] = "Успешна поръчка";
 }
 
-<div class="min-h-[60vh] flex items-center justify-center px-4">
-	<div class="max-w-md w-full bg-white rounded-[2.5rem] p-10 shadow-2xl border border-slate-50 text-center">
-		@* Animated Icon *@
-		<div class="relative w-24 h-24 mx-auto mb-8 bg-slate-50 rounded-full flex items-center justify-center">
-			<div class="absolute inset-0 bg-brand-primary/10 rounded-full animate-ping opacity-25"></div>
-			<i class="bi bi-credit-card-2-front text-brand-primary text-4xl"></i>
-		</div>
+<div class="min-h-[70vh] flex items-center justify-center px-4">
+    <div class="max-w-xl w-full text-center">
+        <div class="relative mb-10 inline-block">
+            <div class="absolute inset-0 bg-emerald-400/20 rounded-full blur-3xl animate-pulse"></div>
 
-		<h2 class="text-2xl font-black text-brand-dark mb-4">Обработка на поръчката</h2>
-		<p class="text-slate-500 mb-8">
-			Свързваме се с <span class="font-bold text-brand-dark">myPOS Checkout</span> за обработка на Вашата карта...
-		</p>
+            <div class="relative h-32 w-32 bg-emerald-500 rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/40 transform transition-transform hover:scale-110 duration-500">
+                <i class="bi bi-check-lg text-white text-6xl"></i>
+            </div>
 
-		@* Hidden Form *@
-		<form method="POST" action="@ViewBag.Endpoint">
-			<input type="hidden" name="SID" value="@ViewBag.Sid" />
-			<input type="hidden" name="ORDER_ID" value="@ViewBag.Order" />
-			<input type="hidden" name="AMOUNT" value="@ViewBag.Amount" />
-			<input type="hidden" name="CURRENCY" value="@ViewBag.Currency" />
-			<input type="hidden" name="WALLET_NUMBER" value="@ViewBag.Wallet" />
-			<input type="hidden" name="KEY_INDEX" value="@ViewBag.KeyIndex" />
-			<input type="hidden" name="SIGNATURE" value="@ViewBag.Signature" />
+            <div class="absolute -top-2 -right-2 h-8 w-8 bg-brand-primary rounded-lg rotate-12 flex items-center justify-center shadow-lg">
+                <i class="bi bi-box-seam-fill text-white"></i>
+            </div>
+        </div>
 
-			<button type="submit" class="bg-brand-dark text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-brand-primary transition-colors">
-				Продължи ръчно
-			</button>
-		</form>
-	</div>
+        <h1 class="text-4xl font-black text-brand-dark mb-4 tracking-tight">
+            Поръчката е приета!
+        </h1>
+        <p class="text-slate-500 text-lg mb-10 leading-relaxed">
+            Благодарим ви за доверието. Плащането премина успешно и вашите 3D модели са изпратени за подготовка. Ще получите имейл с детайли за доставката скоро.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <a asp-controller="Store" asp-action="Articles"
+               class="w-full sm:w-auto px-10 py-4 bg-brand-dark text-white rounded-2xl font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-xl shadow-slate-900/20 flex items-center justify-center gap-2">
+                <i class="bi bi-bag-fill"></i>
+                Към магазина
+            </a>
+
+            <a asp-controller="Home" asp-action="Index"
+               class="w-full sm:w-auto px-10 py-4 bg-white text-slate-600 border border-slate-200 rounded-2xl font-bold hover:bg-slate-50 transition-all active:scale-95 flex items-center justify-center gap-2">
+                Начало
+            </a>
+        </div>
+
+        <div class="mt-16 pt-8 border-t border-slate-100">
+            <p class="text-sm text-slate-400">
+                Имате въпроси? Свържете се с нас на
+                <a href="mailto:support@printit.com" class="text-brand-primary font-bold hover:underline">support@printit.com</a>
+            </p>
+        </div>
+    </div>
 </div>
 
-<script>
-    window.onload = function() {
-        setTimeout(() => {
-            document.forms[0].submit();
-        }, 1200);
-    };
-</script>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script>
+        window.onload = function() {
+            var duration = 3 * 1000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 3,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#3b82f6', '#10b981']
+                });
+                confetti({
+                    particleCount: 3,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#3b82f6', '#10b981']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        };
+    </script>
+}
+
+<style>
+    .text-brand-primary {
+        color: #3b82f6;
+    }
+
+    .bg-brand-primary {
+        background-color: #3b82f6;
+    }
+
+    .text-brand-dark {
+        color: #0f172a;
+    }
+
+    .bg-brand-dark {
+        background-color: #0f172a;
+    }
+</style>
