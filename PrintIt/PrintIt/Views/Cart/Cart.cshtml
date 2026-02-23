@@ -1,4 +1,5 @@
 ﻿@using PrintIt.Models
+@using PrintIt.Enums
 @using System.Globalization
 @{
     ViewData["Title"] = "Shopping Cart";
@@ -10,7 +11,7 @@
     decimal total = subtotal + shipping;
 }
 
-@Html.AntiForgeryToken() 
+@Html.AntiForgeryToken()
 
 <div class="max-w-7xl mx-auto px-4 py-12">
     @if (cartItems.Any())
@@ -23,54 +24,74 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            @* Списък с продукти *@
+            @* List of Products *@
             <div class="lg:col-span-2 space-y-6">
                 @foreach (var item in cartItems)
                 {
                     int displayQty = item.Quantity > 0 ? item.Quantity : 1;
                     decimal unitPrice = item.Print?.Price ?? 0;
+                    var uniqueId = item.Id;
 
                     <div class="group bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-center gap-6">
+
+                        @* Image Section: Uses the single FilePath string *@
                         <div class="h-32 w-32 shrink-0 overflow-hidden rounded-2xl bg-slate-50 border border-slate-100">
                             <img src="@(string.IsNullOrEmpty(item.Print?.FilePath) ? "/images/placeholder.jpg" : item.Print.FilePath)"
+                                 alt="@item.Print?.Name"
                                  class="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         </div>
 
                         <div class="flex-grow text-center sm:text-left">
                             <h3 class="text-xl font-bold text-brand-dark">@item.Print?.Name</h3>
+
+                            @* COLOR BADGES SECTION *@
+                            @if (item.Colours != null && item.Colours.Any())
+                            {
+                                <div class="flex flex-wrap gap-2 mt-1 mb-2 justify-center sm:justify-start">
+                                    @foreach (var color in item.Colours)
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-[10px] font-black uppercase text-slate-500">
+                                            <span class="h-2 w-2 rounded-full @GetColorClass(color)"></span>
+                                            @color.ToString()
+                                        </span>
+                                    }
+                                </div>
+                            }
+
                             <p class="text-slate-400 text-sm mb-2 uppercase font-bold tracking-tighter">
                                 <i class="bi bi-cpu"></i> 3D Print • @item.Print?.MaterialType
                             </p>
+
                             <div class="flex items-center justify-center sm:justify-start gap-4">
                                 <span class="text-lg font-black text-brand-primary item-total-price"
                                       data-unit-price="@unitPrice.ToString("0.00", CultureInfo.InvariantCulture)"
-                                      id="price-@item.PrintId">
+                                      id="price-@uniqueId">
                                     €@((unitPrice * displayQty).ToString("0.00"))
                                 </span>
                                 <span class="text-slate-300">|</span>
                                 <span class="text-slate-500 font-medium">
-                                    Общо: <span id="qty-display-@item.PrintId">@displayQty</span> бр.
+                                    Общо: <span id="qty-display-@uniqueId">@displayQty</span> бр.
                                 </span>
                             </div>
                         </div>
 
                         <div class="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-100">
                             <div class="flex items-center bg-white rounded-xl border border-slate-200 overflow-hidden">
-                                <button type="button" onclick="changeQty('@item.PrintId', -1)"
+                                <button type="button" onclick="changeQty('@uniqueId', -1)"
                                         class="px-3 py-1 hover:bg-slate-50 text-slate-400 transition-colors">
                                     <i class="bi bi-dash-lg"></i>
                                 </button>
-                                <input type="number" id="qty-@item.PrintId"
+                                <input type="number" id="qty-@uniqueId"
                                        class="w-10 text-center font-bold text-brand-dark bg-transparent border-none focus:ring-0 text-sm"
                                        value="@displayQty" readonly />
-                                <button type="button" onclick="changeQty('@item.PrintId', 1)"
+                                <button type="button" onclick="changeQty('@uniqueId', 1)"
                                         class="px-3 py-1 hover:bg-slate-50 text-slate-400 transition-colors">
                                     <i class="bi bi-plus-lg"></i>
                                 </button>
                             </div>
 
                             <form asp-controller="Cart" asp-action="RemoveFromCart" method="post">
-                                <input type="hidden" name="id" value="@item.PrintId" />
+                                <input type="hidden" name="id" value="@uniqueId" />
                                 <button type="submit" class="p-3 text-slate-400 hover:text-white hover:bg-red-500 rounded-xl transition-all shadow-sm active:scale-90">
                                     <i class="bi bi-trash3-fill text-xl"></i>
                                 </button>
@@ -80,6 +101,7 @@
                 }
             </div>
 
+            @* Sidebar Summary *@
             <div class="lg:col-span-1">
                 <div class="bg-brand-dark rounded-[2.5rem] p-8 text-white shadow-2xl sticky top-8">
                     <h2 class="text-2xl font-bold mb-8 flex items-center gap-2">
@@ -109,20 +131,21 @@
                         </div>
                     }
 
-                    <button class="w-full bg-brand-primary hover:bg-blue-500 text-white py-5 rounded-2xl font-bold text-lg shadow-lg shadow-brand-primary/20 transition-all active:scale-95 flex items-center justify-center gap-3">
+                    @* Redirects to the Stripe Checkout page *@
+                    <a asp-controller="Order" asp-action="Checkout"
+                       class="w-full bg-brand-primary hover:bg-blue-500 text-white py-5 rounded-2xl font-bold text-lg shadow-lg shadow-brand-primary/20 transition-all active:scale-95 flex items-center justify-center gap-3">
                         Завърши поръчката
                         <i class="bi bi-arrow-right"></i>
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
     }
     else
     {
-        @* ПРАЗНА КОЛИЧКА *@
+        @* EMPTY CART *@
         <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
             <div class="relative mb-8">
-                @* Анимирани кръгове за фон *@
                 <div class="absolute inset-0 bg-brand-primary/10 rounded-full blur-3xl animate-pulse"></div>
                 <div class="relative h-40 w-40 bg-white rounded-full flex items-center justify-center shadow-2xl border border-slate-50">
                     <i class="bi bi-cart-x text-slate-200 text-7xl animate-bounce" style="animation-duration: 3s;"></i>
@@ -132,7 +155,6 @@
             <h2 class="text-3xl font-black text-brand-dark mb-3">Количката ти е празна</h2>
             <p class="text-slate-500 mb-10 max-w-md mx-auto leading-relaxed">
                 Изглежда още не си избрал нищо от нашите уникални 3D принтирани модели.
-                Върни се в магазина и намери нещо специално!
             </p>
 
             <a asp-controller="Store" asp-action="Articles"
@@ -144,16 +166,36 @@
     }
 </div>
 
+@functions {
+    string GetColorClass(PrintColor color) => color switch
+    {
+        PrintColor.Red => "bg-red-500",
+        PrintColor.Blue => "bg-blue-600",
+        PrintColor.Green => "bg-emerald-500",
+        PrintColor.Yellow => "bg-yellow-400",
+        PrintColor.Black => "bg-slate-900",
+        PrintColor.White => "bg-white border-slate-200",
+        PrintColor.Gray => "bg-slate-400",
+        PrintColor.Orange => "bg-orange-500",
+        PrintColor.Purple => "bg-purple-600",
+        PrintColor.Pink => "bg-pink-400",
+        PrintColor.Brown => "bg-amber-800",
+        PrintColor.Cyan => "bg-cyan-400",
+        PrintColor.Magenta => "bg-fuchsia-600",
+        PrintColor.Lime => "bg-lime-400",
+        _ => "bg-slate-200"
+    };
+}
+
 @section Scripts {
     <script>
-        async function changeQty(printId, delta) {
-            const input = document.getElementById('qty-' + printId);
-            const display = document.getElementById('qty-display-' + printId);
+        async function changeQty(cartItemId, delta) {
+            const input = document.getElementById('qty-' + cartItemId);
+            const display = document.getElementById('qty-display-' + cartItemId);
             let currentVal = parseInt(input.value) || 1;
             let newVal = currentVal + delta;
 
             if (newVal >= 1 && newVal <= 100) {
-                // Вземаме Anti-Forgery Token
                 const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
                 try {
@@ -163,7 +205,7 @@
                             'Content-Type': 'application/x-www-form-urlencoded',
                             'RequestVerificationToken': token
                         },
-                        body: `id=${printId}&quantity=${newVal}`
+                        body: `id=${cartItemId}&quantity=${newVal}`
                     });
 
                     const result = await response.json();
@@ -172,7 +214,7 @@
                         input.value = newVal;
                         display.textContent = newVal;
 
-                        const priceEl = document.getElementById('price-' + printId);
+                        const priceEl = document.getElementById('price-' + cartItemId);
                         const unitPrice = parseFloat(priceEl.dataset.unitPrice);
                         priceEl.textContent = '€' + (unitPrice * newVal).toFixed(2);
 
@@ -191,8 +233,8 @@
                 subtotal += parseFloat(val) || 0;
             });
 
-            const shippingLimit = 50;
-            const shipping = (subtotal > shippingLimit || subtotal === 0) ? 0 : 5;
+            const shippingLimit = 50.00;
+            const shipping = (subtotal > shippingLimit || subtotal === 0) ? 0 : 5.00;
 
             document.getElementById('subtotal').textContent = '€' + subtotal.toFixed(2);
             document.getElementById('shipping').textContent = shipping > 0 ? '€' + shipping.toFixed(2) : 'Безплатна';

@@ -180,11 +180,7 @@ namespace PrintIt.Controllers
 
                 if (model.File != null && model.File.Length > 0)
                 {
-                    // 1. Delete the physical file of the old image
                     DeleteOldImage(existingPrint.FilePath);
-
-                    // 2. Upload the new file and get the correct relative path
-                    // The helper already returns "/images/Category/filename.jpg"
                     existingPrint.FilePath = await UploadImage(model.File, model.PrintType);
                 }
 

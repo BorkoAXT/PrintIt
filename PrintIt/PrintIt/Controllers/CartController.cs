@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrintIt.Data;
+using PrintIt.Enums;
 using PrintIt.Models;
 using System.Security.Claims;
 
@@ -38,11 +39,12 @@ namespace PrintIt.Controllers
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddToCart(Guid id)
+        public async Task<IActionResult> AddToCart(Guid id, List<PrintColor> selectedColors)
         {
             string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
             {
+                // If not logged in, redirect to Login
                 return RedirectToPage("/Account/Login", new { area = "Identity" });
             }
 
@@ -57,16 +59,30 @@ namespace PrintIt.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            var existingItem = cart.Items.FirstOrDefault(i => i.PrintId == id);
+            var incomingColors = selectedColors?
+                .OrderBy(c => c)
+                .ToList() ?? new List<PrintColor>();
+
+            var existingItem = cart.Items.FirstOrDefault(i =>
+                i.PrintId == id &&
+                i.Colours.Count == incomingColors.Count &&
+                i.Colours.OrderBy(c => c).SequenceEqual(incomingColors)
+            );
 
             if (existingItem != null)
             {
+                // If it exists, just bump the quantity
                 existingItem.Quantity++;
                 _context.Entry(existingItem).State = EntityState.Modified;
             }
             else
             {
-                var newItem = new CartItem(cart.Id, id);
+                // If it's a new combination, create a new line item
+                var newItem = new CartItem(cart.Id, id)
+                {
+                    Quantity = 1,
+                    Colours = incomingColors
+                };
                 _context.CartItems.Add(newItem);
             }
 
@@ -76,11 +92,17 @@ namespace PrintIt.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                return RedirectToAction(nameof(Cart));
+                return RedirectToAction("Cart", "Cart");
             }
 
+            // 6. Redirect back to where the user came from
             string referer = Request.Headers["Referer"].ToString();
-            return string.IsNullOrEmpty(referer) ? RedirectToAction("Articles", "Store") : Redirect(referer);
+            if (string.IsNullOrEmpty(referer))
+            {
+                return RedirectToAction("Articles", "Store");
+            }
+
+            return Redirect(referer);
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
