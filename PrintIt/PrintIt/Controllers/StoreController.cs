@@ -18,12 +18,58 @@ namespace PrintIt.Controllers
             _webHostEnvironment = webHostEnvironment;
         }
 
-        // GET: articles
-        public async Task<IActionResult> Articles()
+        // GET: store
+        [HttpGet("Store")]
+        public async Task<IActionResult> Articles(string searchString)
         {
-            var prints = await _context.Prints.ToListAsync();
-            ViewData["Items"] = prints;
-            return View();
+            // Take all items and order them by AddedOn descending
+            var query = _context.Prints.AsQueryable();
+
+            // Filter by search string if provided (searching in Name and Description)
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                query = query.Where(p => p.Name.Contains(searchString) || p.Description.Contains(searchString));
+                ViewData["SearchTerm"] = searchString;
+            }
+
+            var allItems = await query.OrderByDescending(p => p.AddedOn).ToListAsync();
+
+            // Take the most recent 4 items for each category
+            var viewModel = new StoreIndexViewModel
+            {
+                RecentFigures = allItems.Where(i => i.PrintType == PrintType.Figure).Take(4).ToList(),
+                RecentFidgetToys = allItems.Where(i => i.PrintType == PrintType.FidgetToy).Take(4).ToList(),
+                RecentAccessories = allItems.Where(i => i.PrintType == PrintType.Accessory).Take(4).ToList(),
+                SearchResults = allItems // The search results will be the full list of items matching the search, already ordered by AddedOn
+            };
+
+            return View(viewModel);
+        }
+
+        // GET: store/category/{type}
+        [HttpGet("Store/Category/{type}")]
+        public async Task<IActionResult> Category(string type)
+        {
+            // TryParse the string into PrintType enum, ignore case
+            if (!Enum.TryParse(type, true, out PrintType categoryEnum))
+            {
+                return RedirectToAction("Articles"); // If parsing fails, redirect to the main articles page
+            }
+
+            var items = await _context.Prints
+                .Where(p => p.PrintType == categoryEnum)
+                .OrderByDescending(p => p.AddedOn)
+                .ToListAsync();
+
+            ViewData["CategoryName"] = categoryEnum switch
+            {
+                PrintType.Figure => "Фигурки",
+                PrintType.FidgetToy => "Играчки",
+                PrintType.Accessory => "Аксесоари",
+                _ => "Артикули"
+            };
+
+            return View(items);
         }
 
         // GET: store/details/{id}
@@ -39,11 +85,13 @@ namespace PrintIt.Controllers
                 string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (Guid.TryParse(userIdString, out Guid userId))
                 {
+                    // Check if the current print is in the user's wishlist
                     isFavorite = await _context.Set<UserWishlistItem>()
                         .AnyAsync(w => w.PrintId == id && w.UserId == userId);
                 }
             }
 
+            // Use ViewBag to pass the isFavorite value to the view
             ViewBag.IsFavorite = isFavorite;
 
             return View(print);
@@ -65,7 +113,7 @@ namespace PrintIt.Controllers
         {
             if (ModelState.IsValid)
             {
-                string filePath = "/images/placeholder-figure.jpg"; 
+                string filePath = "/images/placeholder-figure.jpg"; // Default placeholder image
 
                 if (model.File != null && model.File.Length > 0)
                 {
