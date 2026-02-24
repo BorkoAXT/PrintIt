@@ -20,30 +20,58 @@ namespace PrintIt.Controllers
 
         // GET: store
         [HttpGet("Store")]
-        public async Task<IActionResult> Articles(string searchString)
+        public async Task<IActionResult> Articles(StoreSearchViewModel filter)
         {
-            // Take all items and order them by AddedOn descending
+            // Check if there are any query parameters (excluding the handler parameter used by Razor Pages)
+            // Use this to determine if we should apply filters or show the default view with sections
+            bool hasActiveFilters = Request.Query.Keys.Any(k => k != "handler");
+
             var query = _context.Prints.AsQueryable();
 
-            // Filter by search string if provided (searching in Name and Description)
-            if (!string.IsNullOrEmpty(searchString))
+            if (hasActiveFilters)
             {
-                query = query.Where(p => p.Name.Contains(searchString) || p.Description.Contains(searchString));
-                ViewData["SearchTerm"] = searchString;
+                // Apply filters based on the provided search criteria
+                if (!string.IsNullOrEmpty(filter.SearchString))
+                {
+                    query = query.Where(p => p.Name.Contains(filter.SearchString) || p.Description.Contains(filter.SearchString));
+                }
+
+                if (filter.SelectedType.HasValue)
+                {
+                    query = query.Where(p => p.PrintType == filter.SelectedType.Value);
+                }
+
+                if (filter.SelectedMaterial.HasValue)
+                {
+                    query = query.Where(p => p.MaterialType == filter.SelectedMaterial.Value);
+                }
+
+                if (filter.MinPrice.HasValue)
+                {
+                    query = query.Where(p => p.Price >= filter.MinPrice.Value);
+                }
+
+                if (filter.MaxPrice.HasValue)
+                {
+                    query = query.Where(p => p.Price <= filter.MaxPrice.Value);
+                }
+
+                filter.Results = await query.OrderByDescending(p => p.AddedOn).ToListAsync();
+                ViewData["IsFiltering"] = true;
+            }
+            else
+            {
+                // Default view with recent items in each category
+                var allItems = await _context.Prints.OrderByDescending(p => p.AddedOn).ToListAsync();
+
+                filter.RecentFigures = allItems.Where(i => i.PrintType == PrintType.Figure).Take(4).ToList();
+                filter.RecentFidgetToys = allItems.Where(i => i.PrintType == PrintType.FidgetToy).Take(4).ToList();
+                filter.RecentAccessories = allItems.Where(i => i.PrintType == PrintType.Accessory).Take(4).ToList();
+
+                ViewData["IsFiltering"] = false;
             }
 
-            var allItems = await query.OrderByDescending(p => p.AddedOn).ToListAsync();
-
-            // Take the most recent 4 items for each category
-            var viewModel = new StoreIndexViewModel
-            {
-                RecentFigures = allItems.Where(i => i.PrintType == PrintType.Figure).Take(4).ToList(),
-                RecentFidgetToys = allItems.Where(i => i.PrintType == PrintType.FidgetToy).Take(4).ToList(),
-                RecentAccessories = allItems.Where(i => i.PrintType == PrintType.Accessory).Take(4).ToList(),
-                SearchResults = allItems // The search results will be the full list of items matching the search, already ordered by AddedOn
-            };
-
-            return View(viewModel);
+            return View(filter);
         }
 
         // GET: store/category/{type}

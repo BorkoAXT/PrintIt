@@ -1,10 +1,11 @@
-﻿@model PrintIt.ViewModels.StoreIndexViewModel
+﻿@model PrintIt.ViewModels.StoreSearchViewModel
 @using PrintIt.Enums
 @{
     ViewData["Title"] = "Магазин";
     Layout = "~/Views/Shared/_Layout.cshtml";
-    bool isSearching = !string.IsNullOrEmpty(ViewData["SearchTerm"] as string);
+    bool isFiltering = (bool)(ViewData["IsFiltering"] ?? false);
 
+    // Function to render each store section (Figures, Fidget Toys, Accessories)
     async Task RenderStoreSection(string title, List<PrintIt.Models.Print> sectionItems, PrintType type)
     {
         <div class="mb-16">
@@ -18,79 +19,191 @@
                 </a>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                @foreach (var item in sectionItems)
-                {
-                    <partial name="_ProductCard" model="item" />
-                }
-            </div>
+            @if (sectionItems == null || !sectionItems.Any())
+            {
+                <div class="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 text-center">
+                    <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="bi bi-box-seam text-slate-400 text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-600">Няма налични @title.ToLower() в момента.</h3>
+                </div>
+            }
+            else
+            {
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    @foreach (var item in sectionItems)
+                    {
+                        <partial name="_ProductCard" model="item" />
+                    }
+                </div>
+            }
         </div>
     }
 }
 
-<div class="max-w-7xl mx-auto px-4 pt-4">
-    @* Header and Search *@
-    <div class="mb-12 -mt-2">
-        <div class="flex items-center justify-between mb-8">
-            <h1 class="text-5xl font-black text-brand-dark tracking-tight">Артикули</h1>
-            @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
-            {
-                <a asp-action="Add3DPrint" class="bg-brand-primary text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform">
-                    <i class="bi bi-plus-lg text-2xl"></i>
-                </a>
-            }
+<div class="max-w-7xl mx-auto px-4 pt-4 pb-20">
+    @* Header Section *@
+    <div class="flex items-center justify-between mb-10">
+        <div class="flex items-center gap-5">
+            <h1 class="text-5xl font-black text-brand-dark tracking-tight">Магазин</h1>
+
+            @* Hamburger / Filter Button *@
+            <button type="button" onclick="toggleFilters()"
+                    class="relative p-3.5 rounded-2xl bg-white border border-slate-200 text-slate-600 hover:text-brand-primary hover:border-brand-primary transition-all shadow-sm group">
+                <i id="filterIcon" class="bi bi-sliders2-vertical text-2xl transition-transform duration-300 @(isFiltering ? "rotate-90 text-brand-primary" : "")"></i>
+
+                @if (isFiltering)
+                {
+                    <span class="absolute -top-1 -right-1 flex h-4 w-4">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-4 w-4 bg-brand-primary border-2 border-white"></span>
+                    </span>
+                }
+            </button>
         </div>
 
-        <form asp-action="Articles" method="get" class="max-w-2xl relative group">
-            <input type="text" name="searchString" value="@ViewData["SearchTerm"]"
-                   placeholder="Търси модел (напр. Dragon)..."
-                   class="w-full bg-white border-2 border-slate-100 rounded-2xl py-4 pl-12 pr-32 shadow-sm focus:border-brand-primary focus:ring-0 transition-all outline-none" />
-            <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl group-focus-within:text-brand-primary"></i>
-            <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 bg-brand-primary text-white px-6 py-2.5 rounded-xl font-bold hover:bg-brand-dark transition-all">
-                Търси
-            </button>
-        </form>
-
-        @if (isSearching)
+        @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
         {
-            <div class="mt-4 flex items-center gap-3">
-                <span class="text-slate-500">Резултати за <b class="text-brand-dark">"@ViewData["SearchTerm"]"</b></span>
-                <a asp-action="Articles" class="text-red-500 font-bold text-xs uppercase tracking-widest hover:underline">Изчисти</a>
-            </div>
+            <a asp-action="Add3DPrint" class="bg-brand-primary text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform">
+                <i class="bi bi-plus-lg text-2xl"></i>
+            </a>
         }
     </div>
 
-    @if (isSearching)
-    {
-        @if (!Model.SearchResults.Any())
+    @* Collapsible Search & Filter Panel *@
+    <div id="filterPanel"
+         class="overflow-hidden transition-all duration-500 ease-in-out"
+         style="max-height: @(isFiltering ? "1000px" : "0px"); opacity: @(isFiltering ? "1" : "0"); margin-bottom: @(isFiltering ? "3rem" : "0px");">
+
+        <div class="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+            <form asp-action="Articles" method="get" class="space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    @* Search Text *@
+                    <div class="md:col-span-2 relative">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-2.5 ml-1">Търсене по име</label>
+                        <div class="relative">
+                            <input type="text" name="SearchString" value="@Model.SearchString"
+                                   placeholder="Напр. Dragon, Keychain..."
+                                   class="w-full bg-slate-50 border-none rounded-2xl py-3.5 pl-11 pr-4 focus:ring-2 focus:ring-brand-primary/20 transition-all outline-none" />
+                            <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        </div>
+                    </div>
+
+                    @* Type Filter *@
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-2.5 ml-1">Категория</label>
+                        <select name="SelectedType" class="w-full bg-slate-50 border-none rounded-2xl py-3.5 focus:ring-2 focus:ring-brand-primary/20 transition-all cursor-pointer outline-none">
+                            <option value="">Всички категории</option>
+                            @foreach (var type in Enum.GetValues<PrintType>())
+                            {
+                                <option value="@type" selected="@(Model.SelectedType == type)">@type.ToString()</option>
+                            }
+                        </select>
+                    </div>
+
+                    @* Material Filter *@
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-2.5 ml-1">Материал</label>
+                        <select name="SelectedMaterial" class="w-full bg-slate-50 border-none rounded-2xl py-3.5 focus:ring-2 focus:ring-brand-primary/20 transition-all cursor-pointer outline-none">
+                            <option value="">Всички материали</option>
+                            @foreach (var mat in Enum.GetValues<MaterialType>())
+                            {
+                                <option value="@mat" selected="@(Model.SelectedMaterial == mat)">@mat.ToString()</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-end justify-between gap-6 pt-6 border-t border-slate-100">
+                    @* Price Range *@
+                    <div class="flex items-center gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Мин. Цена</label>
+                            <input type="number" name="MinPrice" value="@Model.MinPrice" placeholder="0" step="0.01"
+                                   class="w-28 bg-slate-50 border-none rounded-xl py-2.5 focus:ring-2 focus:ring-brand-primary/20 outline-none" />
+                        </div>
+                        <div class="mt-6 text-slate-300">—</div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Макс. Цена</label>
+                            <input type="number" name="MaxPrice" value="@Model.MaxPrice" placeholder="999" step="0.01"
+                                   class="w-28 bg-slate-50 border-none rounded-xl py-2.5 focus:ring-2 focus:ring-brand-primary/20 outline-none" />
+                        </div>
+                    </div>
+
+                    @* Action Buttons *@
+                    <div class="flex items-center gap-3">
+                        @if (isFiltering)
+                        {
+                            <a asp-action="Articles" class="px-6 py-3.5 text-slate-500 font-bold hover:text-red-500 transition-colors">
+                                Изчисти филтрите
+                            </a>
+                        }
+                        <button type="submit" class="px-10 py-3.5 bg-brand-primary text-white font-bold rounded-2xl hover:bg-brand-dark shadow-lg shadow-brand-primary/20 transition-all active:scale-95">
+                            Приложи филтрите
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* --- Main content --- *@
+    <div class="mt-8">
+        @if (isFiltering)
         {
-            <div class="py-20 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-                <i class="bi bi-search text-5xl text-slate-200 mb-4 block"></i>
-                <h3 class="text-xl font-bold text-slate-600">Няма открити резултати</h3>
-                <p class="text-slate-400">Опитай с друга ключова дума.</p>
-            </div>
+            @* Search results *@
+            @if (!Model.Results.Any())
+            {
+                <div class="py-24 text-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
+                    <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                        <i class="bi bi-search text-3xl text-slate-300"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-600">Няма открити резултати</h3>
+                    <p class="text-slate-400 mt-2">Опитайте да промените критериите или изчистете филтрите.</p>
+                </div>
+            }
+            else
+            {
+                <div class="flex items-center justify-between mb-8 px-2">
+                    <h2 class="text-2xl font-black text-brand-dark">Резултати <span class="text-brand-primary ml-1">(@Model.Results.Count)</span></h2>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
+                    @foreach (var item in Model.Results)
+                    {
+                        <partial name="_ProductCard" model="item" />
+                    }
+                </div>
+            }
         }
         else
         {
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
-                @foreach (var item in Model.SearchResults)
-                {
-                    <partial name="_ProductCard" model="item" />
-                }
-            </div>
+            await RenderStoreSection("Фигурки", Model.RecentFigures, PrintType.Figure);
+            await RenderStoreSection("Играчки", Model.RecentFidgetToys, PrintType.FidgetToy);
+            await RenderStoreSection("Аксесоари", Model.RecentAccessories, PrintType.Accessory);
         }
-    }
-    else
-    {
-        @* Sections *@
-        await RenderStoreSection("Фигурки", Model.RecentFigures, PrintType.Figure);
-        await RenderStoreSection("Играчки", Model.RecentFidgetToys, PrintType.FidgetToy);
-        await RenderStoreSection("Аксесоари", Model.RecentAccessories, PrintType.Accessory);
-    }
+    </div>
 </div>
 
 @section Scripts {
     <script>
+        function toggleFilters() {
+            const panel = document.getElementById('filterPanel');
+            const icon = document.getElementById('filterIcon');
+
+            if (panel.style.maxHeight === "0px" || panel.style.maxHeight === "") {
+                panel.style.maxHeight = "1000px";
+                panel.style.opacity = "1";
+                panel.style.marginBottom = "3rem";
+                icon.classList.add('rotate-90', 'text-brand-primary');
+            } else {
+                panel.style.maxHeight = "0px";
+                panel.style.opacity = "0";
+                panel.style.marginBottom = "0px";
+                icon.classList.remove('rotate-90', 'text-brand-primary');
+            }
+        }
+
+        // --- Add to Cart Logic ---
         let addCount = 0;
         let hideTimeout;
 
@@ -152,15 +265,4 @@
             }, 800);
         }
     </script>
-
-    <style>
-        #cart-nav-link i {
-            transition: all 0.2s ease-in-out;
-        }
-
-        @* Relaxed transition for the cart status message *@
-        .group-hover\/section\:opacity-100 {
-            transition: opacity 0.3s ease-in-out;
-        }
-    </style>
 }

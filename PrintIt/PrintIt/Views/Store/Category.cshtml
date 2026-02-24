@@ -11,10 +11,29 @@
         <p class="text-slate-500 mt-2 text-lg">Всички налични модели в категорията.</p>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
-        @foreach (var item in Model)
-        {
-            <partial name="_ProductCard" model="item" />
-        }
-    </div>
+    @if (Model == null || !Model.Any())
+    {
+        <div class="flex flex-col items-center justify-center py-12 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 text-center">
+            <div class="w-16 h-16 bg-white shadow-sm rounded-full flex items-center justify-center mb-4">
+                <i class="bi bi-box-seam text-slate-300 text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-bold text-slate-600">В момента няма налични @categoryName.ToLower()</h2>
+            <p class="text-slate-400 mt-1 text-sm max-w-xs mx-auto">
+                Работим по нови модели. Моля, проверете по-късно.
+            </p>
+            <a asp-controller="Store" asp-action="Articles"
+               class="mt-6 px-6 py-2 bg-brand-primary text-white font-bold rounded-xl hover:bg-brand-dark transition-all text-sm">
+                Към всички артикули
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
+            @foreach (var item in Model)
+            {
+                <partial name="_ProductCard" model="item" />
+            }
+        </div>
+    }
 </div>
