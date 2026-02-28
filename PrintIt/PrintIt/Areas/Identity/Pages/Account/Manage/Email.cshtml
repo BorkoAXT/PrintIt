@@ -1,39 +1,44 @@
 ﻿@page
 @model EmailModel
 @{
-    ViewData["Title"] = "Manage Email";
+    ViewData["Title"] = "Имейл адрес";
     ViewData["ActivePage"] = ManageNavPages.Email;
 }
 
 <div class="space-y-8">
-    <div class="flex items-center gap-4 border-b border-slate-100 pb-4">
-        <div class="p-3 bg-brand-primary/10 rounded-xl">
+    @* Header Section - Better spacing and font size *@
+    <div class="flex items-center gap-5 border-b border-slate-100 pb-6">
+        <div class="p-3 bg-brand-primary/10 rounded-2xl">
             <i class="bi bi-envelope-gear text-brand-primary text-2xl"></i>
         </div>
-        <h3 class="text-2xl font-bold text-brand-dark">@ViewData["Title"]</h3>
+        <div>
+            <h3 class="text-2xl font-black text-brand-dark">@ViewData["Title"]</h3>
+            <p class="text-slate-500 text-base">Управлявайте вашия имейл за връзка и известия.</p>
+        </div>
     </div>
 
     <partial name="_StatusMessage" for="StatusMessage" />
 
     <div class="max-w-xl">
-        <form id="email-form" method="post" class="space-y-6">
+        <form id="email-form" method="post" class="space-y-7">
             @if (!ViewData.ModelState.IsValid)
             {
-                <div asp-validation-summary="All" class="text-red-500 text-xs bg-red-50 p-3 rounded-lg mb-4" role="alert"></div>
+                <div asp-validation-summary="All" class="text-red-600 text-sm bg-red-50 p-4 rounded-2xl mb-6 border border-red-100" role="alert"></div>
             }
 
-            <div>
-                <label asp-for="Email" class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-1 ml-1">Current Email</label>
-                <div class="relative">
+            @* Current Email Field *@
+            <div class="space-y-2">
+                <label asp-for="Email" class="block text-sm font-bold text-slate-700 ml-1">Текущ имейл</label>
+                <div class="relative group">
                     <input asp-for="Email"
-                           class="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 cursor-not-allowed outline-none"
+                           class="w-full px-5 py-4 bg-slate-100 border border-slate-200 rounded-2xl text-slate-600 cursor-not-allowed outline-none text-base"
                            disabled />
 
                     @if (Model.IsEmailConfirmed)
                     {
                         <div class="absolute inset-y-0 right-0 flex items-center pr-4">
-                            <span class="flex items-center gap-1.5 px-2.5 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-wider rounded-full border border-green-200">
-                                <i class="bi bi-patch-check-fill"></i> Verified
+                            <span class="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 text-xs font-bold uppercase tracking-wider rounded-xl border border-green-200 shadow-sm">
+                                <i class="bi bi-patch-check-fill"></i> Потвърден
                             </span>
                         </div>
                     }
@@ -42,24 +47,30 @@
                 @if (!Model.IsEmailConfirmed)
                 {
                     <button id="email-verification" type="submit" asp-page-handler="SendVerificationEmail"
-                            class="mt-2 text-sm font-bold text-brand-primary hover:text-brand-dark transition-colors">
-                        Send verification email
+                            class="ml-1 text-sm font-bold text-brand-primary hover:text-brand-dark transition-colors underline underline-offset-4 decoration-2">
+                        Изпрати имейл за потвърждение
                     </button>
                 }
             </div>
 
-            <div>
-                <label asp-for="Input.NewEmail" class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-1 ml-1">New Email Address</label>
-                <input asp-for="Input.NewEmail"
-                       class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none transition-all placeholder:text-slate-400"
-                       autocomplete="email" aria-required="true" placeholder="Enter new email address" />
-                <span asp-validation-for="Input.NewEmail" class="text-red-500 text-xs mt-1 block"></span>
+            @* New Email Field *@
+            <div class="space-y-2 pt-2">
+                <label asp-for="Input.NewEmail" class="block text-sm font-bold text-slate-700 ml-1">Нов имейл адрес</label>
+                <div class="relative">
+                    <input asp-for="Input.NewEmail"
+                           class="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-4 focus:ring-brand-primary/10 focus:border-brand-primary outline-none transition-all placeholder:text-slate-400 text-base shadow-sm"
+                           autocomplete="email" aria-required="true" placeholder="Въведете новия имейл" />
+                </div>
+                <span asp-validation-for="Input.NewEmail" class="text-red-500 text-sm font-medium mt-2 ml-1 block"></span>
             </div>
 
-            <button id="change-email-button" type="submit" asp-page-handler="ChangeEmail"
-                    class="w-full md:w-auto px-10 py-4 bg-brand-dark hover:bg-brand-primary text-white font-bold rounded-xl shadow-lg hover:shadow-brand-primary/30 transition-all active:scale-[0.98]">
-                Update Email
-            </button>
+            @* Submit Button *@
+            <div class="pt-4">
+                <button id="change-email-button" type="submit" asp-page-handler="ChangeEmail"
+                        class="w-full sm:w-auto px-12 py-4 bg-brand-dark hover:bg-brand-primary text-white text-base font-bold rounded-2xl shadow-lg hover:shadow-brand-primary/30 transition-all active:scale-[0.98]">
+                    Запази промените
+                </button>
+            </div>
         </form>
     </div>
 </div>
