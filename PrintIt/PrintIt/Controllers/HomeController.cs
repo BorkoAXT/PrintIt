@@ -1,57 +1,51 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using PrintIt.Data;
 using PrintIt.Models;
+using PrintIt.Services;
 using PrintIt.ViewModels;
 using System.Diagnostics;
 using System.Security.Claims;
-using ErrorViewModel = PrintIt.ViewModels.ErrorViewModel;
 
-namespace PrintIt.Controllers
+public class HomeController : Controller
 {
-    public class HomeController : BaseController
+    private readonly IWishlistService _wishlistService;
+
+    public HomeController(IWishlistService wishlistService)
     {
-        public HomeController(ApplicationDbContext context) : base(context)
+        _wishlistService = wishlistService;
+    }
+
+    public async Task<IActionResult> Index()
+    {
+        List<UserWishlistItem> wishlistPrints = new();
+
+        if (TryGetUserId(out Guid userId))
         {
+            wishlistPrints = await _wishlistService.GetWishlistForUserAsync(userId);
         }
 
-        public async Task<IActionResult> Index()
+        return View(wishlistPrints);
+    }
+
+    public IActionResult Privacy()
+    {
+        return View();
+    }
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel
         {
-            List<Print> wishlistPrints = new List<Print>();
+            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+        });
+    }
 
-            // Check if user is logged in
-            if (User.Identity?.IsAuthenticated == true)
-            {
-                // Take user ID from claims
-                string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    private bool TryGetUserId(out Guid userId)
+    {
+        userId = Guid.Empty;
 
-                if (Guid.TryParse(userIdString, out Guid userId))
-                {
-                    // Get wishlist items for the user
-                    wishlistPrints = await _context.Set<UserWishlistItem>()
-                        .Where(w => w.UserId == userId)
-                        .Include(w => w.Print)
-                        .Select(w => w.Print)
-                        .ToListAsync();
-                }
-            }
+        string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            ViewData["WishlistItems"] = wishlistPrints;
-
-            return View();
-        }
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+        return Guid.TryParse(userIdString, out userId);
     }
 }

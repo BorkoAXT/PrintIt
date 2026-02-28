@@ -1,148 +1,81 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using PrintIt.Data;
+﻿using Microsoft.AspNetCore.Mvc;
 using PrintIt.Enums;
 using PrintIt.Models;
+using PrintIt.Services;
 using System.Security.Claims;
 
-namespace PrintIt.Controllers
+public class CartController : Controller
 {
-    public class CartController : BaseController
+    private readonly ICartService _cartService;
+
+    public CartController(ICartService cartService)
     {
-        public CartController(ApplicationDbContext context) : base(context) { }
+        _cartService = cartService;
+    }
 
-        [HttpGet("/Cart")]
-        public IActionResult Cart()
-        {
-            List<CartItem> userCart = new List<CartItem>();
+    [HttpGet("/Cart")]
+    public async Task<IActionResult> Cart()
+    {
+        ShopCart viewModel;
 
-            if (User.Identity?.IsAuthenticated == true)
-            {
-                string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                if (Guid.TryParse(userIdString, out Guid userId))
-                {
-                    userCart = _context.ShopCarts
-                        .Include(c => c.Items)
-                        .ThenInclude(i => i.Print)
-                        .Where(c => c.UserId == userId)
-                        .SelectMany(c => c.Items).ToList();
-
-                    ViewData["CartItems"] = userCart;
-                }
-            }
-
-            ViewData["CartItems"] = userCart;
-
-            return View();
-        }
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddToCart(Guid id, List<PrintColor> selectedColors)
+        if (User.Identity?.IsAuthenticated == true)
         {
             string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
+            if (Guid.TryParse(userIdString, out Guid userId))
             {
-                // If not logged in, redirect to Login
-                return RedirectToPage("/Account/Login", new { area = "Identity" });
-            }
-
-            var cart = await _context.ShopCarts
-                .Include(c => c.Items)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
-
-            if (cart == null)
-            {
-                cart = new ShopCart(userId);
-                _context.ShopCarts.Add(cart);
-                await _context.SaveChangesAsync();
-            }
-
-            var incomingColors = selectedColors?
-                .OrderBy(c => c)
-                .ToList() ?? new List<PrintColor>();
-
-            var existingItem = cart.Items.FirstOrDefault(i =>
-                i.PrintId == id &&
-                i.Colours.Count == incomingColors.Count &&
-                i.Colours.OrderBy(c => c).SequenceEqual(incomingColors)
-            );
-
-            if (existingItem != null)
-            {
-                // If it exists, just bump the quantity
-                existingItem.Quantity++;
-                _context.Entry(existingItem).State = EntityState.Modified;
-            }
-            else
-            {
-                // If it's a new combination, create a new line item
-                var newItem = new CartItem(cart.Id, id)
+                viewModel = new ShopCart(userId)
                 {
-                    Quantity = 1,
-                    Colours = incomingColors
+                    Items = await _cartService.GetUserCartAsync(userId)
                 };
-                _context.CartItems.Add(newItem);
+                return View(viewModel);
             }
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return RedirectToAction("Cart", "Cart");
-            }
-
-            // 6. Redirect back to where the user came from
-            string referer = Request.Headers["Referer"].ToString();
-            if (string.IsNullOrEmpty(referer))
-            {
-                return RedirectToAction("Articles", "Store");
-            }
-
-            return Redirect(referer);
         }
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RemoveFromCart(Guid id)
-        {
-            string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userIdString, out Guid userId)) return RedirectToAction(nameof(Cart));
 
-            var cartItem = await _context.CartItems
-                .FirstOrDefaultAsync(ci => ci.PrintId == id && ci.ShopCart.UserId == userId);
+        viewModel = new ShopCart(Guid.Empty); 
+        return View(viewModel);
+    }
 
-            if (cartItem != null)
-            {
-                _context.CartItems.Remove(cartItem);
-                await _context.SaveChangesAsync();
-            }
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddToCart(Guid id, List<PrintColor> selectedColors)
+    {
+        if (!TryGetUserId(out Guid userId))
+            return RedirectToPage("/Account/Login", new { area = "Identity" });
 
+        await _cartService.AddToCartAsync(userId, id, selectedColors);
+
+        return Redirect(Request.Headers["Referer"].ToString() ?? "/");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveFromCart(Guid id)
+    {
+        if (!TryGetUserId(out Guid userId))
             return RedirectToAction(nameof(Cart));
-        }
 
-        [HttpPost]
-        public async Task<IActionResult> UpdateQuantity(Guid id, int quantity)
-        {
-            if (User.Identity?.IsAuthenticated != true) return Json(new { success = false });
+        await _cartService.RemoveFromCartAsync(userId, id);
 
-            string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userIdString, out Guid userId)) return Json(new { success = false });
+        return RedirectToAction(nameof(Cart));
+    }
 
-            var cartItem = await _context.CartItems 
-                .FirstOrDefaultAsync(i => i.PrintId == id && i.ShopCart.UserId == userId);
-
-            if (cartItem != null && quantity > 0)
-            {
-                cartItem.Quantity = quantity;
-                _context.Update(cartItem);
-                await _context.SaveChangesAsync();
-                return Json(new { success = true });
-            }
-
+    [HttpPost]
+    public async Task<IActionResult> UpdateQuantity(Guid id, int quantity)
+    {
+        if (!TryGetUserId(out Guid userId))
             return Json(new { success = false });
-        }
+
+        bool success = await _cartService.UpdateQuantityAsync(userId, id, quantity);
+
+        return Json(new { success });
+    }
+
+    private bool TryGetUserId(out Guid userId)
+    {
+        userId = Guid.Empty;
+
+        string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        return Guid.TryParse(userIdString, out userId);
     }
 }

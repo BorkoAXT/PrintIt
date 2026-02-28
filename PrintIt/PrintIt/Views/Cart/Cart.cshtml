@@ -1,10 +1,14 @@
 ﻿@using PrintIt.Models
 @using PrintIt.Enums
+@using System.Linq;
 @using System.Globalization
+@using Microsoft.AspNetCore.Identity
+@model PrintIt.Models.ShopCart
 @{
     ViewData["Title"] = "Shopping Cart";
-    var cartItems = ViewData["CartItems"] as List<CartItem> ?? new List<CartItem>();
+    Layout = "_Layout";
 
+    var cartItems = Model.Items;
     decimal subtotal = cartItems.Sum(item => (item.Print?.Price ?? 0) * (item.Quantity > 0 ? item.Quantity : 1));
     decimal shippingLimit = 50.00m;
     decimal shipping = (subtotal > shippingLimit || subtotal == 0) ? 0 : 5.00m;
@@ -34,7 +38,7 @@
 
                     <div class="group bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-center gap-6">
 
-                        @* Image Section: Uses the single FilePath string *@
+                        @* Image Section *@
                         <div class="h-32 w-32 shrink-0 overflow-hidden rounded-2xl bg-slate-50 border border-slate-100">
                             <img src="@(string.IsNullOrEmpty(item.Print?.FilePath) ? "/images/placeholder.jpg" : item.Print.FilePath)"
                                  alt="@item.Print?.Name"
@@ -44,7 +48,7 @@
                         <div class="flex-grow text-center sm:text-left">
                             <h3 class="text-xl font-bold text-brand-dark">@item.Print?.Name</h3>
 
-                            @* COLOR BADGES SECTION *@
+                            @* COLOR BADGES *@
                             @if (item.Colours != null && item.Colours.Any())
                             {
                                 <div class="flex flex-wrap gap-2 mt-1 mb-2 justify-center sm:justify-start">
@@ -75,6 +79,7 @@
                             </div>
                         </div>
 
+                        @* Quantity Controls & Trash *@
                         <div class="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-100">
                             <div class="flex items-center bg-white rounded-xl border border-slate-200 overflow-hidden">
                                 <button type="button" onclick="changeQty('@uniqueId', -1)"
@@ -91,6 +96,7 @@
                             </div>
 
                             <form asp-controller="Cart" asp-action="RemoveFromCart" method="post">
+                                @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@uniqueId" />
                                 <button type="submit" class="p-3 text-slate-400 hover:text-white hover:bg-red-500 rounded-xl transition-all shadow-sm active:scale-90">
                                     <i class="bi bi-trash3-fill text-xl"></i>
@@ -122,16 +128,13 @@
                         </div>
                     </div>
 
-                    @if (subtotal < shippingLimit)
-                    {
-                        <div id="free-shipping-promo" class="mb-6 p-4 bg-white/5 rounded-2xl border border-white/10">
-                            <p class="text-xs text-center text-slate-300">
-                                Добави още <b id="remaining-for-free" class="text-brand-primary">€@((shippingLimit - subtotal).ToString("0.00"))</b> за безплатна доставка!
-                            </p>
-                        </div>
-                    }
+                    @* Free Shipping Promo Container *@
+                    <div id="free-shipping-promo" class="@(subtotal >= shippingLimit ? "hidden" : "") mb-6 p-4 bg-white/5 rounded-2xl border border-white/10">
+                        <p class="text-xs text-center text-slate-300">
+                            Добави още <b id="remaining-for-free" class="text-brand-primary">€@((shippingLimit - subtotal).ToString("0.00"))</b> за безплатна доставка!
+                        </p>
+                    </div>
 
-                    @* Redirects to the Stripe Checkout page *@
                     <a asp-controller="Order" asp-action="Checkout"
                        class="w-full bg-brand-primary hover:bg-blue-500 text-white py-5 rounded-2xl font-bold text-lg shadow-lg shadow-brand-primary/20 transition-all active:scale-95 flex items-center justify-center gap-3">
                         Завърши поръчката
@@ -192,11 +195,15 @@
         async function changeQty(cartItemId, delta) {
             const input = document.getElementById('qty-' + cartItemId);
             const display = document.getElementById('qty-display-' + cartItemId);
+
+            if (!input) return;
+
             let currentVal = parseInt(input.value) || 1;
             let newVal = currentVal + delta;
 
             if (newVal >= 1 && newVal <= 100) {
-                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+                const token = tokenElement ? tokenElement.value : '';
 
                 try {
                     const response = await fetch('/Cart/UpdateQuantity', {
@@ -205,18 +212,22 @@
                             'Content-Type': 'application/x-www-form-urlencoded',
                             'RequestVerificationToken': token
                         },
-                        body: `id=${cartItemId}&quantity=${newVal}`
+                        body: `id=${encodeURIComponent(cartItemId)}&quantity=${newVal}`
                     });
+
+                    if (!response.ok) throw new Error('Network response was not ok');
 
                     const result = await response.json();
 
                     if (result.success) {
                         input.value = newVal;
-                        display.textContent = newVal;
+                        if (display) display.textContent = newVal;
 
                         const priceEl = document.getElementById('price-' + cartItemId);
-                        const unitPrice = parseFloat(priceEl.dataset.unitPrice);
-                        priceEl.textContent = '€' + (unitPrice * newVal).toFixed(2);
+                        if (priceEl) {
+                            const unitPrice = parseFloat(priceEl.dataset.unitPrice);
+                            priceEl.textContent = '€' + (unitPrice * newVal).toFixed(2);
+                        }
 
                         updateTotals();
                     }
@@ -236,18 +247,25 @@
             const shippingLimit = 50.00;
             const shipping = (subtotal > shippingLimit || subtotal === 0) ? 0 : 5.00;
 
-            document.getElementById('subtotal').textContent = '€' + subtotal.toFixed(2);
-            document.getElementById('shipping').textContent = shipping > 0 ? '€' + shipping.toFixed(2) : 'Безплатна';
-            document.getElementById('grand-total').textContent = '€' + (subtotal + shipping).toFixed(2);
+            const subtotalField = document.getElementById('subtotal');
+            const shippingField = document.getElementById('shipping');
+            const totalField = document.getElementById('grand-total');
 
-            const promoEl = document.getElementById('remaining-for-free');
+            if(subtotalField) subtotalField.textContent = '€' + subtotal.toFixed(2);
+            if(shippingField) shippingField.textContent = shipping > 0 ? '€' + shipping.toFixed(2) : 'Безплатна';
+            if(totalField) totalField.textContent = '€' + (subtotal + shipping).toFixed(2);
+
             const promoDiv = document.getElementById('free-shipping-promo');
-            if (promoEl && promoDiv) {
-                if (subtotal >= shippingLimit) {
+            const promoEl = document.getElementById('remaining-for-free');
+
+            if (promoDiv) {
+                if (subtotal >= shippingLimit || subtotal === 0) {
                     promoDiv.classList.add('hidden');
                 } else {
                     promoDiv.classList.remove('hidden');
-                    promoEl.textContent = '€' + (shippingLimit - subtotal).toFixed(2);
+                    if (promoEl) {
+                        promoEl.textContent = '€' + (shippingLimit - subtotal).toFixed(2);
+                    }
                 }
             }
         }
@@ -266,6 +284,6 @@
     }
 
     .hidden {
-        display: none;
+        display: none !important;
     }
 </style>
