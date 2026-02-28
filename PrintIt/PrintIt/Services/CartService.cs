@@ -126,7 +126,7 @@ public class CartService : ICartService
             return await _context.ShopCarts
                 .Where(c => c.UserId == userId)
                 .SelectMany(c => c.Items)
-                .CountAsync();
+                .SumAsync(i => i.Quantity);
         });
     }
 

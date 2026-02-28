@@ -1,0 +1,35 @@
+﻿@model int
+
+@* This is the View Component's UI. 
+    It is completely independent of ViewData or ViewBag, 
+    receiving the count directly from the C# InvokeAsync method.
+*@
+
+<div class="relative">
+	<a asp-controller="Cart" asp-action="Cart" id="cart-nav-link"
+	   class="p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all relative inline-block group">
+        
+		@* This ID is the target for the flying box animation *@
+		<i id="cart-icon-target" class="bi bi-cart3 text-xl text-slate-700 transition-transform group-hover:scale-110"></i>
+
+		@* The Badge:
+           - Logic: Render 'flex' if count > 0, otherwise 'hidden'.
+           - JavaScript in Layout will find these IDs to update the number instantly.
+        *@
+		<span id="cart-badge" class="absolute -top-1 -right-1 h-5 w-5 @(Model > 0 ? "flex" : "hidden")">
+			@* The pulse effect *@
+			<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary opacity-75"></span>
+            
+			@* The actual number *@
+			<span id="cart-count-text" class="relative inline-flex rounded-full h-5 w-5 bg-brand-primary text-[10px] text-white items-center justify-center font-black">
+				@Model
+			</span>
+		</span>
+	</a>
+
+	@* Optional: Small status message that appears under the cart *@
+	<span id="cart-status-msg"
+	      class="absolute top-full mt-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-green-500 opacity-0 transition-all duration-300 translate-y-[-5px] pointer-events-none">
+		+1 добавен!
+	</span>
+</div>

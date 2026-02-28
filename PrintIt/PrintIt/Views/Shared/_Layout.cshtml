@@ -31,7 +31,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
     <style>
-        /* Modern Underline */
         .nav-link {
             position: relative;
             padding: 0.5rem 0;
@@ -52,42 +51,36 @@
                 width: 100%;
             }
 
-        /* Blueprint grid background effect for main area */
         .blueprint-bg {
             background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px);
             background-size: 20px 20px;
         }
 
-        /* Identity 'Save' buttons styling */
-        .manage-page-content button[type="submit"],
-        #update-profile-button {
-            width: 100%;
-            padding: 0.75rem 2rem;
-            background-color: #0f172a;
-            color: #fff;
-            font-weight: bold;
-            border-radius: 0.75rem;
-            transition: all 0.2s;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        /* Animation for the flying box */
+        .flyer-item {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            transition: all 0.8s cubic-bezier(0.42, 0, 0.58, 1);
         }
 
-            .manage-page-content button[type="submit"]:hover,
-            #update-profile-button:hover {
-                background-color: #3b82f6;
-            }
-
-        /* Cart Bounce Animation */
-        .cart-bounce {
-            animation: bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        /* Cart Pop/Bounce Effect */
+        .cart-pop {
+            animation: cartPop 0.4s ease-out;
         }
 
-        @@keyframes bounce {
-            0%, 100% {
+        @@keyframes cartPop {
+            0% {
                 transform: scale(1);
             }
 
             50% {
-                transform: scale(1.3);
+                transform: scale(1.4);
+                color: #3b82f6;
+            }
+
+            100% {
+                transform: scale(1);
             }
         }
     </style>
@@ -98,30 +91,28 @@
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-20">
 
+                @* Logo and Navigation *@
                 <div class="flex items-center gap-10">
-	                <a class="flex items-center gap-3 group" asp-area="" asp-controller="Home" asp-action="Index">
-		                <div class="relative">
-			                <div class="bg-brand-dark p-2 rounded-lg transition-transform group-hover:scale-105">
-				                <i class="bi bi-box-seam text-white text-xl"></i>
-			                </div>
-			                <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-brand-primary rounded-full border-2 border-white"></div>
-		                </div>
-		                <div class="flex flex-col leading-none">
-			                <span class="text-xl font-extrabold tracking-tight">PRINTIT<span class="text-brand-primary">3D</span></span>
-			                <span class="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400">Lab & Articles</span>
-		                </div>
-	                </a>
+                    <a class="flex items-center gap-3 group" asp-area="" asp-controller="Home" asp-action="Index">
+                        <div class="relative">
+                            <div class="bg-brand-dark p-2 rounded-lg transition-transform group-hover:scale-105">
+                                <i class="bi bi-box-seam text-white text-xl"></i>
+                            </div>
+                            <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-brand-primary rounded-full border-2 border-white"></div>
+                        </div>
+                        <div class="flex flex-col leading-none">
+                            <span class="text-xl font-extrabold tracking-tight">PRINTIT<span class="text-brand-primary">3D</span></span>
+                            <span class="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400">Lab & Articles</span>
+                        </div>
+                    </a>
+
                     <div class="flex items-center space-x-8">
-                        @* Dropdown Container *@
                         <div class="relative group">
                             <a class="nav-link text-sm font-bold uppercase tracking-wider text-slate-600 hover:text-brand-primary transition-colors flex items-center gap-1 py-4"
                                asp-area="" asp-controller="Store" asp-action="Articles">
-                                <i class="bi bi-grid-3x3-gap"></i>
-                                Артикули
+                                <i class="bi bi-grid-3x3-gap"></i> Артикули
                                 <i class="bi bi-chevron-down text-[10px] transition-transform group-hover:rotate-180"></i>
                             </a>
-
-                            @* Dropdown Menu *@
                             <div class="absolute left-0 top-full w-48 bg-white border border-slate-100 shadow-xl rounded-2xl py-2 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all z-50">
                                 <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-brand-primary transition-colors"
                                    asp-controller="Store" asp-action="Category" asp-route-type="@PrintType.Figure.ToString()">
@@ -135,71 +126,22 @@
                                    asp-controller="Store" asp-action="Category" asp-route-type="@PrintType.Accessory.ToString()">
                                     <i class="bi bi-watch text-brand-primary"></i> Аксесоари
                                 </a>
-                                <div class="border-t border-slate-50 my-1"></div>
-                                <a class="flex items-center gap-3 px-4 py-3 text-xs font-black uppercase tracking-tighter text-brand-dark hover:bg-brand-primary/5 transition-colors"
-                                   asp-controller="Store" asp-action="Articles">
-                                    Всички Артикули
-                                </a>
                             </div>
                         </div>
-
-                        @if (User.Identity?.IsAuthenticated ?? false)
-                        {
-                            <a class="nav-link text-sm font-bold uppercase tracking-wider text-slate-600 hover:text-brand-primary transition-colors"
-                               asp-area="" asp-controller="Order" asp-action="Index">
-                                <i class="bi bi-cpu mr-1"></i> Авторски Поръчки
-                            </a>
-                        }
                     </div>
                 </div>
 
-                <div class="flex items-center space-x-3">
-                    <div class="block">
-                        <partial name="_LoginPartial" />
-                    </div>
+                @* Right side: Login and Cart *@
+                <div class="flex items-center space-x-6">
+                    <partial name="_LoginPartial" />
 
                     @if (User.Identity?.IsAuthenticated ?? false)
                     {
-                        var cartCount = ViewData["CartCount"] as int? ?? 0;
-
-                        <div class="relative flex flex-col items-center">
-                            <a asp-controller="Cart" asp-action="Cart" id="cart-nav-link"
-                               class="p-2 hover:bg-slate-100 rounded-full transition-all relative inline-block group">
-                                <i class="bi bi-cart3 text-xl text-slate-700 transition-transform"></i>
-
-                                @if (cartCount > 0)
-                                {
-                                    <span id="cart-badge" class="absolute top-1 right-1 flex h-4 w-4">
-                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary opacity-75"></span>
-                                        <span class="relative inline-flex rounded-full h-4 w-4 bg-brand-primary text-[10px] text-white items-center justify-center font-bold">
-                                            @cartCount
-                                        </span>
-                                    </span>
-                                }
-                            </a>
-
-                            <span id="cart-status-msg"
-                                  class="absolute top-full mt-1 whitespace-nowrap text-[10px] font-bold text-green-500 opacity-0 transition-all duration-300 translate-y-[-5px] pointer-events-none">
-                                +1 добавен!
-                            </span>
-                        </div>
+	                    @await Component.InvokeAsync("CartCount")
                     }
-
-                    <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-slate-700 hover:bg-slate-100 rounded-lg">
-                        <i class="bi bi-list text-2xl"></i>
-                    </button>
                 </div>
             </div>
         </nav>
-
-        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-200 shadow-2xl">
-            <div class="px-6 py-8 space-y-6">
-                <a class="block text-xl font-bold text-brand-dark" asp-area="" asp-controller="Store" asp-action="Articles">Артикули</a>
-                <a class="block text-xl font-bold text-brand-dark" asp-area="" asp-controller="Order" asp-action="Index">Поръчка</a>
-                <hr>
-                <partial name="_LoginPartial" />
-            </div>
-        </div>
     </header>
 
     <main role="main" class="flex-grow blueprint-bg">
@@ -210,53 +152,59 @@
         </div>
     </main>
 
-    <footer class="bg-slate-950 text-slate-300 pt-20 pb-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 pb-16 border-b border-slate-800">
-
-                <div class="col-span-1 md:col-span-2">
-                    <span class="text-white text-2xl font-black">PRINTIT<span class="text-brand-primary">3D</span></span>
-                    <p class="mt-4 text-slate-400 max-w-sm leading-relaxed">
-                        От прототипи до готови продукти. Използваме най-новите FDM и Resin технологии, за да превърнем вашите 3D модели във физическа реалност.
-                    </p>
-                </div>
-
-                <div>
-                    <h4 class="text-white font-bold mb-6 text-sm uppercase tracking-widest">Магазин</h4>
-                    <ul class="space-y-4 text-sm">
-                        <li><a asp-controller="Store" asp-action="Articles" class="hover:text-brand-primary transition-colors">3D Фигури</a></li>
-                        <li><a asp-controller="Store" asp-action="Articles" class="hover:text-brand-primary transition-colors">Играчки</a></li>
-                        <li><a asp-controller="Store" asp-action="Articles" class="hover:text-brand-primary transition-colors">Аксесоари</a></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <h4 class="text-white font-bold mb-6 text-sm uppercase tracking-widest">Контакт</h4>
-                    <ul class="space-y-4 text-sm">
-                        <li class="flex items-center gap-3"><i class="bi bi-geo-alt text-brand-primary"></i> София, България</li>
-                        <li class="flex items-center gap-3"><i class="bi bi-envelope text-brand-primary"></i> office@printit3d.bg</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="mt-10 flex flex-col md:flex-row justify-between items-center gap-6">
-                <p class="text-xs">&copy; 2026 PrintIt 3D Shop. Всички права запазени.</p>
-                <div class="flex gap-8">
-                    <a href="#" class="text-slate-500 hover:text-white transition-colors"><i class="bi bi-instagram text-xl"></i></a>
-                    <a href="#" class="text-slate-500 hover:text-white transition-colors"><i class="bi bi-youtube text-xl"></i></a>
-                    <a href="#" class="text-slate-500 hover:text-white transition-colors"><i class="bi bi-facebook text-xl"></i></a>
-                </div>
-            </div>
-        </div>
+    <footer class="bg-slate-950 text-slate-300 pt-10 pb-10 text-center">
+        <p class="text-xs">&copy; 2026 PrintIt 3D. Всички права запазени.</p>
     </footer>
 
+    @* Global Scripts *@
     <script>
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            menu.classList.toggle('hidden');
+        function animateFlyToCart(startElement, customColor = '#3b82f6', newTotal = null, loopCount = 1) {
+            const cartIcon = document.getElementById('cart-icon-target');
+            const badge = document.getElementById('cart-badge');
+            const countText = document.getElementById('cart-count-text');
+
+            if (!cartIcon || !startElement) return;
+
+            // 1. INSTANT UI UPDATE
+            // This ensures the user doesn't have to wait for the animation or a page switch
+            if (newTotal !== null && countText && badge) {
+                countText.innerText = newTotal;
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+            }
+
+            // 2. VISUAL FEEDBACK (FLYING BOXES)
+            for (let i = 0; i < loopCount; i++) {
+                setTimeout(() => {
+                    const flyer = document.createElement('div');
+                    flyer.className = 'flyer-item';
+                    flyer.innerHTML = `<i class="bi bi-box-seam-fill" style="color: ${customColor}; font-size: 24px;"></i>`;
+
+                    const startRect = startElement.getBoundingClientRect();
+                    const cartRect = cartIcon.getBoundingClientRect();
+
+                    flyer.style.left = `${startRect.left + (startRect.width / 2) - 12}px`;
+                    flyer.style.top = `${startRect.top + (startRect.height / 2) - 12}px`;
+                    document.body.appendChild(flyer);
+
+                    requestAnimationFrame(() => {
+                        flyer.style.left = `${cartRect.left}px`;
+                        flyer.style.top = `${cartRect.top}px`;
+                        flyer.style.transform = 'scale(0.3) rotate(720deg)';
+                        flyer.style.opacity = '0';
+                    });
+
+                    flyer.addEventListener('transitionend', () => {
+                        flyer.remove();
+                        if (i === loopCount - 1) {
+                            cartIcon.parentElement.classList.add('cart-pop');
+                            setTimeout(() => cartIcon.parentElement.classList.remove('cart-pop'), 400);
+                        }
+                    });
+                }, i * 100);
+            }
         }
     </script>
-
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
