@@ -118,8 +118,12 @@
                             <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-brand-primary dark:bg-brand-accent rounded-full border-2 border-white dark:border-[#0f172a]"></div>
                         </div>
                         <div class="flex flex-col leading-none">
-                            <span class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white transition-colors">PRINTIT<span class="text-brand-primary">3D</span></span>
-                            <span class="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400">Lab & Articles</span>
+                            <span class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white transition-colors">
+                                PRINT<span class="text-slate-400">IT</span><span class="text-brand-primary">3D</span>
+                            </span>
+                            <span class="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400">
+                                Lab & Articles
+                            </span>
                         </div>
                     </a>
 
@@ -189,14 +193,54 @@
         </div>
     </main>
 
-    <footer class="bg-slate-950 text-slate-400 py-12 text-center border-t border-slate-900">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex flex-col items-center gap-4">
-                <div class="flex items-center gap-2 opacity-50 grayscale">
-                    <i class="bi bi-box-seam"></i>
-                    <span class="font-bold tracking-tighter">PRINTIT 3D</span>
+    <footer class="bg-slate-950 text-slate-300 pt-20 pb-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 pb-16 border-b border-slate-800">
+
+                <div class="col-span-1 md:col-span-2">
+                    <span class="text-white text-2xl font-black">PRINTIT<span class="text-brand-primary">3D</span></span>
+                    <p class="mt-4 text-slate-400 max-w-sm leading-relaxed">
+                        От прототипи до готови продукти. Използваме най-новите FDM и Resin технологии, за да превърнем вашите 3D модели във физическа реалност.
+                    </p>
                 </div>
-                <p class="text-xs tracking-widest uppercase">© 2026 Всички права запазени</p>
+
+                <div>
+                    <h4 class="text-white font-bold mb-6 text-sm uppercase tracking-widest">Магазин</h4>
+                    <ul class="space-y-4 text-sm">
+                        <li>
+                            <a asp-controller="Store" asp-action="Category" asp-route-type="Figure"
+                               class="hover:text-brand-primary transition-colors">3D Фигури</a>
+                        </li>
+                        <li>
+                            <a asp-controller="Store" asp-action="Category" asp-route-type="FidgetToy"
+                               class="hover:text-brand-primary transition-colors">Играчки</a>
+                        </li>
+                        <li>
+                            <a asp-controller="Store" asp-action="Category" asp-route-type="Accessory"
+                               class="hover:text-brand-primary transition-colors">Аксесоари</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-bold mb-6 text-sm uppercase tracking-widest">Контакт</h4>
+                    <ul class="space-y-4 text-sm">
+                        <li class="flex items-center gap-3"><i class="bi bi-geo-alt text-brand-primary"></i> София, България</li>
+                        <li class="flex items-center gap-3"><i class="bi bi-envelope text-brand-primary"></i> 26.print.it@gmail.com</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-10 flex flex-col md:flex-row justify-between items-center gap-6">
+                <p class="text-xs">&copy; 2026 PrintIt 3D Shop. Всички права запазени.</p>
+                <div class="flex gap-8">
+                    <a href="https://www.instagram.com/print_it26/"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="text-slate-500 hover:text-white transition-colors">
+                        <i class="bi bi-instagram text-xl"></i>
+                    </a>
+                </div>
             </div>
         </div>
     </footer>

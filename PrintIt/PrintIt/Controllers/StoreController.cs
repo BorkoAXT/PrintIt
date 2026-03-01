@@ -81,6 +81,13 @@ public class StoreController : Controller
         return Json(new { success = true, isFavorite });
     }
 
+    [HttpGet("Store/Add")]
+    [Authorize(Roles = "Admin")]
+    public IActionResult Add3DPrint()
+    {
+        return View("~/Views/Store/Add3DPrint.cshtml", new PrintsViewModel());
+    }
+
     // --- ADMIN OPERATIONS ---
 
     [HttpPost("Store/Add")]
