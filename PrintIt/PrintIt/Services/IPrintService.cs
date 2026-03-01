@@ -14,6 +14,6 @@ namespace PrintIt.Services
         Task UpdateAsync(Print print);
         Task DeleteAsync(Print print);
 
-        void ClearCache();
+        void ClearCache(Guid? id = null);
     }
 }

@@ -9,5 +9,6 @@ namespace PrintIt.Services
         Task<bool> IsFavoriteAsync(Guid userId, Guid printId);
         Task<bool> ToggleAsync(Guid userId, Guid printId);
         Task RemoveAsync(UserWishlistItem item);
+        Task RemoveAllByPrintIdAsync(Guid printId);
     }
 }

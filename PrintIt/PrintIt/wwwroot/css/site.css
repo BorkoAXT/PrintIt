@@ -248,3 +248,6 @@ body {
     text-decoration: none;
     font-weight: 600;
 }
+.product-card {
+    contain: layout;
+}

@@ -12,5 +12,6 @@ namespace PrintIt.Services
         Task RemoveCartItemAsync(CartItem item);
         Task<bool> UpdateQuantityAsync(Guid userId, Guid printId, int quantity);
         Task<int> GetCartCountAsync(Guid userId);
+        Task RemoveAllByPrintIdAsync(Guid printId);
     }
 }

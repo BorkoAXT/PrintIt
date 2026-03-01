@@ -44,7 +44,9 @@ public class CartController : Controller
 
         await _cartService.AddToCartAsync(userId, id, selectedColors);
 
-        return Redirect(Request.Headers["Referer"].ToString() ?? "/");
+        var totalItems = await _cartService.GetCartCountAsync(userId);
+
+        return Json(new { success = true, total = totalItems });
     }
 
     [HttpPost]
@@ -68,6 +70,14 @@ public class CartController : Controller
         bool success = await _cartService.UpdateQuantityAsync(userId, id, quantity);
 
         return Json(new { success });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetCartCount()
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var count = await _cartService.GetCartCountAsync(userId);
+        return Json(count);
     }
 
     private bool TryGetUserId(out Guid userId)

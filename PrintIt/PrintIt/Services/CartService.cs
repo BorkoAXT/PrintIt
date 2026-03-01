@@ -4,7 +4,6 @@ using PrintIt.Data;
 using PrintIt.Enums;
 using PrintIt.Models;
 using PrintIt.Services;
-using PrintIt.Helpers;
 
 public class CartService : ICartService
 {
@@ -43,7 +42,6 @@ public class CartService : ICartService
         var incomingColors = selectedColors?.OrderBy(c => c).ToList() ?? new List<PrintColor>();
         var colorString = string.Join(',', incomingColors);
 
-        // Find existing item with same print and same colors
         var existingItem = cart.Items.FirstOrDefault(i =>
             i.PrintId == printId &&
             i.ColorString == colorString
@@ -123,15 +121,36 @@ public class CartService : ICartService
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2);
 
-            return await _context.ShopCarts
-                .Where(c => c.UserId == userId)
-                .SelectMany(c => c.Items)
+            return await _context.CartItems
+                .Where(i => i.ShopCart.UserId == userId)
                 .SumAsync(i => i.Quantity);
         });
+    }
+    public async Task RemoveAllByPrintIdAsync(Guid printId)
+    {
+        var affectedUserIds = await _context.CartItems
+            .Where(ci => ci.PrintId == printId)
+            .Select(ci => ci.ShopCart.UserId)
+            .Distinct()
+            .ToListAsync();
+
+        var items = await _context.CartItems.Where(ci => ci.PrintId == printId).ToListAsync();
+        if (items.Any())
+        {
+            _context.CartItems.RemoveRange(items);
+            await _context.SaveChangesAsync();
+
+            foreach (var userId in affectedUserIds)
+            {
+                InvalidateCache(userId);
+                _cache.Remove($"cart-items-{userId}");
+            }
+        }
     }
 
     private void InvalidateCache(Guid userId)
     {
         _cache.Remove($"cart-count-{userId}");
     }
+    
 }

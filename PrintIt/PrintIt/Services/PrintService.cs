@@ -84,16 +84,25 @@ namespace PrintIt.Services
 
         public async Task DeleteAsync(Print print)
         {
+            var id = print.Id;
             _context.Prints.Remove(print);
             await _context.SaveChangesAsync();
-            ClearCache();
+
+            ClearCache(id);
         }
 
-        public void ClearCache()
+        public void ClearCache(Guid? id = null)
         {
             _cache.Remove("Prints:All");
+
             foreach (var type in Enum.GetValues(typeof(PrintType)).Cast<PrintType>())
+            {
                 _cache.Remove($"Prints:Category:{type}");
+            }
+            if (id.HasValue)
+            {
+                _cache.Remove($"Prints:{id.Value}");
+            }
         }
     }
 }

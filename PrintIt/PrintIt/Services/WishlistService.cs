@@ -82,6 +82,27 @@ namespace PrintIt.Services
             });
         }
 
+        public async Task RemoveAllByPrintIdAsync(Guid printId)
+        {
+            var affectedUserIds = await _context.CartItems
+                .Where(ci => ci.PrintId == printId)
+                .Select(ci => ci.ShopCart.UserId)
+                .Distinct()
+                .ToListAsync();
+
+            var items = await _context.CartItems.Where(ci => ci.PrintId == printId).ToListAsync();
+            if (items.Any())
+            {
+                _context.CartItems.RemoveRange(items);
+                await _context.SaveChangesAsync();
+
+                foreach (var userId in affectedUserIds)
+                {
+                    ClearCache(userId);
+                }
+            }
+        }
+
         public void ClearCache(Guid userId)
         {
             _cache.Remove($"Wishlist:{userId}");
