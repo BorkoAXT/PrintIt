@@ -50,19 +50,6 @@ namespace PrintIt.Services
                 .Where(w => w.PrintId == printId)
                 .ToListAsync();
         }
-        public async Task AddToWishlistAsync(Guid userId, Guid printId)
-        {
-            var exists = await _context.UserWishlistItems
-                .AnyAsync(w => w.UserId == userId && w.PrintId == printId);
-
-            if (!exists)
-            {
-                _context.UserWishlistItems.Add(new UserWishlistItem(userId, printId));
-                
-
-                await _context.SaveChangesAsync();
-            }
-        }
 
         public async Task RemoveAsync(UserWishlistItem item)
         {

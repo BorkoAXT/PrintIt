@@ -45,6 +45,13 @@ public class OrderService : IOrderService
 
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();
+
+        _context.CartItems.RemoveRange(items);
+        await _context.SaveChangesAsync();
+
+        string cacheKey = $"cart-count-{userId}";
+        _cache.Remove(cacheKey);
+
         return order;
     }
 

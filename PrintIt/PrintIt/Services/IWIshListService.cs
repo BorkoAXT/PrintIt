@@ -10,5 +10,6 @@ namespace PrintIt.Services
         Task<bool> ToggleAsync(Guid userId, Guid printId);
         Task RemoveAsync(UserWishlistItem item);
         Task RemoveAllByPrintIdAsync(Guid printId);
+        void ClearCache(Guid userId);
     }
 }

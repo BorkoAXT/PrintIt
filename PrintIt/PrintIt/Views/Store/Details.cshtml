@@ -219,10 +219,10 @@
             }
         }
 
-                async function addToCart(event, form) {
+                        async function addToCart(event, form) {
             event.preventDefault();
 
-            // 1. Validation: Check if colors are selected
+            // --- 1️⃣ Validation: Check if colors are selected ---
             if (selectedColors.length === 0) {
                 window.dispatchEvent(new CustomEvent('notify', {
                     detail: { message: "Моля, изберете поне един цвят!" }
@@ -239,7 +239,7 @@
             const firstColorHex = hexCodes[0];
 
             try {
-                // Prepare the request
+                // --- 2️⃣ Prepare the request ---
                 const formData = new FormData(form);
                 const response = await fetch(form.action, {
                     method: 'POST',
@@ -249,66 +249,66 @@
                     }
                 });
 
-                if (response.ok) {
-                    // We fetch the fresh count from the server to ensure multi-tab sync
-                    const countResponse = await fetch('/Cart/GetCartCount');
-                    const newCount = await countResponse.json();
+                const result = await response.json();
 
-                    // Target the elements from your ViewComponent
-                    const badge = document.getElementById('cart-badge');
-                    const countText = document.getElementById('cart-count-text');
-                    const statusMsg = document.getElementById('cart-status-msg');
-
-                    // --- UI UPDATE: Update Navbar Count and Visibility ---
-                    if (countText && badge) {
-                        countText.innerText = newCount;
-
-                        if (newCount > 0) {
-                            badge.classList.remove('hidden');
-                            badge.classList.add('flex');
-                        }
-                    }
-
-                    // --- UI UPDATE: Show "+1 добавен!" toast ---
-                    if (statusMsg) {
-                        statusMsg.classList.remove('opacity-0', 'translate-y-[-5px]');
-                        statusMsg.classList.add('opacity-100', 'translate-y-0');
-
-                        setTimeout(() => {
-                            statusMsg.classList.replace('opacity-100', 'opacity-0');
-                            statusMsg.classList.replace('translate-y-0', 'translate-y-[-5px]');
-                        }, 2500);
-                    }
-
-                    // --- ANIMATION: Flying box effect ---
-                    if (typeof animateFlyToCart === "function") {
-                        const gradient = hexCodes.length > 1
-                            ? `linear-gradient(to right, ${hexCodes.join(',')})`
-                            : firstColorHex;
-                        animateFlyToCart(button, gradient);
-                    }
-
-                    // --- BUTTON FEEDBACK: Change color and text ---
-                    if (hexCodes.length > 1) {
-                        button.style.background = `linear-gradient(to right, ${hexCodes.join(',')})`;
-                    } else {
-                        button.style.background = 'none';
-                        button.style.backgroundColor = firstColorHex;
-                    }
-
-                    const isLight = selectedColors.includes('White') || selectedColors.includes('Yellow');
-                    button.style.color = isLight ? '#0f172a' : '#ffffff';
-                    button.innerHTML = '<i class="bi bi-check-all"></i> Добавено!';
-                    button.disabled = true;
-
-                } else {
-                    console.error("Server responded with error:", response.statusText);
+                // --- 3️⃣ Handle anonymous user redirect ---
+                if (!result.success && result.redirectUrl) {
+                    window.location.href = result.redirectUrl;
+                    return;
                 }
+
+                // --- 4️⃣ Update cart count ---
+                const newCount = result.total;
+                const badge = document.getElementById('cart-badge');
+                const countText = document.getElementById('cart-count-text');
+                const statusMsg = document.getElementById('cart-status-msg');
+
+                if (countText && badge) {
+                    countText.innerText = newCount;
+
+                    if (newCount > 0) {
+                        badge.classList.remove('hidden');
+                        badge.classList.add('flex');
+                    }
+                }
+
+                // --- 5️⃣ Show "+1 добавен!" toast ---
+                if (statusMsg) {
+                    statusMsg.classList.remove('opacity-0', 'translate-y-[-5px]');
+                    statusMsg.classList.add('opacity-100', 'translate-y-0');
+
+                    setTimeout(() => {
+                        statusMsg.classList.replace('opacity-100', 'opacity-0');
+                        statusMsg.classList.replace('translate-y-0', 'translate-y-[-5px]');
+                    }, 2500);
+                }
+
+                // --- 6️⃣ Animate flying box to cart ---
+                if (typeof animateFlyToCart === "function") {
+                    const gradient = hexCodes.length > 1
+                        ? `linear-gradient(to right, ${hexCodes.join(',')})`
+                        : firstColorHex;
+                    animateFlyToCart(button, gradient);
+                }
+
+                // --- 7️⃣ Button feedback ---
+                if (hexCodes.length > 1) {
+                    button.style.background = `linear-gradient(to right, ${hexCodes.join(',')})`;
+                } else {
+                    button.style.background = 'none';
+                    button.style.backgroundColor = firstColorHex;
+                }
+
+                const isLight = selectedColors.includes('White') || selectedColors.includes('Yellow');
+                button.style.color = isLight ? '#0f172a' : '#ffffff';
+                button.innerHTML = '<i class="bi bi-check-all"></i> Добавено!';
+                button.disabled = true;
+
             } catch (error) {
                 console.error("Cart Network Error:", error);
             }
 
-            // Reset button after a delay
+            // --- 8️⃣ Reset button after delay ---
             setTimeout(() => {
                 button.disabled = false;
                 button.innerHTML = originalContent;

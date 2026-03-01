@@ -125,27 +125,38 @@
 
                     @* Desktop Nav *@
                     <div class="hidden md:flex items-center space-x-8">
-                        <div class="relative group">
-                            <a class="nav-link text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:text-brand-primary dark:hover:text-white transition-colors flex items-center gap-1 py-4"
-                               asp-area="" asp-controller="Store" asp-action="Articles">
-                                <i class="bi bi-grid-3x3-gap"></i> Артикули
-                                <i class="bi bi-chevron-down text-[10px] transition-transform group-hover:rotate-180"></i>
-                            </a>
-                            <div class="absolute left-0 top-full w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl rounded-2xl py-2 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all z-50">
-                                <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-brand-primary dark:hover:text-white transition-colors"
-                                   asp-controller="Store" asp-action="Category" asp-route-type="@PrintType.Figure.ToString()">
-                                    <i class="bi bi-person-bounding-box text-brand-primary"></i> Фигурки
-                                </a>
-                                <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-brand-primary dark:hover:text-white transition-colors"
-                                   asp-controller="Store" asp-action="Category" asp-route-type="@PrintType.FidgetToy.ToString()">
-                                    <i class="bi bi-controller text-brand-primary"></i> Играчки
-                                </a>
-                                <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-brand-primary dark:hover:text-white transition-colors"
-                                   asp-controller="Store" asp-action="Category" asp-route-type="@PrintType.Accessory.ToString()">
-                                    <i class="bi bi-watch text-brand-primary"></i> Аксесоари
-                                </a>
-                            </div>
-                        </div>
+	                    <div class="relative group">
+		                    <a class="nav-link text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:text-brand-primary dark:hover:text-white transition-colors flex items-center gap-1 py-4"
+		                       asp-area="" asp-controller="Store" asp-action="Articles">
+			                    <i class="bi bi-grid-3x3-gap"></i> Артикули
+			                    <i class="bi bi-chevron-down text-[10px] transition-transform group-hover:rotate-180"></i>
+		                    </a>
+		                    <div class="absolute left-0 top-full w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl rounded-2xl py-2 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all z-50">
+			                    <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-brand-primary dark:hover:text-white transition-colors"
+			                       asp-controller="Store" asp-action="Category" asp-route-type="@PrintType.Figure.ToString()">
+				                    <i class="bi bi-person-bounding-box text-brand-primary"></i> Фигурки
+			                    </a>
+			                    <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-brand-primary dark:hover:text-white transition-colors"
+			                       asp-controller="Store" asp-action="Category" asp-route-type="@PrintType.FidgetToy.ToString()">
+				                    <i class="bi bi-controller text-brand-primary"></i> Играчки
+			                    </a>
+			                    <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-brand-primary dark:hover:text-white transition-colors"
+			                       asp-controller="Store" asp-action="Category" asp-route-type="@PrintType.Accessory.ToString()">
+				                    <i class="bi bi-watch text-brand-primary"></i> Аксесоари
+			                    </a>
+		                    </div>
+	                    </div>
+	                    <div class="hidden md:flex items-center space-x-8">
+		                    @* Existing Артикули Dropdown ... *@
+		                    <div class="relative group">
+			                    <a class="nav-link text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:text-brand-primary dark:hover:text-white transition-colors flex items-center gap-2 py-4"
+			                       asp-area="" asp-controller="Order" asp-action="Index">
+				                    <i class="bi bi-puzzle"></i> Поръчка
+			                    </a>
+		                    </div>
+    
+		                    @* The Rest of your existing Nav items... *@
+	                    </div>
                     </div>
                 </div>
 

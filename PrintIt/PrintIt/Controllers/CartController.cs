@@ -50,7 +50,14 @@ public class CartController : Controller
         if (!TryGetUserId(out Guid userId))
         {
             _logger.LogWarning("Anonymous user tried to add item {PrintId} to cart.", id);
-            return RedirectToPage("/Account/Login", new { area = "Identity" });
+
+            // Send JSON response to redirect the frontend to login
+            var returnUrl = Url.Action(nameof(AddToCart), "Cart", new { id });
+            return Json(new
+            {
+                success = false,
+                redirectUrl = $"/Identity/Account/Login?returnUrl={returnUrl}"
+            });
         }
 
         try
