@@ -1,13 +1,24 @@
 ﻿@{
 	Layout = "_Layout";
 }
-<div class="max-w-2xl mx-auto py-20 text-center">
-	<div class="h-24 w-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
-		<i class="bi bi-check-lg text-5xl"></i>
+<div class="min-h-[70vh] flex items-center justify-center transition-colors duration-500">
+	<div class="max-w-2xl mx-auto py-20 px-4 text-center">
+		@* Success Icon - Dark Mode Optimized *@
+		<div class="h-24 w-24 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-8 shadow-sm">
+			<i class="bi bi-check-lg text-5xl"></i>
+		</div>
+
+		@* Heading and Text *@
+		<h1 class="text-4xl font-black text-brand-dark dark:text-white mb-4 tracking-tight">
+			Успешно плащане!
+		</h1>
+		<p class="text-slate-500 dark:text-slate-400 mb-10 text-lg">
+			Благодарим Ви! Вашата поръчка е приета и започваме работа по нея.
+		</p>
+
+		@* Call to Action *@
+		<a href="/" class="inline-block bg-brand-primary text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-brand-primary/30 dark:shadow-none hover:scale-105 active:scale-95 transition-all">
+			Към началната страница
+		</a>
 	</div>
-	<h1 class="text-4xl font-black text-brand-dark mb-4">Успешно плащане!</h1>
-	<p class="text-slate-500 mb-10 text-lg">Благодарим Ви! Вашата поръчка е приета и започваме работа по нея.</p>
-	<a href="/" class="bg-brand-primary text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-brand-primary/30">
-		Към началната страница
-	</a>
 </div>

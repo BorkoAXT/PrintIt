@@ -8,27 +8,28 @@
     bool isFav = ViewBag.IsFavorite ?? false;
     var tokens = Antiforgery.GetAndStoreTokens(Context);
     var imageSrc = !string.IsNullOrEmpty(Model.FilePath)
-                   ? Model.FilePath
-                   : $"/images/{Model.Id}.png";
+                    ? Model.FilePath
+                    : $"/images/{Model.Id}.png";
 }
 
 <input type="hidden" id="af-token" value="@tokens.RequestToken" />
 
-<div class="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8">
+@* Background updated for Dark Mode compatibility *@
+<div class="min-h-screen bg-slate-50/50 dark:bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-500">
     <div class="max-w-6xl mx-auto">
         @* Breadcrumbs & Back Button *@
         <div class="mb-8 flex items-center justify-between">
             <div>
-                <nav class="flex text-sm font-medium text-slate-500 mb-2">
+                <nav class="flex text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">
                     <ol class="flex items-center space-x-2">
-                        <li><a asp-controller="Store" asp-action="Articles" class="hover:text-blue-600 transition-colors">Магазин</a></li>
-                        <li><i class="bi bi-chevron-right text-[10px] text-slate-300"></i></li>
-                        <li class="text-slate-900 font-bold">@Model.Name</li>
+                        <li><a asp-controller="Store" asp-action="Articles" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Магазин</a></li>
+                        <li><i class="bi bi-chevron-right text-[10px] text-slate-300 dark:text-slate-700"></i></li>
+                        <li class="text-slate-900 dark:text-white font-bold">@Model.Name</li>
                     </ol>
                 </nav>
-                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Детайли за продукта</h1>
+                <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Детайли за продукта</h1>
             </div>
-            <a asp-controller="Store" asp-action="Articles" class="group flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+            <a asp-controller="Store" asp-action="Articles" class="group flex items-center text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors">
                 <i class="bi bi-arrow-left mr-2 transition-transform group-hover:-translate-x-1"></i>
                 Назад към магазина
             </a>
@@ -37,27 +38,29 @@
         <div class="lg:grid lg:grid-cols-2 lg:gap-x-12 lg:items-start">
             @* Left Column: Image and Tech Specs *@
             <div class="flex flex-col">
-                <div class="w-full aspect-square rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-xl shadow-slate-200/50">
+                <div class="w-full aspect-square rounded-3xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors">
                     <img src="@imageSrc" alt="@Model.Name" class="w-full h-full object-center object-cover hover:scale-105 transition-transform duration-700">
                 </div>
 
                 <div class="mt-8 grid grid-cols-2 gap-4">
-                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-                        <div class="p-3 bg-blue-50 rounded-xl text-blue-600">
+                    @* Material Spec *@
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-4 transition-colors">
+                        <div class="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-600 dark:text-blue-400">
                             <i class="bi bi-layers-half text-xl"></i>
                         </div>
                         <div>
-                            <span class="block text-[10px] uppercase font-black text-slate-400 tracking-widest">Материал</span>
-                            <span class="text-slate-900 font-bold text-lg">@Model.MaterialType</span>
+                            <span class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 tracking-widest">Материал</span>
+                            <span class="text-slate-900 dark:text-white font-bold text-lg">@Model.MaterialType</span>
                         </div>
                     </div>
-                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-                        <div class="p-3 bg-orange-50 rounded-xl text-orange-600">
+                    @* Weight Spec *@
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-4 transition-colors">
+                        <div class="p-3 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-600 dark:text-orange-400">
                             <i class="bi bi-speedometer2 text-xl"></i>
                         </div>
                         <div>
-                            <span class="block text-[10px] uppercase font-black text-slate-400 tracking-widest">Тегло</span>
-                            <span class="text-slate-900 font-bold text-lg">@Model.Weight гр.</span>
+                            <span class="block text-[10px] uppercase font-black text-slate-400 dark:text-slate-500 tracking-widest">Тегло</span>
+                            <span class="text-slate-900 dark:text-white font-bold text-lg">@Model.Weight гр.</span>
                         </div>
                     </div>
                 </div>
@@ -65,17 +68,17 @@
 
             @* Right Column: Info & Selection *@
             <div class="mt-10 lg:mt-0 px-4">
-                <div class="border-b border-slate-100 pb-6">
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-slate-900 text-white mb-4 uppercase tracking-tighter">
+                <div class="border-b border-slate-100 dark:border-slate-800 pb-6">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 mb-4 uppercase tracking-tighter transition-colors">
                         @Model.PrintType.ToString()
                     </span>
-                    <h1 class="text-5xl font-black text-slate-900 tracking-tight mb-4">@Model.Name</h1>
-                    <p class="text-3xl font-light text-blue-600">€ @Model.Price.ToString("F2")</p>
+                    <h1 class="text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-4">@Model.Name</h1>
+                    <p class="text-3xl font-light text-blue-600 dark:text-blue-400">€ @Model.Price.ToString("F2")</p>
                 </div>
 
                 <div class="mt-8">
-                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">Описание</h3>
-                    <div class="text-slate-600 leading-relaxed text-lg">
+                    <h3 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">Описание</h3>
+                    <div class="text-slate-600 dark:text-slate-300 leading-relaxed text-lg">
                         @Model.Description
                     </div>
                 </div>
@@ -83,8 +86,8 @@
                 @* Color Selection Area *@
                 <div class="mt-10">
                     <div class="flex justify-between items-end mb-4">
-                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest">Избери цветове</h3>
-                        <span id="selection-count" class="text-[10px] font-black bg-blue-100 text-blue-600 px-2 py-1 rounded-md hidden">0 ИЗБРАНИ</span>
+                        <h3 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Избери цветове</h3>
+                        <span id="selection-count" class="text-[10px] font-black bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-md hidden">0 ИЗБРАНИ</span>
                     </div>
 
                     <div class="flex flex-wrap gap-4">
@@ -96,7 +99,7 @@
                                 PrintColor.Blue => "bg-blue-600",
                                 PrintColor.Green => "bg-emerald-500",
                                 PrintColor.Yellow => "bg-yellow-400",
-                                PrintColor.Black => "bg-slate-900",
+                                PrintColor.Black => "bg-slate-900 border-slate-700",
                                 PrintColor.White => "bg-white border-slate-200",
                                 PrintColor.Gray => "bg-slate-400",
                                 PrintColor.Orange => "bg-orange-500",
@@ -109,10 +112,10 @@
                             <div class="group relative">
                                 <button type="button"
                                         onclick="toggleColor(this, '@color')"
-                                        class="color-swatch @colorClass w-12 h-12 rounded-xl shadow-md border-2 border-transparent hover:scale-110 transition-all cursor-pointer ring-offset-2 flex items-center justify-center">
+                                        class="color-swatch @colorClass w-12 h-12 rounded-xl shadow-md border-2 border-transparent hover:scale-110 transition-all cursor-pointer ring-offset-2 dark:ring-offset-slate-950 flex items-center justify-center">
                                     <i class="bi bi-check-lg text-white text-xl check-icon hidden"></i>
                                 </button>
-                                <span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-slate-400 uppercase opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                <span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                                     @color
                                 </span>
                             </div>
@@ -126,7 +129,7 @@
                          x-transition
                          class="mt-6"
                          style="display: none;">
-                        <div class="bg-red-50 text-red-700 px-4 py-3 rounded-xl border border-red-100 flex items-center gap-3">
+                        <div class="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl border border-red-100 dark:border-red-900/30 flex items-center gap-3">
                             <i class="bi bi-exclamation-circle-fill"></i>
                             <span class="font-bold text-sm" x-text="message"></span>
                         </div>
@@ -135,21 +138,21 @@
 
                 @* Action Buttons *@
                 <div class="mt-10 space-y-4">
-	                <form asp-controller="Cart" asp-action="AddToCart" method="post" id="add-to-cart-form" onsubmit="addToCart(event, this)">
+                    <form asp-controller="Cart" asp-action="AddToCart" method="post" id="add-to-cart-form" onsubmit="addToCart(event, this)">
                         @Html.AntiForgeryToken()
-		                <input type="hidden" name="id" value="@Model.Id"/>
-		                <div id="selected-colors-container"></div>
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div id="selected-colors-container"></div>
 
-		                <button type="submit" id="add-btn" class="w-full bg-blue-600 text-white py-5 rounded-2xl text-xl font-black uppercase tracking-widest shadow-xl shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3">
-			                <i class="bi bi-cart-plus-fill"></i>
-			                Добави в количката
-		                </button>
-	                </form>
+                        <button type="submit" id="add-btn" class="w-full bg-blue-600 text-white py-5 rounded-2xl text-xl font-black uppercase tracking-widest shadow-xl shadow-blue-200 dark:shadow-none hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+                            <i class="bi bi-cart-plus-fill"></i>
+                            Добави в количката
+                        </button>
+                    </form>
 
                     <button type="button"
                             onclick="handleWishlistClick('@Model.Id')"
                             id="wishlist-btn"
-                            class="w-full py-4 rounded-2xl text-sm font-bold uppercase tracking-widest shadow-sm active:scale-[0.99] transition-all flex items-center justify-center gap-2 group border-2 @(isFav ? "bg-pink-50 border-pink-100 text-pink-600" : "bg-white border-slate-200 text-slate-900 hover:bg-slate-50")">
+                            class="w-full py-4 rounded-2xl text-sm font-bold uppercase tracking-widest shadow-sm active:scale-[0.99] transition-all flex items-center justify-center gap-2 group border-2 @(isFav ? "bg-pink-50 dark:bg-pink-900/20 border-pink-100 dark:border-pink-900/30 text-pink-600 dark:text-pink-400" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800")">
                         <i id="wishlist-icon" class="bi @(isFav ? "bi-heart-fill" : "bi-heart") transition-colors"></i>
                         <span id="wishlist-text">@(isFav ? "В любими" : "Добави в любими")</span>
                     </button>
@@ -162,6 +165,7 @@
 @section Scripts {
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
+        // JS logic remains the same, but note the "isLight" check for checkmark colors
         const colorHexMap = {
             'Red': '#ef4444', 'Blue': '#2563eb', 'Green': '#10b981', 'Yellow': '#facc15',
             'Black': '#0f172a', 'White': '#ffffff', 'Gray': '#94a3b8', 'Orange': '#f97316',
@@ -183,7 +187,6 @@
                 element.classList.add('ring-4', 'ring-blue-500', 'border-white');
                 checkIcon.classList.remove('hidden');
 
-                // Adjust checkmark color for visibility on light backgrounds
                 if(colorName === 'White' || colorName === 'Yellow') {
                     checkIcon.classList.replace('text-white', 'text-slate-900');
                 } else {
@@ -216,7 +219,7 @@
             }
         }
 
-               async function addToCart(event, form) {
+        async function addToCart(event, form) {
             event.preventDefault();
 
             if (selectedColors.length === 0) {
@@ -241,20 +244,13 @@
                 });
 
                 if (response.ok) {
-                    // 1. Update cart count instantly
-                    const badge = document.getElementById('cart-badge');
                     const countText = document.getElementById('cart-count-text');
                     const statusMsg = document.getElementById('cart-status-msg');
 
-                    if (countText && badge && statusMsg) {
+                    if (countText && statusMsg) {
                         let currentCount = parseInt(countText.innerText) || 0;
-                        currentCount += 1;
-                        countText.innerText = currentCount;
+                        countText.innerText = currentCount + 1;
 
-                        badge.classList.remove('hidden');
-                        badge.classList.add('flex');
-
-                        // Show "+1 добавен!" message
                         statusMsg.classList.remove('opacity-0', 'translate-y-[-5px]');
                         statusMsg.classList.add('opacity-100', 'translate-y-0');
 
@@ -264,18 +260,11 @@
                         }, 2500);
                     }
 
-                    // 2. Flying orb animation
                     if (typeof animateFlyToCart === "function") {
-                        if (hexCodes.length > 1) {
-                            // Create a gradient orb if multiple colors
-                            const gradient = `linear-gradient(to right, ${hexCodes.join(',')})`;
-                            animateFlyToCart(button, gradient);
-                        } else {
-                            animateFlyToCart(button, firstColorHex);
-                        }
+                        const gradient = hexCodes.length > 1 ? `linear-gradient(to right, ${hexCodes.join(',')})` : firstColorHex;
+                        animateFlyToCart(button, gradient);
                     }
 
-                    // 3. Button color change
                     if (hexCodes.length > 1) {
                         button.style.background = `linear-gradient(to right, ${hexCodes.join(',')})`;
                     } else {
@@ -292,7 +281,6 @@
                 console.error("Cart Error:", error);
             }
 
-            // 4. Reset button after 1.5s
             setTimeout(() => {
                 button.disabled = false;
                 button.innerHTML = originalContent;
@@ -321,13 +309,13 @@
                 const data = await response.json();
                 if (data.success) {
                     if (data.isFavorite) {
-                        btn.classList.replace('bg-white', 'bg-pink-50');
-                        btn.classList.replace('text-slate-900', 'text-pink-600');
+                        btn.classList.add('bg-pink-50', 'dark:bg-pink-900/20', 'text-pink-600', 'dark:text-pink-400', 'border-pink-100', 'dark:border-pink-900/30');
+                        btn.classList.remove('bg-white', 'dark:bg-slate-900', 'text-slate-900', 'dark:text-white', 'border-slate-200', 'dark:border-slate-800');
                         icon.classList.replace('bi-heart', 'bi-heart-fill');
                         text.textContent = "В любими";
                     } else {
-                        btn.classList.replace('bg-pink-50', 'bg-white');
-                        btn.classList.replace('text-pink-600', 'text-slate-900');
+                        btn.classList.remove('bg-pink-50', 'dark:bg-pink-900/20', 'text-pink-600', 'dark:text-pink-400', 'border-pink-100', 'dark:border-pink-900/30');
+                        btn.classList.add('bg-white', 'dark:bg-slate-900', 'text-slate-900', 'dark:text-white', 'border-slate-200', 'dark:border-slate-800');
                         icon.classList.replace('bi-heart-fill', 'bi-heart');
                         text.textContent = "Добави в любими";
                     }

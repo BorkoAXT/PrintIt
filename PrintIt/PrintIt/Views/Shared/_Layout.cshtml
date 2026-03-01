@@ -2,7 +2,7 @@
 @using PrintIt.Enums
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,6 +14,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
@@ -31,6 +32,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
     <style>
+        /* Smooth color transitions for the whole page */
+        body {
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
         .nav-link {
             position: relative;
             padding: 0.5rem 0;
@@ -51,22 +57,23 @@
                 width: 100%;
             }
 
+        /* The Blueprint Grid */
         .blueprint-bg {
-            background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px);
-            background-size: 20px 20px;
+            background-image: radial-gradient(#e2e8f0 0.8px, transparent 0.8px);
+            background-size: 24px 24px;
+            background-color: #f8fafc;
+        }
+        /* True Dark Grid */
+        .dark .blueprint-bg {
+            background-image: radial-gradient(#1e293b 0.8px, transparent 0.8px);
+            background-color: #020617; /* Deepest Black */
         }
 
-        /* Animation for the flying box */
         .flyer-item {
             position: fixed;
             z-index: 9999;
             pointer-events: none;
             transition: all 0.8s cubic-bezier(0.42, 0, 0.58, 1);
-        }
-
-        /* Cart Pop/Bounce Effect */
-        .cart-pop {
-            animation: cartPop 0.4s ease-out;
         }
 
         @@keyframes cartPop {
@@ -83,46 +90,60 @@
                 transform: scale(1);
             }
         }
-    </style>
-</head>
-<body class="bg-brand-surface text-brand-dark font-sans antialiased min-h-screen flex flex-col">
 
-    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200">
+        .cart-pop {
+            animation: cartPop 0.4s ease-out;
+        }
+    </style>
+
+    @* Prevent Flash: This script runs before the page renders *@
+    <script>
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+</head>
+<body class="bg-brand-surface dark:bg-[#020617] text-slate-900 dark:text-slate-100 font-sans antialiased min-h-screen flex flex-col">
+
+    <header class="sticky top-0 z-50 bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 transition-colors duration-500">
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-20">
 
-                @* Logo and Navigation *@
+                @* Logo *@
                 <div class="flex items-center gap-10">
                     <a class="flex items-center gap-3 group" asp-area="" asp-controller="Home" asp-action="Index">
                         <div class="relative">
-                            <div class="bg-brand-dark p-2 rounded-lg transition-transform group-hover:scale-105">
+                            <div class="bg-brand-dark dark:bg-brand-primary p-2 rounded-lg transition-transform group-hover:scale-105">
                                 <i class="bi bi-box-seam text-white text-xl"></i>
                             </div>
-                            <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-brand-primary rounded-full border-2 border-white"></div>
+                            <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-brand-primary dark:bg-brand-accent rounded-full border-2 border-white dark:border-[#0f172a]"></div>
                         </div>
                         <div class="flex flex-col leading-none">
-                            <span class="text-xl font-extrabold tracking-tight">PRINTIT<span class="text-brand-primary">3D</span></span>
+                            <span class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white transition-colors">PRINTIT<span class="text-brand-primary">3D</span></span>
                             <span class="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400">Lab & Articles</span>
                         </div>
                     </a>
 
-                    <div class="flex items-center space-x-8">
+                    @* Desktop Nav *@
+                    <div class="hidden md:flex items-center space-x-8">
                         <div class="relative group">
-                            <a class="nav-link text-sm font-bold uppercase tracking-wider text-slate-600 hover:text-brand-primary transition-colors flex items-center gap-1 py-4"
+                            <a class="nav-link text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:text-brand-primary dark:hover:text-white transition-colors flex items-center gap-1 py-4"
                                asp-area="" asp-controller="Store" asp-action="Articles">
                                 <i class="bi bi-grid-3x3-gap"></i> Артикули
                                 <i class="bi bi-chevron-down text-[10px] transition-transform group-hover:rotate-180"></i>
                             </a>
-                            <div class="absolute left-0 top-full w-48 bg-white border border-slate-100 shadow-xl rounded-2xl py-2 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all z-50">
-                                <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-brand-primary transition-colors"
+                            <div class="absolute left-0 top-full w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl rounded-2xl py-2 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all z-50">
+                                <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-brand-primary dark:hover:text-white transition-colors"
                                    asp-controller="Store" asp-action="Category" asp-route-type="@PrintType.Figure.ToString()">
                                     <i class="bi bi-person-bounding-box text-brand-primary"></i> Фигурки
                                 </a>
-                                <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-brand-primary transition-colors"
+                                <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-brand-primary dark:hover:text-white transition-colors"
                                    asp-controller="Store" asp-action="Category" asp-route-type="@PrintType.FidgetToy.ToString()">
                                     <i class="bi bi-controller text-brand-primary"></i> Играчки
                                 </a>
-                                <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-brand-primary transition-colors"
+                                <a class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-brand-primary dark:hover:text-white transition-colors"
                                    asp-controller="Store" asp-action="Category" asp-route-type="@PrintType.Accessory.ToString()">
                                     <i class="bi bi-watch text-brand-primary"></i> Аксесоари
                                 </a>
@@ -131,33 +152,62 @@
                     </div>
                 </div>
 
-                @* Right side: Login and Cart *@
+                @* Right side *@
                 <div class="flex items-center space-x-6">
                     <partial name="_LoginPartial" />
 
                     @if (User.Identity?.IsAuthenticated ?? false)
                     {
-	                    @await Component.InvokeAsync("CartCount")
+                        @await Component.InvokeAsync("CartCount")
                     }
                 </div>
             </div>
         </nav>
     </header>
 
-    <main role="main" class="flex-grow blueprint-bg">
+    @* Floating Theme Toggle Button *@
+    <div class="fixed bottom-8 right-8 z-50">
+        <button id="theme-toggle" class="relative w-14 h-14 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-2xl border border-slate-200 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all duration-300 group overflow-hidden">
+            <i id="theme-toggle-light-icon" class="bi bi-sun-fill text-2xl text-brand-accent transition-all duration-500 absolute rotate-0 scale-100 dark:-rotate-90 dark:scale-0"></i>
+            <i id="theme-toggle-dark-icon" class="bi bi-moon-stars-fill text-2xl text-brand-primary transition-all duration-500 absolute rotate-90 scale-0 dark:rotate-0 dark:scale-100"></i>
+        </button>
+    </div>
+
+    <main role="main" class="flex-grow blueprint-bg transition-colors duration-500">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div class="bg-white/50 backdrop-blur-sm rounded-3xl p-4 md:p-8 shadow-sm border border-slate-200/60 min-h-[60vh]">
+            <div class="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md rounded-3xl p-6 md:p-10 shadow-2xl border border-slate-200/60 dark:border-slate-800/60 min-h-[70vh] transition-all duration-500">
                 @RenderBody()
             </div>
         </div>
     </main>
 
-    <footer class="bg-slate-950 text-slate-300 pt-10 pb-10 text-center">
-        <p class="text-xs">&copy; 2026 PrintIt 3D. Всички права запазени.</p>
+    <footer class="bg-slate-950 text-slate-400 py-12 text-center border-t border-slate-900">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex flex-col items-center gap-4">
+                <div class="flex items-center gap-2 opacity-50 grayscale">
+                    <i class="bi bi-box-seam"></i>
+                    <span class="font-bold tracking-tighter">PRINTIT 3D</span>
+                </div>
+                <p class="text-xs tracking-widest uppercase">© 2026 Всички права запазени</p>
+            </div>
+        </div>
     </footer>
 
-    @* Global Scripts *@
+    @* Core Scripts *@
     <script>
+        // --- Dark Mode Logic ---
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        themeToggleBtn.addEventListener('click', function() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('color-theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('color-theme', 'dark');
+            }
+        });
+
+        // --- Cart Animation (Fixed for new theme) ---
         function animateFlyToCart(startElement, customColor = '#3b82f6', newTotal = null, loopCount = 1) {
             const cartIcon = document.getElementById('cart-icon-target');
             const badge = document.getElementById('cart-badge');
@@ -165,15 +215,12 @@
 
             if (!cartIcon || !startElement) return;
 
-            // 1. INSTANT UI UPDATE
-            // This ensures the user doesn't have to wait for the animation or a page switch
             if (newTotal !== null && countText && badge) {
                 countText.innerText = newTotal;
                 badge.classList.remove('hidden');
                 badge.classList.add('flex');
             }
 
-            // 2. VISUAL FEEDBACK (FLYING BOXES)
             for (let i = 0; i < loopCount; i++) {
                 setTimeout(() => {
                     const flyer = document.createElement('div');

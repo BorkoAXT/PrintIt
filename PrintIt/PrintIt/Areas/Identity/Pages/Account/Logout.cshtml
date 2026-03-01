@@ -1,45 +1,47 @@
 ﻿@page
 @model LogoutModel
 @{
-    ViewData["Title"] = "Log out";
+    ViewData["Title"] = "Изход";
 }
 
-<div class="flex flex-col items-center justify-center py-20">
-    <div class="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-200 p-8 md:p-10 text-center">
+<div class="flex flex-col items-center justify-center py-20 min-h-[70vh] transition-colors duration-500">
+    <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-10 text-center transition-colors">
 
         @if (User.Identity?.IsAuthenticated ?? false)
         {
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-amber-50 rounded-full mb-6">
-                <i class="bi bi-door-open text-brand-accent text-4xl"></i>
+            @* Confirmation State *@
+            <div class="inline-flex items-center justify-center w-24 h-24 bg-amber-50 dark:bg-amber-500/10 rounded-[2rem] mb-8 transition-colors">
+                <i class="bi bi-door-open text-amber-500 dark:text-amber-400 text-5xl"></i>
             </div>
 
-            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight mb-2">@ViewData["Title"]</h1>
-            <p class="text-slate-500 mb-8">Are you sure you want to sign out of your session?</p>
+            <h1 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Сигурни ли сте?</h1>
+            <p class="text-slate-500 dark:text-slate-400 mb-10 font-medium">Ще излезете от текущата си сесия в 3D Lab.</p>
 
-            <form class="flex flex-col gap-3" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
+            <form class="flex flex-col gap-4" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
                 <button type="submit"
-                        class="w-full py-4 bg-brand-dark hover:bg-red-600 text-white font-bold rounded-xl shadow-lg transition-all active:scale-[0.98]">
-                    Confirm Log Out
+                        class="w-full py-5 bg-slate-900 dark:bg-red-600 hover:bg-red-600 dark:hover:bg-red-500 text-white font-black rounded-2xl shadow-xl shadow-red-900/10 transition-all active:scale-[0.98]">
+                    Потвърди излизането
                 </button>
 
                 <a href="javascript:history.back()"
-                   class="w-full py-3 text-sm font-bold text-slate-500 hover:text-brand-dark transition-colors">
-                    Stay Signed In
+                   class="w-full py-4 text-sm font-black text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors uppercase tracking-widest">
+                    Остани в профила
                 </a>
             </form>
         }
         else
         {
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-green-50 rounded-full mb-6">
-                <i class="bi bi-check2-circle text-brand-green text-4xl"></i>
+            @* Success State *@
+            <div class="inline-flex items-center justify-center w-24 h-24 bg-emerald-50 dark:bg-emerald-500/10 rounded-[2rem] mb-8 transition-colors">
+                <i class="bi bi-check2-circle text-emerald-500 dark:text-emerald-400 text-5xl"></i>
             </div>
 
-            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight mb-2">Signed Out</h1>
-            <p class="text-slate-500 mb-8">You have successfully logged out of the application.</p>
+            <h1 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Излязохте успешно</h1>
+            <p class="text-slate-500 dark:text-slate-400 mb-10 font-medium">Благодарим ви, че ни посетихте! Очакваме ви отново.</p>
 
             <a asp-area="" asp-controller="Home" asp-action="Index"
-               class="inline-block px-8 py-3 bg-brand-primary text-white font-bold rounded-xl shadow-lg hover:bg-brand-dark transition-all">
-                Return to Home
+               class="inline-block px-12 py-5 bg-blue-600 dark:bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-600/20 hover:bg-blue-500 hover:scale-105 active:scale-95 transition-all">
+                Към началната страница
             </a>
         }
     </div>
