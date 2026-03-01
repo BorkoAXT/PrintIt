@@ -25,13 +25,13 @@ jobs:
         run: dotnet build PrintIt/PrintIt.sln --configuration Release
 
       - name: Publish solution
-        run: dotnet publish PrintIt/PrintIt.sln -c Release -o ${{ github.workspace }}/myapp
+        run: dotnet publish PrintIt/PrintIt.sln -c Release -o ${{ github.workspace }}/publish
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: dotnet-app
-          path: ${{ github.workspace }}/myapp
+          path: ${{ github.workspace }}/publish
 
   deploy:
     runs-on: windows-latest
@@ -45,6 +45,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dotnet-app
+          path: ${{ github.workspace }}/publish
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -58,7 +59,7 @@ jobs:
         with:
           app-name: 'print-it3d'
           slot-name: 'Production'
-          package: ${{ github.workspace }}/dotnet-app
+          package: ${{ github.workspace }}/publish
           app-settings: |
             Stripe__SecretKey=${{ secrets.STRIPE_SECRETKEY }}
             Stripe__PublishableKey=${{ secrets.STRIPE_PUBLISHABLEKEY }}
