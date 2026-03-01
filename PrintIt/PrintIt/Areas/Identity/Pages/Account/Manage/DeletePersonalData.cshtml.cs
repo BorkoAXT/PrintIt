@@ -8,21 +8,25 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Logging;
 using PrintIt.Models;
 
 namespace PrintIt.Areas.Identity.Pages.Account.Manage
 {
-    public class SetPasswordModel : PageModel
+    public class DeletePersonalDataModel : PageModel
     {
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
+        private readonly ILogger<DeletePersonalDataModel> _logger;
 
-        public SetPasswordModel(
+        public DeletePersonalDataModel(
             UserManager<User> userManager,
-            SignInManager<User> signInManager)
+            SignInManager<User> signInManager,
+            ILogger<DeletePersonalDataModel> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _logger = logger;
         }
 
         /// <summary>
@@ -36,13 +40,6 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        [TempData]
-        public string StatusMessage { get; set; }
-
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public class InputModel
         {
             /// <summary>
@@ -50,22 +47,17 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
             [Required]
-            [StringLength(100, ErrorMessage = "Паролата трябва да бъде поне {2} и максимум {1} символа.", MinimumLength = 6)]
             [DataType(DataType.Password)]
-            [Display(Name = "Нова парола")]
-            public string NewPassword { get; set; }
-
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [DataType(DataType.Password)]
-            [Display(Name = "Потвърдете новата парола")]
-            [Compare("NewPassword", ErrorMessage = "Новата парола и потвърждението на паролата не съвпадат.")]
-            public string ConfirmPassword { get; set; }
+            public string Password { get; set; }
         }
 
-        public async Task<IActionResult> OnGetAsync()
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public bool RequirePassword { get; set; }
+
+        public async Task<IActionResult> OnGet()
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
@@ -73,43 +65,40 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
                 return NotFound($"Не може да се зареди потребител с ID '{_userManager.GetUserId(User)}'.");
             }
 
-            var hasPassword = await _userManager.HasPasswordAsync(user);
-
-            if (hasPassword)
-            {
-                return RedirectToPage("./ChangePassword");
-            }
-
+            RequirePassword = await _userManager.HasPasswordAsync(user);
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
-
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
                 return NotFound($"Не може да се зареди потребител с ID '{_userManager.GetUserId(User)}'.");
             }
 
-            var addPasswordResult = await _userManager.AddPasswordAsync(user, Input.NewPassword);
-            if (!addPasswordResult.Succeeded)
+            RequirePassword = await _userManager.HasPasswordAsync(user);
+            if (RequirePassword)
             {
-                foreach (var error in addPasswordResult.Errors)
+                if (!await _userManager.CheckPasswordAsync(user, Input.Password))
                 {
-                    ModelState.AddModelError(string.Empty, error.Description);
+                    ModelState.AddModelError(string.Empty, "Невалидна парола.");
+                    return Page();
                 }
-                return Page();
             }
 
-            await _signInManager.RefreshSignInAsync(user);
-            StatusMessage = "Вашата парола е запазена.";
+            var result = await _userManager.DeleteAsync(user);
+            var userId = await _userManager.GetUserIdAsync(user);
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException($"Възникна неочаквана грешка при изтриването на потребителя.");
+            }
 
-            return RedirectToPage();
+            await _signInManager.SignOutAsync();
+
+            _logger.LogInformation("Потребител с ID '{UserId}' изтри себе си.", userId);
+
+            return Redirect("~/");
         }
     }
 }
