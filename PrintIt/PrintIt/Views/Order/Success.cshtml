@@ -22,3 +22,30 @@
 		</a>
 	</div>
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        fetch('/Cart/GetCartCount')
+            .then(res => res.json())
+            .then(count => {
+                const badge = document.getElementById('cart-badge');
+                const countText = document.getElementById('cart-count-text');
+
+                // 1. Update the text if it exists
+                if (countText) {
+                    countText.innerText = count;
+                }
+
+                // 2. Toggle visibility on the parent badge container
+                if (badge) {
+                    if (count > 0) {
+                        badge.classList.remove('hidden');
+                        badge.classList.add('flex');
+                    } else {
+                        badge.classList.remove('flex');
+                        badge.classList.add('hidden');
+                    }
+                }
+            })
+            .catch(err => console.error("Error refreshing cart count:", err));
+    });
+</script>

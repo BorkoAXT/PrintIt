@@ -6,33 +6,41 @@ using System.Security.Claims;
 
 public class CartController : Controller
 {
+    private readonly ILogger<CartController> _logger;
     private readonly ICartService _cartService;
 
-    public CartController(ICartService cartService)
+    public CartController(ILogger<CartController> logger, ICartService cartService)
     {
+        _logger = logger;
         _cartService = cartService;
     }
 
     [HttpGet("/Cart")]
     public async Task<IActionResult> Cart()
     {
-        ShopCart viewModel;
-
-        if (User.Identity?.IsAuthenticated == true)
+        try
         {
-            string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (Guid.TryParse(userIdString, out Guid userId))
+            if (User.Identity?.IsAuthenticated == true)
             {
-                viewModel = new ShopCart(userId)
+                if (TryGetUserId(out Guid userId))
                 {
-                    Items = await _cartService.GetUserCartAsync(userId)
-                };
-                return View(viewModel);
-            }
-        }
+                    _logger.LogInformation("Fetching shopping cart for User ID: {UserId}", userId);
 
-        viewModel = new ShopCart(Guid.Empty); 
-        return View(viewModel);
+                    var items = await _cartService.GetUserCartAsync(userId);
+                    var viewModel = new ShopCart(userId) { Items = items };
+
+                    return View(viewModel);
+                }
+            }
+
+            _logger.LogWarning("Unauthenticated or invalid user attempted to access cart view.");
+            return View(new ShopCart(Guid.Empty));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load shopping cart view.");
+            return View("Error");
+        }
     }
 
     [HttpPost]
@@ -40,23 +48,41 @@ public class CartController : Controller
     public async Task<IActionResult> AddToCart(Guid id, List<PrintColor> selectedColors)
     {
         if (!TryGetUserId(out Guid userId))
+        {
+            _logger.LogWarning("Anonymous user tried to add item {PrintId} to cart.", id);
             return RedirectToPage("/Account/Login", new { area = "Identity" });
+        }
 
-        await _cartService.AddToCartAsync(userId, id, selectedColors);
+        try
+        {
+            await _cartService.AddToCartAsync(userId, id, selectedColors);
+            var totalItems = await _cartService.GetCartCountAsync(userId);
 
-        var totalItems = await _cartService.GetCartCountAsync(userId);
-
-        return Json(new { success = true, total = totalItems });
+            _logger.LogInformation("User {UserId} added Print {PrintId} to cart. New total: {Count}", userId, id, totalItems);
+            return Json(new { success = true, total = totalItems });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding item {PrintId} to cart for User {UserId}", id, userId);
+            return Json(new { success = false, message = "Could not add item to cart." });
+        }
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RemoveFromCart(Guid id)
     {
-        if (!TryGetUserId(out Guid userId))
-            return RedirectToAction(nameof(Cart));
+        if (!TryGetUserId(out Guid userId)) return RedirectToAction(nameof(Cart));
 
-        await _cartService.RemoveFromCartAsync(userId, id);
+        try
+        {
+            await _cartService.RemoveFromCartAsync(userId, id);
+            _logger.LogInformation("User {UserId} removed cart item {CartItemId}", userId, id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing item {CartItemId} for User {UserId}", id, userId);
+        }
 
         return RedirectToAction(nameof(Cart));
     }
@@ -64,28 +90,38 @@ public class CartController : Controller
     [HttpPost]
     public async Task<IActionResult> UpdateQuantity(Guid id, int quantity)
     {
-        if (!TryGetUserId(out Guid userId))
+        if (!TryGetUserId(out Guid userId)) return Json(new { success = false });
+
+        try
+        {
+            bool success = await _cartService.UpdateQuantityAsync(userId, id, quantity);
+
+            if (success)
+                _logger.LogDebug("User {UserId} updated item {CartItemId} quantity to {Qty}", userId, id, quantity);
+            else
+                _logger.LogWarning("User {UserId} failed to update quantity for item {CartItemId}", userId, id);
+
+            return Json(new { success });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception while updating quantity for item {CartItemId}", id);
             return Json(new { success = false });
-
-        bool success = await _cartService.UpdateQuantityAsync(userId, id, quantity);
-
-        return Json(new { success });
+        }
     }
 
     [HttpGet]
     public async Task<IActionResult> GetCartCount()
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        if (!TryGetUserId(out Guid userId)) return Json(0);
+
         var count = await _cartService.GetCartCountAsync(userId);
         return Json(count);
     }
 
     private bool TryGetUserId(out Guid userId)
     {
-        userId = Guid.Empty;
-
         string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
         return Guid.TryParse(userIdString, out userId);
     }
 }

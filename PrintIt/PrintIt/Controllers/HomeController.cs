@@ -7,10 +7,12 @@ using System.Security.Claims;
 
 public class HomeController : Controller
 {
+    private readonly ILogger<HomeController> _logger;
     private readonly IWishlistService _wishlistService;
 
-    public HomeController(IWishlistService wishlistService)
+    public HomeController(ILogger<HomeController> logger, IWishlistService wishlistService)
     {
+        _logger = logger;
         _wishlistService = wishlistService;
     }
 
@@ -18,12 +20,25 @@ public class HomeController : Controller
     {
         List<UserWishlistItem> wishlistPrints = new();
 
-        if (TryGetUserId(out Guid userId))
+        try
         {
-            wishlistPrints = await _wishlistService.GetWishlistForUserAsync(userId);
-        }
+            if (TryGetUserId(out Guid userId))
+            {
+                _logger.LogInformation("Loading landing page for User: {UserId}", userId);
+                wishlistPrints = await _wishlistService.GetWishlistForUserAsync(userId);
+            }
+            else
+            {
+                _logger.LogDebug("Loading landing page for anonymous guest.");
+            }
 
-        return View(wishlistPrints);
+            return View(wishlistPrints);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while loading the Index page.");
+            return RedirectToAction(nameof(Error));
+        }
     }
 
     public IActionResult Privacy()
@@ -34,18 +49,19 @@ public class HomeController : Controller
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
+        var requestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+
+        _logger.LogWarning("Error page triggered. Request ID: {RequestId}", requestId);
+
         return View(new ErrorViewModel
         {
-            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+            RequestId = requestId
         });
     }
 
     private bool TryGetUserId(out Guid userId)
     {
-        userId = Guid.Empty;
-
         string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
         return Guid.TryParse(userIdString, out userId);
     }
 }

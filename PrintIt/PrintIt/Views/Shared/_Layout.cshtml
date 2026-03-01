@@ -32,7 +32,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
     <style>
-        /* Smooth color transitions for the whole page */
         body {
             transition: background-color 0.4s ease, color 0.4s ease;
         }
@@ -57,16 +56,15 @@
                 width: 100%;
             }
 
-        /* The Blueprint Grid */
         .blueprint-bg {
             background-image: radial-gradient(#e2e8f0 0.8px, transparent 0.8px);
             background-size: 24px 24px;
             background-color: #f8fafc;
         }
-        /* True Dark Grid */
+
         .dark .blueprint-bg {
             background-image: radial-gradient(#1e293b 0.8px, transparent 0.8px);
-            background-color: #020617; /* Deepest Black */
+            background-color: #020617;
         }
 
         .flyer-item {
@@ -96,7 +94,6 @@
         }
     </style>
 
-    @* Prevent Flash: This script runs before the page renders *@
     <script>
         if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
@@ -207,7 +204,32 @@
             }
         });
 
-        // --- Cart Animation (Fixed for new theme) ---
+        // --- GLOBAL CART REFRESH ---
+        // Call this from anywhere to keep the navbar count in sync with the DB
+        window.refreshCartUI = async function() {
+            try {
+                const response = await fetch('/Cart/GetCartCount');
+                const count = await response.json();
+
+                const badge = document.getElementById('cart-badge');
+                const countText = document.getElementById('cart-count-text');
+
+                if (badge && countText) {
+                    countText.innerText = count;
+                    if (count > 0) {
+                        badge.classList.remove('hidden');
+                        badge.classList.add('flex');
+                    } else {
+                        badge.classList.remove('flex');
+                        badge.classList.add('hidden');
+                    }
+                }
+            } catch (err) {
+                console.error("Cart Sync Error:", err);
+            }
+        };
+
+        // --- Cart Animation ---
         function animateFlyToCart(startElement, customColor = '#3b82f6', newTotal = null, loopCount = 1) {
             const cartIcon = document.getElementById('cart-icon-target');
             const badge = document.getElementById('cart-badge');
@@ -215,6 +237,7 @@
 
             if (!cartIcon || !startElement) return;
 
+            // Update UI immediately if total is provided
             if (newTotal !== null && countText && badge) {
                 countText.innerText = newTotal;
                 badge.classList.remove('hidden');

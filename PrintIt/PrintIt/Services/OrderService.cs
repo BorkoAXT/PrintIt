@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using PrintIt.Data;
 using PrintIt.Models;
 using PrintIt.Services;
@@ -7,11 +8,12 @@ public class OrderService : IOrderService
 {
     private readonly ApplicationDbContext _context;
     private readonly ICartService _cartService;
-
-    public OrderService(ApplicationDbContext context, ICartService cartService)
+    private readonly IMemoryCache _cache;
+    public OrderService(ApplicationDbContext context, ICartService cartService, IMemoryCache cache)
     {
         _context = context;
         _cartService = cartService;
+        _cache = cache;
     }
 
     public async Task<List<CartItem>> GetCartItemsAsync(Guid userId)
@@ -56,6 +58,9 @@ public class OrderService : IOrderService
         {
             _context.CartItems.RemoveRange(cart.Items);
             await _context.SaveChangesAsync();
+
+            string key = $"cart-count-{userId}";
+            _cache.Remove(key);
         }
     }
 }
