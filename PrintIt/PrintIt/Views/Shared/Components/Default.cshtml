@@ -1,0 +1,31 @@
+﻿@model int
+
+<div class="relative flex items-center">
+	@* The link is now just a wrapper with no forced background *@
+	<a asp-controller="Cart" asp-action="Cart" id="cart-nav-link"
+	   class="relative p-2 text-slate-700 dark:text-slate-300 hover:text-brand-primary transition-all duration-300 group">
+        
+		@* The Icon: Standalone and larger *@
+		<i id="cart-icon-target" class="bi bi-cart3 text-2xl transition-transform group-hover:scale-110"></i>
+
+		@* The Badge: Positioned specifically on the icon's shoulder *@
+		<span id="cart-badge" 
+		      class="absolute top-1 right-0.5 h-5 w-5 @(Model > 0 ? "flex" : "hidden") items-center justify-center">
+            
+			@* Pulse effect for attention *@
+			<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary opacity-75"></span>
+            
+			@* The actual count *@
+			<span id="cart-count-text" 
+			      class="relative inline-flex rounded-full h-5 w-5 bg-brand-primary text-[10px] text-white items-center justify-center font-bold border-2 border-white dark:border-[#0f172a]">
+				@Model
+			</span>
+		</span>
+
+		@* The "+1" toast message floating above the icon *@
+		<span id="cart-status-msg"
+		      class="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-black text-brand-primary opacity-0 transition-all duration-300 translate-y-[5px] pointer-events-none">
+			+1 ДОБАВЕН!
+		</span>
+	</a>
+</div>

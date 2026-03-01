@@ -1,53 +1,67 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using PrintIt.Data;
 using PrintIt.Models;
+using PrintIt.Services;
 using PrintIt.ViewModels;
 using System.Diagnostics;
 using System.Security.Claims;
-using ErrorViewModel = PrintIt.ViewModels.ErrorViewModel;
 
-namespace PrintIt.Controllers
+public class HomeController : Controller
 {
-    public class HomeController : BaseController
+    private readonly ILogger<HomeController> _logger;
+    private readonly IWishlistService _wishlistService;
+
+    public HomeController(ILogger<HomeController> logger, IWishlistService wishlistService)
     {
-        public HomeController(ApplicationDbContext context) : base(context)
-        {
-        }
+        _logger = logger;
+        _wishlistService = wishlistService;
+    }
 
-        public async Task<IActionResult> Index()
-        {
-            List<Print> wishlistPrints = new List<Print>();
+    public async Task<IActionResult> Index()
+    {
+        List<UserWishlistItem> wishlistPrints = new();
 
-            // Check if user is logged in
-            if (User.Identity?.IsAuthenticated == true)
+        try
+        {
+            if (TryGetUserId(out Guid userId))
             {
-                // Take user ID from claims
-                string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                if (Guid.TryParse(userIdString, out Guid userId))
-                {
-                    // Get wishlist items for the user
-                    wishlistPrints = await _context.Set<UserWishlistItem>()
-                        .Where(w => w.UserId == userId)
-                        .Include(w => w.Print)
-                        .Select(w => w.Print)
-                        .ToListAsync();
-                }
+                _logger.LogInformation("Loading landing page for User: {UserId}", userId);
+                wishlistPrints = await _wishlistService.GetWishlistForUserAsync(userId);
+            }
+            else
+            {
+                _logger.LogDebug("Loading landing page for anonymous guest.");
             }
 
-            ViewData["WishlistItems"] = wishlistPrints;
-
-            return View();
+            return View(wishlistPrints);
         }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        catch (Exception ex)
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            _logger.LogError(ex, "An error occurred while loading the Index page.");
+            return RedirectToAction(nameof(Error));
         }
+    }
+
+    public IActionResult Privacy()
+    {
+        return View();
+    }
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        var requestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+
+        _logger.LogWarning("Error page triggered. Request ID: {RequestId}", requestId);
+
+        return View(new ErrorViewModel
+        {
+            RequestId = requestId
+        });
+    }
+
+    private bool TryGetUserId(out Guid userId)
+    {
+        string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(userIdString, out userId);
     }
 }

@@ -1,4 +1,5 @@
-﻿using PrintIt.Enums;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using PrintIt.Enums;
 
 namespace PrintIt.Models
 {
@@ -37,7 +38,22 @@ namespace PrintIt.Models
         /// </summary>
         public int Quantity { get; set; }
 
-        public List<PrintColor> Colours { get; set; } = new List<PrintColor>();
+        public string ColorString { get; set; } = "";
+
+        [NotMapped]
+        public List<PrintColor> Colours
+        {
+            get => string.IsNullOrEmpty(ColorString)
+                ? new List<PrintColor>()
+                : ColorString.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => Enum.Parse<PrintColor>(s))
+                    .ToList();
+            set => ColorString = value != null
+                ? string.Join(',', value.OrderBy(c => c))
+                : "";
+        }
+
+        public String UniqueKey { get; set; } = string.Empty;
 
         public CartItem(Guid shopCartId, Guid printId)
         {

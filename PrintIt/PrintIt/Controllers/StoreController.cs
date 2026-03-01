@@ -1,303 +1,227 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using PrintIt.Data;
 using PrintIt.Enums;
 using PrintIt.Models;
+using PrintIt.Services;
 using PrintIt.ViewModels;
 using System.Security.Claims;
 
-namespace PrintIt.Controllers
+public class StoreController : Controller
 {
-    public class StoreController : BaseController
+    private readonly ILogger<StoreController> _logger;
+    private readonly IPrintService _printService;
+    private readonly IFileService _fileService;
+    private readonly IWishlistService _wishlistService;
+    private readonly ICartService _cartService;
+
+    public StoreController(
+        ILogger<StoreController> logger,
+        IPrintService printService,
+        IFileService fileService,
+        IWishlistService wishlistService,
+        ICartService cartService)
     {
-        private readonly IWebHostEnvironment _webHostEnvironment;
+        _logger = logger;
+        _printService = printService;
+        _fileService = fileService;
+        _wishlistService = wishlistService;
+        _cartService = cartService;
+    }
 
-        public StoreController(IWebHostEnvironment webHostEnvironment, ApplicationDbContext context) : base(context)
+    [HttpGet("Store")]
+    public async Task<IActionResult> Articles(StoreSearchViewModel filter)
+    {
+        _logger.LogDebug("Accessing Store Articles. Filter applied: {IsFiltered}", Request.Query.Keys.Any());
+
+        bool hasFilters = Request.Query.Keys.Any(k => k != "handler");
+
+        if (hasFilters)
         {
-            _webHostEnvironment = webHostEnvironment;
+            filter.Results = await _printService.SearchAsync(filter);
+            ViewData["IsFiltering"] = true;
+        }
+        else
+        {
+            var allItems = await _printService.GetAllAsync();
+            filter.RecentFigures = allItems.Where(p => p.PrintType == PrintType.Figure).Take(4).ToList();
+            filter.RecentFidgetToys = allItems.Where(p => p.PrintType == PrintType.FidgetToy).Take(4).ToList();
+            filter.RecentAccessories = allItems.Where(p => p.PrintType == PrintType.Accessory).Take(4).ToList();
+            ViewData["IsFiltering"] = false;
         }
 
-        // GET: store
-        [HttpGet("Store")]
-        public async Task<IActionResult> Articles(StoreSearchViewModel filter)
+        return View(filter);
+    }
+
+    public async Task<IActionResult> Details(Guid id)
+    {
+        var print = await _printService.GetByIdAsync(id);
+        if (print == null)
         {
-            // Check if there are any query parameters (excluding the handler parameter used by Razor Pages)
-            // Use this to determine if we should apply filters or show the default view with sections
-            bool hasActiveFilters = Request.Query.Keys.Any(k => k != "handler");
-
-            var query = _context.Prints.AsQueryable();
-
-            if (hasActiveFilters)
-            {
-                // Apply filters based on the provided search criteria
-                if (!string.IsNullOrEmpty(filter.SearchString))
-                {
-                    query = query.Where(p => p.Name.Contains(filter.SearchString) || p.Description.Contains(filter.SearchString));
-                }
-
-                if (filter.SelectedType.HasValue)
-                {
-                    query = query.Where(p => p.PrintType == filter.SelectedType.Value);
-                }
-
-                if (filter.SelectedMaterial.HasValue)
-                {
-                    query = query.Where(p => p.MaterialType == filter.SelectedMaterial.Value);
-                }
-
-                if (filter.MinPrice.HasValue)
-                {
-                    query = query.Where(p => p.Price >= filter.MinPrice.Value);
-                }
-
-                if (filter.MaxPrice.HasValue)
-                {
-                    query = query.Where(p => p.Price <= filter.MaxPrice.Value);
-                }
-
-                filter.Results = await query.OrderByDescending(p => p.AddedOn).ToListAsync();
-                ViewData["IsFiltering"] = true;
-            }
-            else
-            {
-                // Default view with recent items in each category
-                var allItems = await _context.Prints.OrderByDescending(p => p.AddedOn).ToListAsync();
-
-                filter.RecentFigures = allItems.Where(i => i.PrintType == PrintType.Figure).Take(4).ToList();
-                filter.RecentFidgetToys = allItems.Where(i => i.PrintType == PrintType.FidgetToy).Take(4).ToList();
-                filter.RecentAccessories = allItems.Where(i => i.PrintType == PrintType.Accessory).Take(4).ToList();
-
-                ViewData["IsFiltering"] = false;
-            }
-
-            return View(filter);
+            _logger.LogWarning("Product Details requested for non-existent ID: {PrintId}", id);
+            return NotFound();
         }
 
-        // GET: store/category/{type}
-        [HttpGet("Store/Category/{type}")]
-        public async Task<IActionResult> Category(string type)
+        bool isFavorite = false;
+        if (TryGetUserId(out Guid userId))
+            isFavorite = await _wishlistService.IsFavoriteAsync(userId, id);
+
+        ViewBag.IsFavorite = isFavorite;
+        return View(print);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleWishlist(Guid id)
+    {
+        if (!TryGetUserId(out Guid userId)) return Json(new { success = false, message = "Unauthorized" });
+
+        bool isFavorite = await _wishlistService.ToggleAsync(userId, id);
+        _logger.LogInformation("User {UserId} toggled wishlist for Print {PrintId}. New State: {IsFavorite}", userId, id, isFavorite);
+
+        return Json(new { success = true, isFavorite });
+    }
+
+    // --- ADMIN OPERATIONS ---
+
+    [HttpPost("Store/Add")]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Add3DPrint(PrintsViewModel model)
+    {
+        if (!ModelState.IsValid) return View(model);
+
+        try
         {
-            // TryParse the string into PrintType enum, ignore case
-            if (!Enum.TryParse(type, true, out PrintType categoryEnum))
+            string filePath = "/images/placeholder-figure.jpg";
+            if (model.File != null)
             {
-                return RedirectToAction("Articles"); // If parsing fails, redirect to the main articles page
-            }
-
-            var items = await _context.Prints
-                .Where(p => p.PrintType == categoryEnum)
-                .OrderByDescending(p => p.AddedOn)
-                .ToListAsync();
-
-            ViewData["CategoryName"] = categoryEnum switch
-            {
-                PrintType.Figure => "Фигурки",
-                PrintType.FidgetToy => "Играчки",
-                PrintType.Accessory => "Аксесоари",
-                _ => "Артикули"
-            };
-
-            return View(items);
-        }
-
-        // GET: store/details/{id}
-        public async Task<IActionResult> Details(Guid id)
-        {
-            var print = await _context.Prints.FindAsync(id);
-            if (print == null) return NotFound();
-
-            bool isFavorite = false;
-
-            if (User.Identity?.IsAuthenticated == true)
-            {
-                string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (Guid.TryParse(userIdString, out Guid userId))
-                {
-                    // Check if the current print is in the user's wishlist
-                    isFavorite = await _context.Set<UserWishlistItem>()
-                        .AnyAsync(w => w.PrintId == id && w.UserId == userId);
-                }
+                filePath = await _fileService.UploadImageAsync(model.File, model.PrintType);
+                _logger.LogInformation("Admin uploaded new image: {FilePath}", filePath);
             }
 
-            // Use ViewBag to pass the isFavorite value to the view
-            ViewBag.IsFavorite = isFavorite;
+            var print = new Print(
+                model.Name, model.Description, model.MaterialType, model.Weight,
+                model.Price, filePath, model.PrintType, model.PrintColors
+            );
 
-            return View(print);
+            await _printService.AddAsync(print);
+            _logger.LogInformation("Admin created new product: {PrintName} ({PrintId})", print.Name, print.Id);
+
+            return RedirectToAction(nameof(Articles));
         }
-
-        // GET: store/add
-        [HttpGet("Store/Add")]
-        [Authorize(Roles = "Admin")]
-        public IActionResult Add3DPrint()
+        catch (Exception ex)
         {
-            return View("~/Views/Store/Add3DPrint.cshtml", new PrintsViewModel());
-        }
-
-        // POST: store/add
-        [HttpPost("Store/Add")]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Add3DPrint(PrintsViewModel model)
-        {
-            if (ModelState.IsValid)
-            {
-                string filePath = "/images/placeholder-figure.jpg"; // Default placeholder image
-
-                if (model.File != null && model.File.Length > 0)
-                {
-                    filePath = await UploadImage(model.File, model.PrintType);
-                }
-
-                var newPrint = new Print(model.Name, model.Description, model.MaterialType,
-                    model.Weight, model.Price, filePath,
-                    model.PrintType, model.PrintColors);
-
-                _context.Prints.Add(newPrint);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Articles));
-            }
-            return View("~/Views/Store/Add3DPrint.cshtml", model);
-        }
-
-        // GET: store/edit/{id}
-        [HttpGet("Store/Edit/{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(Guid id)
-        {
-            var print = await _context.Prints.FindAsync(id);
-            if (print == null) return NotFound();
-
-            var viewModel = new PrintsViewModel
-            {
-                Id = print.Id,
-                Name = print.Name,
-                Description = print.Description,
-                Price = print.Price,
-                Weight = print.Weight,
-                MaterialType = print.MaterialType,
-                PrintType = print.PrintType,
-                PrintColors = print.PrintColors ?? new List<Enums.PrintColor>(),
-                FilePath = print.FilePath
-            };
-
-            return View("~/Views/Store/Edit.cshtml", viewModel);
-        }
-
-        // POST: store/edit/{id}
-        [HttpPost("Store/Edit/{id}")]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(Guid id, PrintsViewModel model)
-        {
-            if (id != model.Id) return BadRequest();
-
-            ModelState.Remove("File");
-
-            if (ModelState.IsValid)
-            {
-                var existingPrint = await _context.Prints.FindAsync(id);
-                if (existingPrint == null) return NotFound();
-
-                existingPrint.Name = model.Name;
-                existingPrint.Description = model.Description;
-                existingPrint.Price = model.Price;
-                existingPrint.Weight = model.Weight;
-                existingPrint.MaterialType = model.MaterialType;
-                existingPrint.PrintType = model.PrintType;
-                existingPrint.PrintColors = model.PrintColors;
-
-                if (model.File != null && model.File.Length > 0)
-                {
-                    DeleteOldImage(existingPrint.FilePath);
-                    existingPrint.FilePath = await UploadImage(model.File, model.PrintType);
-                }
-
-                _context.Update(existingPrint);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Articles));
-            }
+            _logger.LogError(ex, "Failed to create new 3D print: {PrintName}", model.Name);
             return View(model);
         }
+    }
 
-        // POST: store/delete/{id}
-        [HttpPost]
-        [Authorize(Roles = "Admin")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(Guid id)
+    [HttpGet("Store/Category/{type}")]
+    public async Task<IActionResult> Category(string type)
+    {
+        if (string.IsNullOrEmpty(type))
         {
-            var print = await _context.Prints.FindAsync(id);
-            if (print != null)
-            {
-                DeleteOldImage(print.FilePath);
-                _context.Prints.Remove(print);
-                await _context.SaveChangesAsync();
-            }
+            _logger.LogWarning("Category accessed without a type parameter.");
             return RedirectToAction(nameof(Articles));
         }
 
-        // Helper методи за снимките
-        private async Task<string> UploadImage(IFormFile file, PrintType printType)
+        // Try parsing the string to the Enum safely
+        if (!Enum.TryParse(type, true, out PrintType categoryEnum))
         {
-            string categoryFolder = string.Empty;
-            switch (printType)
-            {
-                case PrintType.Accessory: categoryFolder = "Accessories"; break;
-                case PrintType.FidgetToy: categoryFolder = "FidgetToys"; break;
-                case PrintType.Figure: categoryFolder = "Figures"; break;
-            };
-
-            string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", categoryFolder);
-
-            if (!Directory.Exists(uploadsFolder))
-                Directory.CreateDirectory(uploadsFolder);
-
-            string uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
-            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(fileStream);
-            }
-            return $"/images/{categoryFolder}/{uniqueFileName}";
+            _logger.LogWarning("Invalid category type requested: {Type}", type);
+            return RedirectToAction(nameof(Articles));
         }
 
-        private void DeleteOldImage(string? filePath)
+        var items = await _printService.GetByCategoryAsync(categoryEnum);
+
+        ViewData["CategoryName"] = categoryEnum switch
         {
-            if (string.IsNullOrEmpty(filePath) || filePath.Contains("placeholder")) return;
+            PrintType.Figure => "Фигурки",
+            PrintType.FidgetToy => "Играчки",
+            PrintType.Accessory => "Аксесоари",
+            _ => "Артикули"
+        };
 
-            string fullPath = Path.Combine(_webHostEnvironment.WebRootPath, filePath.TrimStart('/'));
-            if (System.IO.File.Exists(fullPath))
-            {
-                System.IO.File.Delete(fullPath);
-            }
-        }
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ToggleWishlist(Guid id)
+        return View(items);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Edit(PrintsViewModel model)
+    {
+        if (model.Id == Guid.Empty) return BadRequest();
+        if (!ModelState.IsValid) return View(model);
+
+        try
         {
-            if (User.Identity?.IsAuthenticated != true)
+            var existing = await _printService.GetByIdAsync(model.Id);
+            if (existing == null) return NotFound();
+
+            _logger.LogInformation("Admin is updating product: {PrintId}", model.Id);
+
+            existing.Name = model.Name;
+            existing.Description = model.Description;
+            existing.Price = model.Price;
+            existing.Weight = model.Weight;
+            existing.MaterialType = model.MaterialType;
+            existing.PrintType = model.PrintType;
+            existing.PrintColors = model.PrintColors;
+
+            if (model.File != null)
             {
-                return Json(new { success = false, message = "Unauthorized" });
+                _logger.LogDebug("Replacing image for Print {PrintId}", model.Id);
+                await _fileService.DeleteImageAsync(existing.FilePath);
+                existing.FilePath = await _fileService.UploadImageAsync(model.File, model.PrintType);
             }
 
-            string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userIdString, out Guid userId)) return Json(new { success = false });
-
-            var wishlistItem = await _context.Set<UserWishlistItem>()
-                .FirstOrDefaultAsync(w => w.PrintId == id && w.UserId == userId);
-
-            if (wishlistItem != null)
-            {
-                _context.Set<UserWishlistItem>().Remove(wishlistItem);
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, isFavorite = false });
-            }
-            else
-            {
-                _context.Set<UserWishlistItem>().Add(new UserWishlistItem (userId, id));
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, isFavorite = true });
-            }
+            await _printService.UpdateAsync(existing);
+            return RedirectToAction(nameof(Articles));
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating product {PrintId}", model.Id);
+            return View(model);
+        }
+    }
+
+    [HttpPost("Store/Delete/{id}")]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var print = await _printService.GetByIdAsync(id);
+        if (print == null) return NotFound();
+
+        try
+        {
+            _logger.LogWarning("Admin initiated deletion of product: {PrintName} ({PrintId})", print.Name, id);
+
+            await _cartService.RemoveAllByPrintIdAsync(id);
+            await _wishlistService.RemoveAllByPrintIdAsync(id);
+
+            if (!string.IsNullOrEmpty(print.FilePath) && !print.FilePath.Contains("placeholder"))
+            {
+                await _fileService.DeleteImageAsync(print.FilePath);
+            }
+
+            await _printService.DeleteAsync(print);
+            _printService.ClearCache();
+
+            _logger.LogInformation("Product {PrintId} successfully deleted and cache cleared.", id);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical(ex, "CRITICAL: Database cleanup failed during deletion of Print {PrintId}!", id);
+            return StatusCode(500, "Database cleanup failed.");
+        }
+    }
+
+    private bool TryGetUserId(out Guid userId)
+    {
+        userId = Guid.Empty;
+        string? str = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(str, out userId);
     }
 }

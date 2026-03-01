@@ -12,8 +12,8 @@ using PrintIt.Data;
 namespace PrintIt.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260223165944_PrintColours")]
-    partial class PrintColours
+    [Migration("20260228152729_FixedColumnError")]
+    partial class FixedColumnError
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -162,9 +162,10 @@ namespace PrintIt.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.PrimitiveCollection<string>("Colours")
+                    b.Property<string>("ColorString")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<Guid>("PrintId")
                         .HasColumnType("uniqueidentifier");
@@ -180,6 +181,9 @@ namespace PrintIt.Data.Migrations
                     b.HasIndex("PrintId");
 
                     b.HasIndex("ShopCartId", "PrintId")
+                        .IsUnique();
+
+                    b.HasIndex("ShopCartId", "PrintId", "ColorString")
                         .IsUnique();
 
                     b.ToTable("CartItems");
@@ -227,6 +231,11 @@ namespace PrintIt.Data.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AddedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
 
                     b.Property<string>("Description")
                         .IsRequired()

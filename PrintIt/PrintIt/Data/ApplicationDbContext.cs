@@ -48,10 +48,6 @@ namespace PrintIt.Data
                 .HasForeignKey(ci => ci.PrintId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<CartItem>()
-                .HasIndex(ci => new { ci.ShopCartId, ci.PrintId })
-                .IsUnique();
-
             // UserWishlistItem (N–M)
             builder.Entity<UserWishlistItem>()
                 .HasKey(w => new { w.UserId, w.PrintId });
@@ -70,34 +66,16 @@ namespace PrintIt.Data
 
             builder.Entity<CartItem>(entity =>
             {
-                // Update the Index to include Colours to prevent the SqlException
-                entity.HasIndex(ci => new { ci.ShopCartId, ci.PrintId, ci.Colours })
+                entity.HasIndex(e => new { e.ShopCartId, e.PrintId, e.ColorString })
                     .IsUnique();
 
-                // Add the ValueComparer to fix the Validation[10620] error
-                entity.Property(e => e.Colours)
-                    .HasConversion(
-                        v => string.Join(',', v.Select(c => (int)c)),
-                        v => v.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                            .Select(s => (PrintColor)int.Parse(s))
-                            .ToList(),
-                        new ValueComparer<List<PrintColor>>(
-                            (c1, c2) => c1.SequenceEqual(c2),
-                            c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
-                            c => c.ToList()
-                        )
-                    );
+                entity.Property(e => e.ColorString).HasMaxLength(200).IsRequired();
             });
 
             // Print configuration
             builder.Entity<Print>()
                 .Property(p => p.Price)
                 .HasPrecision(18, 4);
-
-
-            builder.Entity<CartItem>()
-                .HasIndex(ci => new { ci.ShopCartId, ci.PrintId })
-                .IsUnique();
 
             builder.Entity<Print>()
                 .Property(p => p.PrintColors)
@@ -111,6 +89,10 @@ namespace PrintIt.Data
                         c => c.ToList()
                     )
                 );
+            builder.Entity<Print>()
+                .Property(p => p.AddedOn)
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("GETUTCDATE()");
         }
     }
 }

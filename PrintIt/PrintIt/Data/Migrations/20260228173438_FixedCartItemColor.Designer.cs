@@ -12,8 +12,8 @@ using PrintIt.Data;
 namespace PrintIt.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260223170845_UpdateCartItemIndex")]
-    partial class UpdateCartItemIndex
+    [Migration("20260228173438_FixedCartItemColor")]
+    partial class FixedCartItemColor
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -162,9 +162,10 @@ namespace PrintIt.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Colours")
+                    b.Property<string>("ColorString")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<Guid>("PrintId")
                         .HasColumnType("uniqueidentifier");
@@ -175,6 +176,10 @@ namespace PrintIt.Data.Migrations
                     b.Property<Guid>("ShopCartId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("UniqueKey")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PrintId");
@@ -182,7 +187,7 @@ namespace PrintIt.Data.Migrations
                     b.HasIndex("ShopCartId", "PrintId")
                         .IsUnique();
 
-                    b.HasIndex("ShopCartId", "PrintId", "Colours")
+                    b.HasIndex("ShopCartId", "PrintId", "ColorString")
                         .IsUnique();
 
                     b.ToTable("CartItems");
@@ -230,6 +235,11 @@ namespace PrintIt.Data.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AddedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
 
                     b.Property<string>("Description")
                         .IsRequired()

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Google;
 using PrintIt.Data;
 using PrintIt.Models;
+using PrintIt.Services;
 
 namespace PrintIt
 {
@@ -12,12 +13,21 @@ namespace PrintIt
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // =========================
+            // Database
+            // =========================
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-            builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(connectionString));
+            if (!builder.Environment.IsEnvironment("Testing"))
+            {
+                builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                    options.UseSqlServer(connectionString));
+            }
 
+            // =========================
+            // Identity
+            // =========================
             builder.Services
                 .AddIdentity<User, IdentityRole<Guid>>(options =>
                 {
@@ -32,34 +42,38 @@ namespace PrintIt
                 .AddDefaultTokenProviders()
                 .AddDefaultUI();
 
+            // =========================
+            // External authentication
+            // =========================
             builder.Services.AddAuthentication()
                 .AddGoogle(options =>
                 {
                     options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
                     options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
-
                     options.Scope.Add("profile");
                     options.Scope.Add("email");
                 });
 
+            // =========================
+            // MVC + Razor Pages
+            // =========================
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
             builder.Services.AddRazorPages();
             builder.Services.AddControllersWithViews();
 
+            // =========================
+            // Cookie + Session
+            // =========================
             builder.Services.ConfigureApplicationCookie(options =>
             {
-                // Important: Allows the cookie to be preserved during redirects
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-
-                // Optional: Point to your login page explicitly
                 options.LoginPath = "/Identity/Account/Login";
                 options.AccessDeniedPath = "/Identity/Account/AccessDenied";
             });
 
-            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddMemoryCache();
             builder.Services.AddSession(options =>
             {
                 options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -67,8 +81,21 @@ namespace PrintIt
                 options.Cookie.IsEssential = true;
             });
 
+            // =========================
+            // Services (DI)
+            // =========================
+            builder.Services.AddScoped<IPrintService, PrintService>();
+            builder.Services.AddScoped<IWishlistService, WishlistService>();
+            builder.Services.AddScoped<IFileService, FileService>();
+            builder.Services.AddScoped<IPaymentService, PaymentService>();
+            builder.Services.AddScoped<ICartService, CartService>();
+            builder.Services.AddScoped<IOrderService, OrderService>();
+
             var app = builder.Build();
 
+            // =========================
+            // Middleware
+            // =========================
             if (app.Environment.IsDevelopment())
             {
                 app.UseMigrationsEndPoint();
@@ -80,22 +107,24 @@ namespace PrintIt
             }
 
             app.UseHttpsRedirection();
-            app.UseRouting();
+            app.UseStaticFiles();
 
+            app.UseRouting();
             app.UseSession();
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.MapStaticAssets();
-
+            // =========================
+            // Routes
+            // =========================
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}")
-                .WithStaticAssets();
+                pattern: "{controller=Home}/{action=Index}/{id?}");
+            app.MapRazorPages();
 
-            app.MapRazorPages().WithStaticAssets();
-
-            // Seed roles + admin
+            // =========================
+            // Seed Roles + Admin
+            // =========================
             using (var scope = app.Services.CreateScope())
             {
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
@@ -104,13 +133,10 @@ namespace PrintIt
                 foreach (var role in roles)
                 {
                     if (!await roleManager.RoleExistsAsync(role))
-                    {
                         await roleManager.CreateAsync(new IdentityRole<Guid>(role));
-                    }
                 }
 
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-
                 var adminEmail = "admin@gmail.com";
                 var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
@@ -131,3 +157,4 @@ namespace PrintIt
         }
     }
 }
+public partial class Program { }

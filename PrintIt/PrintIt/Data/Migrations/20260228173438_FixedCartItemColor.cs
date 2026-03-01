@@ -5,24 +5,24 @@
 namespace PrintIt.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class PrintColours : Migration
+    public partial class FixedCartItemColor : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "Colours",
+                name: "UniqueKey",
                 table: "CartItems",
                 type: "nvarchar(max)",
                 nullable: false,
-                defaultValue: "[]");
+                defaultValue: "");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Colours",
+                name: "UniqueKey",
                 table: "CartItems");
         }
     }
