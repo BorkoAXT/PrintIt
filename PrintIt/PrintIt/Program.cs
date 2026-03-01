@@ -19,11 +19,10 @@ namespace PrintIt
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-            if (!builder.Environment.IsEnvironment("Testing"))
-            {
-                builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseSqlServer(connectionString));
-            }
+            
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(connectionString));
+            
 
             // =========================
             // Identity
@@ -45,14 +44,25 @@ namespace PrintIt
             // =========================
             // External authentication
             // =========================
-            builder.Services.AddAuthentication()
-                .AddGoogle(options =>
-                {
-                    options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
-                    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
-                    options.Scope.Add("profile");
-                    options.Scope.Add("email");
-                });
+            var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+            var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+
+            if (!string.IsNullOrWhiteSpace(googleClientId) &&
+                !string.IsNullOrWhiteSpace(googleClientSecret))
+            {
+                builder.Services.AddAuthentication()
+                    .AddGoogle(options =>
+                    {
+                        options.ClientId = googleClientId;
+                        options.ClientSecret = googleClientSecret;
+                        options.Scope.Add("profile");
+                        options.Scope.Add("email");
+                    });
+            }
+            else
+            {
+                builder.Services.AddAuthentication();
+            }
 
             // =========================
             // MVC + Razor Pages
@@ -92,6 +102,9 @@ namespace PrintIt
             builder.Services.AddScoped<IOrderService, OrderService>();
 
             var app = builder.Build();
+
+            // TEMP: enable detailed startup errors in non-Development as well
+            app.UseDeveloperExceptionPage();
 
             // =========================
             // Middleware
@@ -151,6 +164,12 @@ namespace PrintIt
                     await userManager.CreateAsync(adminUser, "Admin123");
                     await userManager.AddToRoleAsync(adminUser, "Admin");
                 }
+            }
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                await db.Database.MigrateAsync();
             }
 
             app.Run();
