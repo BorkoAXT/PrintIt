@@ -23,11 +23,11 @@ jobs:
 
       # Build solution
       - name: Build solution
-        run: dotnet build PrintIt/PrintIt/PrintIt.sln --configuration Release
+        run: dotnet build PrintIt/PrintIt.sln --configuration Release
 
       # Publish solution
       - name: Publish solution
-        run: dotnet publish PrintIt/PrintIt/PrintIt.sln -c Release -o ${{ github.workspace }}/myapp
+        run: dotnet publish PrintIt/PrintIt.sln -c Release -o ${{ github.workspace }}/myapp
 
       # Upload artifact for deployment
       - name: Upload artifact
