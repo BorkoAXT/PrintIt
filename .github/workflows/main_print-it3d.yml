@@ -13,20 +13,24 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      # Checkout the repository
+      - uses: actions/checkout@v4
 
-      - name: Set up .NET
+      # Set up .NET 9 SDK
+      - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.x'
 
-      - name: Build solution
-        run: dotnet build PrintIt/PrintIt.sln --configuration Release
+      # Build the project
+      - name: Build project
+        run: dotnet build PrintIt/PrintIt/PrintIt.csproj --configuration Release
 
-      - name: Publish solution
-        run: dotnet publish PrintIt/PrintIt.sln -c Release -o ${{ github.workspace }}/publish
+      # Publish the project
+      - name: Publish project
+        run: dotnet publish PrintIt/PrintIt/PrintIt.csproj -c Release -o ${{ github.workspace }}/publish --self-contained false
 
+      # Upload published files as an artifact
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -41,12 +45,13 @@ jobs:
       contents: read
 
     steps:
-      - name: Download artifact from build job
+      # Download artifact from build job
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: dotnet-app
-          path: ${{ github.workspace }}/publish
 
+      # Login to Azure
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -54,13 +59,19 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C6F0E5A5321C49C490E26BCACC16FC01 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_15A6966EF8074A6286DC9ECD30AAF7FA }}
 
+      # Deploy to Azure Web App
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'print-it3d'
-          slot-name: 'Production'
           package: ${{ github.workspace }}/publish
-          app-settings: |
+
+      # Set App Service application settings
+      - name: Set Azure App Service Application Settings
+        uses: azure/webapps-config@v2
+        with:
+          app-name: 'print-it3d'
+          configuration-strings: |
             Stripe__SecretKey=${{ secrets.STRIPE_SECRETKEY }}
             Stripe__PublishableKey=${{ secrets.STRIPE_PUBLISHABLEKEY }}
             Authentication__Google__ClientId=${{ secrets.GOOGLE_CLIENTID }}
