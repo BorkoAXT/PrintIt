@@ -1,32 +1,38 @@
 ﻿@{
-    // Inherit from the main site layout
-    Layout = "/Views/Shared/_Layout.cshtml";
+	Layout = "/Views/Shared/_Layout.cshtml";
 }
 
-<div class="max-w-6xl mx-auto px-4 pt-4 pb-12">
-    <div class="mb-8">
-        <h1 class="text-4xl font-black text-brand-dark tracking-tight">Настройки на профила</h1>
-        <p class="text-slate-500 mt-2 text-base">Управлявайте вашия профил и сигурност.</p>
-    </div>
+<div class="max-w-6xl mx-auto px-4 pt-4 pb-12 transition-colors duration-500">
+	@* Page Header *@
+	<div class="mb-10">
+		<h1 class="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
+			Настройки на <span class="text-brand-primary">профила</span>
+		</h1>
+		<p class="text-slate-500 dark:text-slate-400 mt-2 text-lg font-medium">Управлявайте вашия профил и сигурност.</p>
+	</div>
 
-    <div class="flex flex-col lg:flex-row gap-8">
+	<div class="flex flex-col lg:flex-row gap-8">
 
-        <aside class="w-full lg:w-72 shrink-0">
-            <div class="bg-white border border-slate-200 rounded-[2rem] p-5 shadow-sm sticky top-20">
-                <nav>
-                    <partial name="_ManageNav" />
-                </nav>
-            </div>
-        </aside>
+		@* Sidebar Navigation *@
+		<aside class="w-full lg:w-72 shrink-0">
+			<div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-6 shadow-xl shadow-slate-200/50 dark:shadow-none sticky top-24 transition-all">
+				<nav class="space-y-1">
+					<partial name="_ManageNav" />
+				</nav>
+			</div>
+		</aside>
 
-        <main class="flex-grow">
-            <div class="bg-white border border-slate-200 rounded-[2rem] p-6 md:p-8 shadow-sm transition-all">
-                @RenderBody()
-            </div>
-        </main>
-    </div>
+		@* Main Content Area *@
+		<main class="flex-grow">
+			<div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-slate-200 dark:border-slate-800 rounded-[3rem] p-8 md:p-12 shadow-2xl shadow-slate-200/40 dark:shadow-none transition-all">
+				<div class="prose dark:prose-invert max-w-none">
+					@RenderBody()
+				</div>
+			</div>
+		</main>
+	</div>
 </div>
 
 @section Scripts {
-    @RenderSection("Scripts", required: false)
+	@RenderSection("Scripts", required: false)
 }
