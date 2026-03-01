@@ -50,9 +50,9 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
             [Required]
-            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+            [StringLength(100, ErrorMessage = "Паролата трябва да бъде поне {2} и максимум {1} символа.", MinimumLength = 6)]
             [DataType(DataType.Password)]
-            [Display(Name = "New password")]
+            [Display(Name = "Нова парола")]
             public string NewPassword { get; set; }
 
             /// <summary>
@@ -60,8 +60,8 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
             [DataType(DataType.Password)]
-            [Display(Name = "Confirm new password")]
-            [Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")]
+            [Display(Name = "Потвърдете новата парола")]
+            [Compare("NewPassword", ErrorMessage = "Новата парола и потвърждението на паролата не съвпадат.")]
             public string ConfirmPassword { get; set; }
         }
 
@@ -70,7 +70,7 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"Не може да се зареди потребител с ID '{_userManager.GetUserId(User)}'.");
             }
 
             var hasPassword = await _userManager.HasPasswordAsync(user);
@@ -93,7 +93,7 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"Не може да се зареди потребител с ID '{_userManager.GetUserId(User)}'.");
             }
 
             var addPasswordResult = await _userManager.AddPasswordAsync(user, Input.NewPassword);
@@ -107,7 +107,7 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
             }
 
             await _signInManager.RefreshSignInAsync(user);
-            StatusMessage = "Your password has been set.";
+            StatusMessage = "Вашата парола е запазена.";
 
             return RedirectToPage();
         }

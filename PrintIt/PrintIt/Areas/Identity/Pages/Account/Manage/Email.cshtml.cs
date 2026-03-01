@@ -70,7 +70,7 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
             /// </summary>
             [Required]
             [EmailAddress]
-            [Display(Name = "New email")]
+            [Display(Name = "Нов имейл")]
             public string NewEmail { get; set; }
         }
 
@@ -92,7 +92,7 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"Не може да се зареди потребител с ID '{_userManager.GetUserId(User)}'.");
             }
 
             await LoadAsync(user);
@@ -104,7 +104,7 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"Не може да се зареди потребител с ID '{_userManager.GetUserId(User)}'.");
             }
 
             if (!ModelState.IsValid)
@@ -126,14 +126,15 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
                     protocol: Request.Scheme);
                 await _emailSender.SendEmailAsync(
                     Input.NewEmail,
-                    "Confirm your email",
-                    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                    "Потвърдете имейла си",
+                    // translate to bulgarian: Моля потвърдете акаунта си, като <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>кликнете тук</a>. 
+                    $"Моля потвърдете акаунта си, като <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>кликнете тук</a>.");
 
-                StatusMessage = "Confirmation link to change email sent. Please check your email.";
+                StatusMessage = "Потвърдителен линк за смяна на имейла е изпратен. Моля проверете имейла си.";
                 return RedirectToPage();
             }
 
-            StatusMessage = "Your email is unchanged.";
+            StatusMessage = "Вашият имейл е непроменен.";
             return RedirectToPage();
         }
 
@@ -142,7 +143,7 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"Не може да се зареди потребител с ID '{_userManager.GetUserId(User)}'.");
             }
 
             if (!ModelState.IsValid)
@@ -162,10 +163,10 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
                 protocol: Request.Scheme);
             await _emailSender.SendEmailAsync(
                 email,
-                "Confirm your email",
-                $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                "Потвърдете имейла си",
+                $"Моля потвърдете акаунта си, като <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>кликнете тук</a>.");
 
-            StatusMessage = "Verification email sent. Please check your email.";
+            StatusMessage = "Потвърдителен линк за имейл е изпратен. Моля проверете имейла си.";
             return RedirectToPage();
         }
     }

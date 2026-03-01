@@ -78,14 +78,14 @@ namespace PrintIt.Areas.Identity.Pages.Account
 
             if (remoteError != null)
             {
-                ErrorMessage = $"Error from external provider: {remoteError}";
+                ErrorMessage = $"Грешка от външния доставчик: {remoteError}";
                 return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
             }
 
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
-                ErrorMessage = "Error loading external login information.";
+                ErrorMessage = "Грешка при зареждане на информацията за външното влизане.";
                 return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
             }
 
@@ -98,7 +98,7 @@ namespace PrintIt.Areas.Identity.Pages.Account
 
             if (signInResult.Succeeded)
             {
-                _logger.LogInformation("{Name} logged in with {LoginProvider} provider.",
+                _logger.LogInformation("{Name} се логна с {LoginProvider} доставчик.",
                     info.Principal.Identity?.Name, info.LoginProvider);
 
                 return LocalRedirect(returnUrl);
@@ -109,7 +109,7 @@ namespace PrintIt.Areas.Identity.Pages.Account
                 return RedirectToPage("./Lockout");
             }
 
-            // ✅ NEW USER FLOW:
+            // NEW USER FLOW:
             // Auto-create the local user from the external provider (no "enter email" / "Register" page).
             var email =
                 info.Principal.FindFirstValue(ClaimTypes.Email)
@@ -117,7 +117,7 @@ namespace PrintIt.Areas.Identity.Pages.Account
 
             if (string.IsNullOrWhiteSpace(email))
             {
-                ErrorMessage = "Email not received from the external provider.";
+                ErrorMessage = "Не получихме имейл от външния доставчик.";
                 return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
             }
 
@@ -134,7 +134,7 @@ namespace PrintIt.Areas.Identity.Pages.Account
                 }
 
                 // If linking failed, show a useful error.
-                ErrorMessage = "A local account with this email already exists, but we couldn't link the external login.";
+                ErrorMessage = "Вече съществува локален акаунт с този имейл, но не успяхме да свържем външното влизане.";
                 return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
             }
 
@@ -187,11 +187,11 @@ namespace PrintIt.Areas.Identity.Pages.Account
             {
                 foreach (var error in createResult.Errors)
                 {
-                    _logger.LogWarning("External login user creation error: {Code} - {Description}",
+                    _logger.LogWarning("Грешка при създаване на потребител: {Code} - {Description}",
                         error.Code, error.Description);
                 }
 
-                ErrorMessage = "Could not create a local user account from the external login.";
+                ErrorMessage = "Не успяхме да създадем локален потребителски акаунт от външното влизане.";
                 return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
             }
 
@@ -200,18 +200,18 @@ namespace PrintIt.Areas.Identity.Pages.Account
             {
                 foreach (var error in addLoginResult.Errors)
                 {
-                    _logger.LogWarning("External login linking error: {Code} - {Description}",
+                    _logger.LogWarning("Грешка при свързване на външното влизане: {Code} - {Description}",
                         error.Code, error.Description);
                 }
 
                 // Clean up the user we just created to avoid orphaned accounts
                 await _userManager.DeleteAsync(user);
 
-                ErrorMessage = "Could not link the external login to the created user account.";
+                ErrorMessage = "Не успяхме да свържем външното влизане с новосъздадения потребителски акаунт";
                 return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
             }
 
-            _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
+            _logger.LogInformation("Потребителят създаде акаунт чрез {Name} доставчик.", info.LoginProvider);
 
             await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
             return LocalRedirect(returnUrl);
@@ -232,9 +232,9 @@ namespace PrintIt.Areas.Identity.Pages.Account
             }
             catch
             {
-                throw new InvalidOperationException($"Can't create an instance of '{nameof(User)}'. " +
-                    $"Ensure that '{nameof(User)}' is not an abstract class and has a parameterless constructor, or alternatively " +
-                    $"override the external login page in /Areas/Identity/Pages/Account/ExternalLogin.cshtml");
+                throw new InvalidOperationException($"Не може да се създаде инстанция на '{nameof(User)}'. " +
+                    $"Уверете се, че '{nameof(User)}' не е абстрактен клас и има конструктор без параметри, или алтернативно " +
+                    $"презапишете страницата за външно влизане в /Areas/Identity/Pages/Account/ExternalLogin.cshtml");
             }
         }
 
@@ -242,7 +242,7 @@ namespace PrintIt.Areas.Identity.Pages.Account
         {
             if (!_userManager.SupportsUserEmail)
             {
-                throw new NotSupportedException("The default UI requires a user store with email support.");
+                throw new NotSupportedException("Стандартният интерфейс за външно влизане изисква потребителско запазване с поддръжка на имейл.");
             }
 
             return (IUserEmailStore<User>)_userStore;
