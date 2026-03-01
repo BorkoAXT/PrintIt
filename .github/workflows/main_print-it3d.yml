@@ -13,23 +13,20 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # Setup .NET
-      - name: Set up .NET Core
+      - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.x'
 
-      # Build solution
       - name: Build solution
         run: dotnet build PrintIt/PrintIt.sln --configuration Release
 
-      # Publish solution
       - name: Publish solution
         run: dotnet publish PrintIt/PrintIt.sln -c Release -o ${{ github.workspace }}/myapp
 
-      # Upload artifact for deployment
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -44,13 +41,11 @@ jobs:
       contents: read
 
     steps:
-      # Download artifact
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: dotnet-app
 
-      # Login to Azure
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -58,20 +53,12 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C6F0E5A5321C49C490E26BCACC16FC01 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_15A6966EF8074A6286DC9ECD30AAF7FA }}
 
-      # Deploy to Azure Web App
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'print-it3d'
           slot-name: 'Production'
           package: ${{ github.workspace }}/dotnet-app
-
-      # Set Azure App Service Application Settings
-      - name: Set Azure App Service Application Settings
-        uses: azure/appservice-settings@v2
-        with:
-          app-name: 'print-it3d'
-          slot-name: 'Production'
           app-settings: |
             Stripe__SecretKey=${{ secrets.STRIPE_SECRETKEY }}
             Stripe__PublishableKey=${{ secrets.STRIPE_PUBLISHABLEKEY }}
