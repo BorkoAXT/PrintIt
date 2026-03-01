@@ -1,4 +1,4 @@
-name: Build and deploy ASP.Net Core app to Azure Web App - print-it3d
+name: Build and deploy ASP.Net Core app to Azure Web App - Print-it
 
 on:
   push:
@@ -20,13 +20,18 @@ jobs:
         with:
           dotnet-version: '9.x'
 
+      # Build solution
       - name: Build with dotnet
-        run: dotnet build PrintIt/PrintIt/PrintIt.sln --configuration Release
+        working-directory: PrintIt/PrintIt
+        run: dotnet build PrintIt.sln --configuration Release
 
+      # Publish
       - name: dotnet publish
-        run: dotnet publish PrintIt/PrintIt/PrintIt.sln -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+        working-directory: PrintIt/PrintIt
+        run: dotnet publish PrintIt.sln -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 
-      - name: Upload artifact for deployment job
+      # Upload artifact for deployment
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
@@ -44,7 +49,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: .net-app
-      
+
+      # Login to Azure
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -52,17 +58,23 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C6F0E5A5321C49C490E26BCACC16FC01 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_15A6966EF8074A6286DC9ECD30AAF7FA }}
 
+      # Deploy to Azure Web App
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'print-it3d'
           slot-name: 'Production'
-          package: ${{env.DOTNET_ROOT}}/myapp
-        env:
-          # Your application secrets
-          Stripe__SecretKey: ${{ secrets.STRIPE_SECRETKEY }}
-          Stripe__PublishableKey: ${{ secrets.STRIPE_PUBLISHABLEKEY }}
-          Authentication__Google__ClientId: ${{ secrets.GOOGLE_CLIENTID }}
-          Authentication__Google__ClientSecret: ${{ secrets.GOOGLE_CLIENTSECRET }}
-          ConnectionStrings__DefaultConnection: ${{ secrets.DB_CONNECTION_STRING }}
+          package: .
+
+      # Optional: Set secrets as environment variables on Azure App Service
+      - name: Set Azure App Service Application Settings
+        uses: azure/appservice-settings@v2
+        with:
+          app-name: 'print-it3d'
+          slot-name: 'Production'
+          app-settings: |
+            Stripe__SecretKey=${{ secrets.STRIPE_SECRETKEY }}
+            Stripe__PublishableKey=${{ secrets.STRIPE_PUBLISHABLEKEY }}
+            Authentication__Google__ClientId=${{ secrets.GOOGLE_CLIENTID }}
+            Authentication__Google__ClientSecret=${{ secrets.GOOGLE_CLIENTSECRET }}
