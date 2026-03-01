@@ -2,12 +2,11 @@ name: Deploy PrintIt App
 
 on:
   push:
-    branches: [ "main" ] # Runs every time you push to main
+    branches: [ "main" ]
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    # IMPORTANT: Use the exact name of the Environment you created in GitHub
     environment: SecretKeys 
 
     steps:
@@ -16,22 +15,23 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x' 
+        dotnet-version: '9.0.x' 
 
     - name: Build with Secrets
       shell: bash
       run: |
         dotnet build --configuration Release
       env:
-        # This maps your GitHub Secrets to the build environment 
-        # so they are available if you run integration tests
         Stripe__SecretKey: ${{ secrets.Stripe__SecretKey }}
         Authentication__Google__ClientSecret: ${{ secrets.Authentication__Google__ClientSecret }}
 
     - name: Publish
       run: dotnet publish -c Release -o ./publish
 
-    # --- DEPLOYMENT STEP ---
-    # This part depends on your host. 
-    # If using Azure, you'd use 'azure/webapps-deploy@v2'
-    # If using a VPS, you'd use 'appleboy/scp-action'
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: printit-app         # <-- Your App Service name
+        slot-name: production         # <-- Use your slot or "production"
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: ./publish
