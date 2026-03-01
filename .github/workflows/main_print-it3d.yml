@@ -1,4 +1,4 @@
-name: Build and deploy ASP.Net Core app to Azure Web App - Print-it
+name: Build and deploy ASP.NET Core app to Azure Web App - Print-it
 
 on:
   push:
@@ -13,24 +13,28 @@ jobs:
       contents: read
 
     steps:
-      # Checkout the repository
+      # Checkout code
       - uses: actions/checkout@v4
 
-      # Set up .NET 9 SDK
-      - name: Set up .NET Core
+      # Setup .NET SDK
+      - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.x'
 
-      # Build the project
-      - name: Build project
-        run: dotnet build PrintIt/PrintIt/PrintIt.csproj --configuration Release
+      # Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore PrintIt/PrintIt.sln
 
-      # Publish the project
-      - name: Publish project
-        run: dotnet publish PrintIt/PrintIt/PrintIt.csproj -c Release -o ${{ github.workspace }}/publish --self-contained false
+      # Build solution
+      - name: Build solution
+        run: dotnet build PrintIt/PrintIt.sln --configuration Release
 
-      # Upload published files as an artifact
+      # Publish solution
+      - name: Publish solution
+        run: dotnet publish PrintIt/PrintIt.sln -c Release -o ${{ github.workspace }}/publish --self-contained false
+
+      # Upload artifact
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -45,34 +49,39 @@ jobs:
       contents: read
 
     steps:
-      # Download artifact from build job
+      # Download build artifact
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: dotnet-app
+          path: ${{ github.workspace }}/publish
 
       # Login to Azure
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_E217FCAB05F64B1895B3CF817391F6A4 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C6F0E5A5321C49C490E26BCACC16FC01 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_15A6966EF8074A6286DC9ECD30AAF7FA }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
       # Deploy to Azure Web App
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'print-it3d'
+          slot-name: 'Production'
           package: ${{ github.workspace }}/publish
 
-      # Set App Service application settings
-      - name: Set Azure App Service Application Settings
-        uses: azure/webapps-config@v2
+      # Set App Service Application Settings using Azure CLI
+      - name: Configure App Settings
+        uses: azure/cli@v1
         with:
-          app-name: 'print-it3d'
-          configuration-strings: |
-            Stripe__SecretKey=${{ secrets.STRIPE_SECRETKEY }}
-            Stripe__PublishableKey=${{ secrets.STRIPE_PUBLISHABLEKEY }}
-            Authentication__Google__ClientId=${{ secrets.GOOGLE_CLIENTID }}
-            Authentication__Google__ClientSecret=${{ secrets.GOOGLE_CLIENTSECRET }}
+          azcliversion: 2.100.0
+          inlineScript: |
+            az webapp config appsettings set \
+              --name print-it3d \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --settings Stripe__SecretKey=${{ secrets.STRIPE_SECRETKEY }} \
+                        Stripe__PublishableKey=${{ secrets.STRIPE_PUBLISHABLEKEY }} \
+                        Authentication__Google__ClientId=${{ secrets.GOOGLE_CLIENTID }} \
+                        Authentication__Google__ClientSecret=${{ secrets.GOOGLE_CLIENTSECRET }}
