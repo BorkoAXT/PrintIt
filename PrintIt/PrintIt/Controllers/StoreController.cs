@@ -185,34 +185,27 @@ public class StoreController : Controller
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        // 1. Verify product exists
         var print = await _printService.GetByIdAsync(id);
         if (print == null) return NotFound();
 
-        // 2. Perform Cleanups
-        // Make sure your services are actually deleting from the DB, not just a local list
         try
         {
-            // These should be internal DB commands: DELETE FROM CartItems WHERE PrintId = @id
             await _cartService.RemoveAllByPrintIdAsync(id);
             await _wishlistService.RemoveAllByPrintIdAsync(id);
 
-            // 3. Delete Physical Files
             if (!string.IsNullOrEmpty(print.FilePath))
             {
                 await _fileService.DeleteImageAsync(print.FilePath);
             }
 
-            // 4. Delete the actual Print
             await _printService.DeleteAsync(print);
 
             _printService.ClearCache();
 
-            return Ok(); // Essential for your JavaScript fetch to succeed
+            return Ok();
         }
         catch (Exception ex)
         {
-            // Log the error
             return StatusCode(500, "Database cleanup failed.");
         }
     }
