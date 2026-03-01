@@ -1,22 +1,22 @@
 ﻿@page
 @model LoginModel
 @{
-    ViewData["Title"] = "Log in";
+    ViewData["Title"] = "Вход";
 }
 
 <div class="flex flex-col items-center justify-center py-10">
     <div class="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-200 p-8 md:p-10">
 
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Welcome</h1>
-            <p class="text-slate-500 mt-2">Please sign in to your 3D Lab account</p>
+            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Добре дошли</h1>
+            <p class="text-slate-500 mt-2">Моля, влезте във вашия 3D Lab профил</p>
         </div>
 
         <form id="account" method="post" class="space-y-4">
             <div asp-validation-summary="ModelOnly" class="text-red-500 text-xs bg-red-50 p-3 rounded-lg mb-4" role="alert"></div>
 
             <div>
-                <label asp-for="Input.Email" class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-1 ml-1">Email</label>
+                <label asp-for="Input.Email" class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-1 ml-1">Имейл</label>
                 <input asp-for="Input.Email"
                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none transition-all placeholder:text-slate-400"
                        autocomplete="username" aria-required="true" placeholder="name@example.com" />
@@ -24,7 +24,7 @@
             </div>
 
             <div class="relative">
-                <label asp-for="Input.Password" class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-1 ml-1">Password</label>
+                <label asp-for="Input.Password" class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-1 ml-1">Парола</label>
                 <input asp-for="Input.Password"
                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none transition-all placeholder:text-slate-400"
                        autocomplete="current-password" aria-required="true" placeholder="••••••••" />
@@ -36,17 +36,17 @@
                     <input asp-for="Input.RememberMe"
                            class="w-4 h-4 text-brand-primary border-slate-300 rounded focus:ring-brand-primary/20" />
                     <label asp-for="Input.RememberMe" class="ml-2 text-sm font-semibold text-slate-600">
-                        Stay logged in
+                        Запомни ме
                     </label>
                 </div>
                 <a asp-page="./ForgotPassword" class="text-sm font-bold text-brand-primary hover:text-brand-dark-blue transition-colors">
-                    Forgot?
+                    Забравена парола?
                 </a>
             </div>
 
             <button id="login-submit" type="submit"
                     class="w-full py-4 bg-brand-dark hover:bg-brand-primary text-white font-bold rounded-xl shadow-lg hover:shadow-brand-primary/30 transition-all active:scale-[0.98] mt-2">
-                Sign In
+                Вход
             </button>
         </form>
 
@@ -54,7 +54,7 @@
         {
             <div class="relative my-8">
                 <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-slate-200"></span></div>
-                <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-4 text-slate-400 font-semibold tracking-widest">Social Login</span></div>
+                <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-4 text-slate-400 font-semibold tracking-widest">Вход чрез социални мрежи</span></div>
             </div>
 
             <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
@@ -69,10 +69,9 @@
                             }
                             else if (provider.DisplayName == "Facebook")
                             {
-
                                 <i class="bi bi-facebook text-blue-600"></i>
                             }
-                            <span>Login with @provider.DisplayName</span>
+                            <span>Вход с @provider.DisplayName</span>
                         </button>
                     }
                 </div>
@@ -80,8 +79,8 @@
         }
 
         <p class="text-center text-slate-500 text-sm mt-8">
-            New user?
-            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="text-brand-green font-bold hover:underline">Create an account</a>
+            Нямате профил?
+            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="text-brand-green font-bold hover:underline">Създайте акаунт</a>
         </p>
     </div>
 </div>

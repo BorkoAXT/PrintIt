@@ -15,7 +15,7 @@
         @if (wishlist.Any())
         {
             <div class="mb-16">
-                <h2 class="text-xl font-bold text-slate-400 uppercase tracking-widest mb-8">Твоят списък с желания</h2>
+                <h2 class="text-xl font-bold text-slate-400 uppercase tracking-widest mb-8">Вашият списък с желания</h2>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                     @foreach (var item in wishlist)
@@ -28,7 +28,7 @@
                                 <div class="absolute inset-0 bg-brand-dark/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
                                     <a asp-controller="Store" asp-action="Details" asp-route-id="@item.Id"
                                        class="bg-white text-brand-dark px-6 py-3 rounded-xl font-bold text-sm shadow-xl transform translate-y-8 group-hover:translate-y-0 transition-all duration-300 hover:bg-brand-primary hover:text-white">
-                                        Виж детайли
+                                        Вижте детайли
                                     </a>
                                 </div>
                             </div>
@@ -46,8 +46,8 @@
         {
             @* Empty wishlist *@
             <div class="py-16 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 text-center">
-                <p class="text-slate-500 font-bold text-xl">Списъкът ти с желания е все още празен.</p>
-                <a asp-controller="Store" asp-action="Articles" class="mt-4 inline-block text-brand-primary font-bold hover:underline">Разгледай продуктите тук →</a>
+                <p class="text-slate-500 font-bold text-xl">Списъкът Ви с желания е все още празен.</p>
+                <a asp-controller="Store" asp-action="Articles" class="mt-4 inline-block text-brand-primary font-bold hover:underline">Разгледайте продуктите тук →</a>
             </div>
         }
     }

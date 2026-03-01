@@ -100,7 +100,7 @@ namespace PrintIt
             {
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
                 var roles = new[] { "Admin", "User" };
-
+                    
                 foreach (var role in roles)
                 {
                     if (!await roleManager.RoleExistsAsync(role))

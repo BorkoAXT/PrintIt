@@ -1,53 +1,108 @@
 ﻿@page
 @model ExternalLoginsModel
 @{
-    ViewData["Title"] = "Manage your external logins";
+    ViewData["Title"] = "Външни входове";
     ViewData["ActivePage"] = ManageNavPages.ExternalLogins;
 }
 
-<partial name="_StatusMessage" for="StatusMessage" />
-@if (Model.CurrentLogins?.Count > 0)
-{
-    <h3>Registered Logins</h3>
-    <table class="table">
-        <tbody>
-            @foreach (var login in Model.CurrentLogins)
-            {
-                <tr>
-                    <td id="@($"login-provider-{login.LoginProvider}")">@login.ProviderDisplayName</td>
-                    <td>
-                        @if (Model.ShowRemoveButton)
-                        {
-                            <form id="@($"remove-login-{login.LoginProvider}")" asp-page-handler="RemoveLogin" method="post">
-                                <div>
+<div class="space-y-8">
+    @* Header Section *@
+    <div class="flex items-center gap-5 border-b border-slate-100 pb-6">
+        <div class="p-3 bg-brand-primary/10 rounded-2xl">
+            <i class="bi bi-box-arrow-in-right text-brand-primary text-2xl"></i>
+        </div>
+        <div>
+            <h3 class="text-2xl font-black text-brand-dark">@ViewData["Title"]</h3>
+            <p class="text-slate-500 text-base">Управлявайте свързаните социални мрежи и външни услуги за вход.</p>
+        </div>
+    </div>
+
+    <partial name="_StatusMessage" for="StatusMessage" />
+
+    @if (Model.CurrentLogins?.Count > 0)
+    {
+        <div class="space-y-4">
+            <h4 class="text-lg font-bold text-slate-700 ml-1">Регистрирани входове</h4>
+
+            <div class="grid gap-4">
+                @foreach (var login in Model.CurrentLogins)
+                {
+                    <div class="flex items-center justify-between p-5 bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-brand-primary/30 transition-colors">
+                        <div class="flex items-center gap-4">
+                            @* Dynamic Icon based on provider name *@
+                            <div class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 border border-slate-100 text-brand-dark">
+                                @if (login.LoginProvider.ToLower().Contains("google"))
+                                {
+                                    <i class="bi bi-google"></i>
+                                }
+                                else if (login.LoginProvider.ToLower().Contains("facebook"))
+                                {
+
+                                    <i class="bi bi-facebook"></i>
+                                }
+                                else
+                                {
+
+                                    <i class="bi bi-shield-check"></i>
+                                }
+                            </div>
+                            <div>
+                                <span class="font-bold text-brand-dark text-base" id="@($"login-provider-{login.LoginProvider}")">
+                                    @login.ProviderDisplayName
+                                </span>
+                            </div>
+                        </div>
+
+                        <div>
+                            @if (Model.ShowRemoveButton)
+                            {
+                                <form id="@($"remove-login-{login.LoginProvider}")" asp-page-handler="RemoveLogin" method="post">
                                     <input asp-for="@login.LoginProvider" name="LoginProvider" type="hidden" />
                                     <input asp-for="@login.ProviderKey" name="ProviderKey" type="hidden" />
-                                    <button type="submit" class="btn btn-primary" title="Remove this @login.ProviderDisplayName login from your account">Remove</button>
-                                </div>
-                            </form>
-                        }
-                        else
-                        {
-                            @: &nbsp;
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-@if (Model.OtherLogins?.Count > 0)
-{
-    <h4>Add another service to log in.</h4>
-    <hr />
-    <form id="link-login-form" asp-page-handler="LinkLogin" method="post" class="form-horizontal">
-        <div id="socialLoginList">
-            <p>
+                                    <button type="submit" class="px-5 py-2 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all border border-red-100"
+                                            title="Премахване на @login.ProviderDisplayName вход">
+                                        Премахни
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="text-xs text-slate-400 italic">Основен вход</span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (Model.OtherLogins?.Count > 0)
+    {
+        <div class="space-y-4 pt-4">
+            <div class="border-t border-slate-100 pt-6">
+                <h4 class="text-lg font-bold text-slate-700 ml-1">Добавяне на нова услуга</h4>
+                <p class="text-sm text-slate-500 ml-1 mb-4">Свържете акаунта си с други платформи за по-лесен достъп.</p>
+            </div>
+
+            <form id="link-login-form" asp-page-handler="LinkLogin" method="post" class="flex flex-wrap gap-3">
                 @foreach (var provider in Model.OtherLogins)
                 {
-                    <button id="@($"link-login-button-{provider.Name}")" type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
+                    <button id="@($"link-login-button-{provider.Name}")" type="submit" name="provider" value="@provider.Name"
+                            class="flex items-center gap-3 px-6 py-3.5 bg-white border border-slate-200 text-brand-dark font-bold rounded-2xl hover:border-brand-primary hover:bg-brand-primary/5 hover:shadow-md transition-all active:scale-[0.98]"
+                            title="Вход чрез @provider.DisplayName акаунт">
+                        @if (provider.Name.ToLower().Contains("google"))
+                        {
+                            <i class="bi bi-google text-red-500"></i>
+                        }
+                        else if (provider.Name.ToLower().Contains("facebook"))
+                        {
+
+                            <i class="bi bi-facebook text-blue-600"></i>
+                        }
+                        @provider.DisplayName
+                    </button>
                 }
-            </p>
+            </form>
         </div>
-    </form>
-}
+    }
+</div>
