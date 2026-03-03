@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.Google;
 using PrintIt.Data;
 using PrintIt.Models;
 using PrintIt.Services;
@@ -19,11 +18,8 @@ namespace PrintIt
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-            if (!builder.Environment.IsEnvironment("Testing"))
-            {
-                builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseSqlServer(connectionString));
-            }
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(connectionString));
 
             // =========================
             // Identity
@@ -43,16 +39,25 @@ namespace PrintIt
                 .AddDefaultUI();
 
             // =========================
-            // External authentication
+            // Authentication (includes Google if configured)
             // =========================
-            builder.Services.AddAuthentication()
-                .AddGoogle(options =>
+            var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+            var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+
+            // IMPORTANT: configure auth ONCE, then optionally add Google.
+            var authBuilder = builder.Services.AddAuthentication();
+
+            if (!string.IsNullOrWhiteSpace(googleClientId) &&
+                !string.IsNullOrWhiteSpace(googleClientSecret))
+            {
+                authBuilder.AddGoogle(options =>
                 {
-                    options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
-                    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+                    options.ClientId = googleClientId;
+                    options.ClientSecret = googleClientSecret;
                     options.Scope.Add("profile");
                     options.Scope.Add("email");
                 });
+            }
 
             // =========================
             // MVC + Razor Pages
@@ -68,7 +73,7 @@ namespace PrintIt
             {
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.HttpOnly = true;
-                options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // better for production
                 options.LoginPath = "/Identity/Account/Login";
                 options.AccessDeniedPath = "/Identity/Account/AccessDenied";
             });
@@ -98,6 +103,7 @@ namespace PrintIt
             // =========================
             if (app.Environment.IsDevelopment())
             {
+                app.UseDeveloperExceptionPage();
                 app.UseMigrationsEndPoint();
             }
             else
@@ -111,6 +117,7 @@ namespace PrintIt
 
             app.UseRouting();
             app.UseSession();
+
             app.UseAuthentication();
             app.UseAuthorization();
 
@@ -123,33 +130,58 @@ namespace PrintIt
             app.MapRazorPages();
 
             // =========================
-            // Seed Roles + Admin
+            // DB migrate + seed (SAFE)
             // =========================
-            using (var scope = app.Services.CreateScope())
+            var runDbMigrations = builder.Configuration.GetValue<bool>("RUN_DB_MIGRATIONS");
+
+            if (app.Environment.IsDevelopment() || runDbMigrations)
             {
-                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-                var roles = new[] { "Admin", "User" };
-                    
-                foreach (var role in roles)
+                try
                 {
-                    if (!await roleManager.RoleExistsAsync(role))
-                        await roleManager.CreateAsync(new IdentityRole<Guid>(role));
-                }
+                    using var scope = app.Services.CreateScope();
 
-                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-                var adminEmail = "admin@gmail.com";
-                var adminUser = await userManager.FindByEmailAsync(adminEmail);
+                    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    await db.Database.MigrateAsync();
 
-                if (adminUser == null)
-                {
-                    adminUser = new User
+                    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+                    var roles = new[] { "Admin", "User" };
+
+                    foreach (var role in roles)
                     {
-                        UserName = adminEmail,
-                        Email = adminEmail
-                    };
+                        if (!await roleManager.RoleExistsAsync(role))
+                            await roleManager.CreateAsync(new IdentityRole<Guid>(role));
+                    }
 
-                    await userManager.CreateAsync(adminUser, "Admin123");
-                    await userManager.AddToRoleAsync(adminUser, "Admin");
+                    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+                    var adminEmail = builder.Configuration["AdminUser:Email"] ?? "admin@gmail.com";
+                    var adminPassword = builder.Configuration["AdminUser:Password"] ?? "Admin123";
+
+                    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+                    if (adminUser == null)
+                    {
+                        adminUser = new User
+                        {
+                            UserName = adminEmail,
+                            Email = adminEmail
+                        };
+
+                        var createResult = await userManager.CreateAsync(adminUser, adminPassword);
+                        if (createResult.Succeeded)
+                        {
+                            await userManager.AddToRoleAsync(adminUser, "Admin");
+                        }
+                        else
+                        {
+                            var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
+                            app.Logger.LogError("Failed to create admin user: {Errors}", errors);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    app.Logger.LogError(ex, "Database migration/seed failed during startup.");
+
+                    // if (!app.Environment.IsDevelopment()) throw;
                 }
             }
 
@@ -157,4 +189,5 @@ namespace PrintIt
         }
     }
 }
+
 public partial class Program { }

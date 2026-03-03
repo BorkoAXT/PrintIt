@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using PrintIt.Enums;
 using PrintIt.Models;
 using PrintIt.Services;
 using PrintIt.ViewModels;
+using System;
 using System.Security.Claims;
 
 public class StoreController : Controller
@@ -152,6 +154,31 @@ public class StoreController : Controller
         return View(items);
     }
 
+    // GET: store/edit/{id}
+    [HttpGet("Store/Edit/{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Edit(Guid id)
+    {
+        var print = await _printService.GetByIdAsync(id);
+        if (print == null) return NotFound();
+
+        var viewModel = new PrintsViewModel
+        {
+            Id = print.Id,
+            Name = print.Name,
+            Description = print.Description,
+            Price = print.Price,
+            Weight = print.Weight,
+            MaterialType = print.MaterialType,
+            PrintType = print.PrintType,
+            PrintColors = print.PrintColors ?? new List<PrintColor>(),
+            FilePath = print.FilePath
+        };
+
+        return View("~/Views/Store/Edit.cshtml", viewModel);
+    }
+
+    // POST: store/edit/{id}
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin")]
