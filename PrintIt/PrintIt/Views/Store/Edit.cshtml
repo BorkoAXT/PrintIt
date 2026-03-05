@@ -4,28 +4,75 @@
 @{
     ViewData["Title"] = "Редактиране на артикул";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    string TranslateColor(PrintColor color) => color switch
+    {
+        PrintColor.Red => "Червен",
+        PrintColor.Blue => "Син",
+        PrintColor.Green => "Зелен",
+        PrintColor.Yellow => "Жълт",
+        PrintColor.Black => "Черен",
+        PrintColor.White => "Бял",
+        PrintColor.Gray => "Сив",
+        PrintColor.Orange => "Оранжев",
+        PrintColor.Purple => "Лилав",
+        PrintColor.Pink => "Розов",
+        PrintColor.Brown => "Кафяв",
+        PrintColor.Cyan => "Циан",
+        PrintColor.Magenta => "Магента",
+        PrintColor.Lime => "Лайм",
+        PrintColor.Multiple => "Многоцветен",
+        _ => color.ToString()
+    };
+
+    string GetColorHex(PrintColor color) => color switch
+    {
+        PrintColor.Red => "bg-red-500",
+        PrintColor.Blue => "bg-blue-600",
+        PrintColor.Green => "bg-emerald-500",
+        PrintColor.Yellow => "bg-yellow-400",
+        PrintColor.Black => "bg-slate-900 ring-1 ring-slate-700",
+        PrintColor.White => "bg-white border border-slate-300",
+        PrintColor.Gray => "bg-slate-400",
+        PrintColor.Orange => "bg-orange-500",
+        PrintColor.Purple => "bg-purple-600",
+        PrintColor.Pink => "bg-pink-400",
+        PrintColor.Brown => "bg-amber-800",
+        PrintColor.Cyan => "bg-cyan-400",
+        PrintColor.Magenta => "bg-pink-600",
+        PrintColor.Lime => "bg-lime-400",
+        PrintColor.Multiple => "bg-gradient-to-tr from-red-500 via-green-500 to-blue-500",
+        _ => "bg-slate-200"
+    };
 }
 
 <div class="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-500">
     <div class="max-w-3xl mx-auto">
 
         @* Header Section *@
-        <div class="mb-8 flex items-center justify-between">
+        <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Редактиране на артикул</h1>
+                <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Редактиране</h1>
                 <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Променете детайлите на вашия 3D модел.</p>
             </div>
-            <a asp-controller="Store" asp-action="Articles" class="group flex items-center text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
-                <i class="bi bi-arrow-left mr-2 transition-transform group-hover:-translate-x-1"></i>
-                Назад към магазина
-            </a>
+
+            @* Toolbar: JSON Tools *@
+            <div class="flex flex-wrap gap-2 items-center bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <button type="button" onclick="toggleJsonModal(true)" title="Импорт на JSON" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-all">
+                    <i class="bi bi-box-arrow-in-down text-xl"></i>
+                </button>
+                <button type="button" onclick="copyFormAsJson()" title="Копирай като JSON" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-all">
+                    <i class="bi bi-copy text-xl"></i>
+                </button>
+                <button type="button" onclick="downloadJson()" title="Изтегли .json файл" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-all">
+                    <i class="bi bi-download text-xl"></i>
+                </button>
+            </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl shadow-slate-200/60 dark:shadow-none border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
-            @* Form points to Store/Edit/{id} *@
-            <form asp-controller="Store" asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="divide-y divide-slate-100 dark:divide-slate-800">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <form id="mainForm" asp-controller="Store" asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="divide-y divide-slate-100 dark:divide-slate-800">
 
-                @* Hidden Fields *@
                 <input type="hidden" asp-for="Id" />
                 <input type="hidden" asp-for="FilePath" />
 
@@ -33,75 +80,55 @@
 
                 @* Section: Basic Info *@
                 <div class="p-8 space-y-6">
-                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <div class="sm:col-span-2">
-                            <label asp-for="Name" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Име на продукта</label>
-                            <input asp-for="Name" type="text"
-                                   placeholder="Въведете име..."
-                                   class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-all border" />
-                            <span asp-validation-for="Name" class="mt-2 text-xs text-red-500"></span>
-                        </div>
+                    <div>
+                        <label asp-for="Name" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Име на продукта</label>
+                        <input asp-for="Name" id="Name" placeholder="Въведете име..." class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white border focus:ring-2 focus:ring-blue-500 transition-all" />
+                    </div>
 
-                        <div class="sm:col-span-2">
-                            <label asp-for="Description" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Описание</label>
-                            <textarea asp-for="Description" rows="3"
-                                      placeholder="Опишете вашия модел..."
-                                      class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition-all border"></textarea>
-                            <span asp-validation-for="Description" class="mt-2 text-xs text-red-500"></span>
-                        </div>
+                    <div>
+                        <label asp-for="Description" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Описание</label>
+                        <textarea asp-for="Description" id="Description" rows="4" placeholder="Опишете вашия модел..." class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white border focus:ring-2 focus:ring-blue-500 transition-all"></textarea>
                     </div>
                 </div>
 
-                @* Section: Tech Specs - Slightly different BG for visual grouping *@
+                @* Section: Tech Specs *@
                 <div class="p-8 bg-slate-50/30 dark:bg-slate-900/50 space-y-6">
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div>
                             <label asp-for="PrintType" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Категория</label>
-                            <select asp-for="PrintType" asp-items="Html.GetEnumSelectList<PrintType>()"
-                                    class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm border">
-                            </select>
+                            <select asp-for="PrintType" id="PrintType" asp-items="Html.GetEnumSelectList<PrintType>()" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white border"></select>
                         </div>
-
                         <div>
                             <label asp-for="MaterialType" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Материал</label>
-                            <select asp-for="MaterialType" asp-items="Html.GetEnumSelectList<MaterialType>()"
-                                    class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm border">
-                            </select>
+                            <select asp-for="MaterialType" id="MaterialType" asp-items="Html.GetEnumSelectList<MaterialType>()" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white border"></select>
                         </div>
-
                         <div>
                             <label asp-for="Price" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Цена (EUR)</label>
                             <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600 text-sm">€</span>
-                                <input asp-for="Price" type="number" step="0.01"
-                                       class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 pl-12 pr-4 py-3 text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm border" />
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600">€</span>
+                                <input asp-for="Price" id="Price" type="number" step="0.01" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 pl-10 pr-4 py-3 text-slate-900 dark:text-white border" />
                             </div>
-                            <span asp-validation-for="Price" class="mt-2 text-xs text-red-500"></span>
                         </div>
-
                         <div>
                             <label asp-for="Weight" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Тегло (Грамове)</label>
-                            <input asp-for="Weight" type="number" step="0.1"
-                                   class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm border" />
-                            <span asp-validation-for="Weight" class="mt-2 text-xs text-red-500"></span>
+                            <input asp-for="Weight" id="Weight" type="number" step="0.1" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white border" />
                         </div>
                     </div>
                 </div>
 
                 @* Section: Colors & Image *@
-                <div class="p-8 space-y-6">
+                <div class="p-8 space-y-8">
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Налични цветове</label>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Налични цветове</label>
                         <div class="flex flex-wrap gap-3">
                             @foreach (var color in Enum.GetValues(typeof(PrintColor)).Cast<PrintColor>())
                             {
-                                <label class="relative flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all has-[:checked]:border-blue-600 dark:has-[:checked]:border-blue-500 has-[:checked]:ring-1 has-[:checked]:ring-blue-600 dark:has-[:checked]:ring-blue-500">
-                                    <input type="checkbox"
-                                           name="PrintColors"
-                                           value="@color"
-                                           class="sr-only"
-                                           @(Model.PrintColors.Contains(color) ? "checked" : "") />
-                                    <span class="text-xs font-medium text-slate-900 dark:text-slate-300">@color</span>
+                                <label class="relative flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 shadow-sm hover:bg-slate-50 transition-all has-[:checked]:border-blue-600 has-[:checked]:ring-1 has-[:checked]:ring-blue-600">
+                                    <input type="checkbox" name="PrintColors" value="@color" class="sr-only color-checkbox" @(Model.PrintColors.Contains(color) ? "checked" : "") />
+                                    <span class="flex items-center gap-2">
+                                        <span class="h-3 w-3 rounded-full @GetColorHex(color)"></span>
+                                        <span class="text-xs font-medium text-slate-900 dark:text-slate-300">@TranslateColor(color)</span>
+                                    </span>
                                 </label>
                             }
                         </div>
@@ -110,38 +137,34 @@
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Снимка на продукта</label>
 
-                        @* Current Image Display *@
                         @if (!string.IsNullOrEmpty(Model.FilePath))
                         {
                             <div class="mb-4 flex items-center space-x-4 p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
                                 <img src="@Model.FilePath" class="h-20 w-20 object-cover rounded-lg shadow-sm" alt="Текуща снимка" />
-                                <div class="text-xs text-slate-500 dark:text-slate-400">
+                                <div class="text-xs">
                                     <p class="font-bold text-slate-700 dark:text-slate-200">Текущо изображение</p>
-                                    <p>Оставете празно, за да запазите текущата снимка</p>
+                                    <p class="text-slate-500">Оставете празно, за да го запазите</p>
                                 </div>
                             </div>
                         }
 
-                        @* Upload Zone *@
-                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-xl hover:border-blue-400 dark:hover:border-blue-500 transition-colors bg-white dark:bg-slate-900/50">
-                            <div class="space-y-1 text-center">
+                        <div class="mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-xl hover:border-blue-400 bg-white dark:bg-slate-900/50 transition-colors">
+                            <div class="space-y-2 text-center">
                                 <i class="bi bi-cloud-arrow-up text-4xl text-slate-300 dark:text-slate-600"></i>
                                 <div class="flex text-sm text-slate-600 dark:text-slate-400 items-center gap-2 justify-center">
-                                    <button type="button" onclick="document.getElementById('file-upload').click()" class="font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500">
-                                        Качете нов файл
-                                    </button>
+                                    <button type="button" onclick="document.getElementById('file-upload').click()" class="font-bold text-blue-600 dark:text-blue-400">Качете нов файл</button>
                                     <input id="file-upload" asp-for="File" type="file" class="hidden" accept="image/*" />
-                                    <p id="file-name" class="pl-1 text-slate-400 dark:text-slate-500">или дръпнете тук</p>
+                                    <p id="file-name" class="text-slate-400">или го пуснете тук</p>
                                 </div>
-                                <p class="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-widest font-bold">PNG, JPG до 10MB</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 @* Action Buttons *@
-                <div class="p-8 flex items-center justify-center bg-slate-50/50 dark:bg-slate-900/20">
-                    <button type="submit" class="w-full sm:w-auto bg-blue-600 text-white px-10 py-4 rounded-xl font-bold shadow-lg shadow-blue-600/20 hover:bg-blue-700 dark:hover:bg-blue-500 transition-all active:scale-95 flex items-center justify-center gap-2">
+                <div class="p-8 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/20">
+                    <a asp-controller="Store" asp-action="Articles" class="text-sm font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">Отказ</a>
+                    <button type="submit" class="bg-blue-600 text-white px-12 py-4 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-2">
                         <i class="bi bi-check-circle-fill"></i>
                         Запази промените
                     </button>
@@ -151,18 +174,131 @@
     </div>
 </div>
 
+@* JSON Modal *@
+<div id="json-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
+    <div class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-xl w-full border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div class="p-6">
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">JSON Импорт</h3>
+            <textarea id="json-input" rows="8" class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-4 py-3 text-sm font-mono border focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder='{ "Name": "Product", ... }'></textarea>
+            <p id="json-error" class="hidden mt-2 text-xs text-red-500 font-medium"></p>
+        </div>
+        <div class="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 flex flex-row-reverse gap-3">
+            <button type="button" onclick="runFullImport()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition-colors">Импортирай</button>
+            <button type="button" onclick="toggleJsonModal(false)" class="text-slate-600 dark:text-slate-400 px-4 py-2 hover:text-slate-900 transition-colors">Затвори</button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
+        // SweetAlert2 Toast Setup
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 2500,
+            timerProgressBar: true,
+            background: document.documentElement.classList.contains('dark') ? '#0f172a' : '#fff',
+            color: document.documentElement.classList.contains('dark') ? '#fff' : '#000',
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+
+        function toggleJsonModal(show) {
+            document.getElementById('json-modal').classList.toggle('hidden', !show);
+            if(show) {
+                document.getElementById('json-input').value = '';
+                document.getElementById('json-error').classList.add('hidden');
+            }
+        }
+
         document.getElementById('file-upload').addEventListener('change', function () {
             const fileNameEl = document.getElementById('file-name');
             if (this.files && this.files.length > 0) {
                 fileNameEl.innerText = "Избран: " + this.files[0].name;
-                fileNameEl.classList.remove('text-slate-400', 'dark:text-slate-500');
                 fileNameEl.classList.add('text-blue-600', 'dark:text-blue-400', 'font-bold');
             }
         });
+
+        function getFormDataAsObject() {
+            const colors = Array.from(document.querySelectorAll('.color-checkbox:checked')).map(cb => cb.value);
+            return {
+                Id: document.getElementsByName('Id')[0].value,
+                Name: document.getElementById('Name').value,
+                Description: document.getElementById('Description').value,
+                PrintType: parseInt(document.getElementById('PrintType').value),
+                MaterialType: parseInt(document.getElementById('MaterialType').value),
+                Price: parseFloat(document.getElementById('Price').value) || 0,
+                Weight: parseFloat(document.getElementById('Weight').value) || 0,
+                PrintColors: colors
+            };
+        }
+
+        async function copyFormAsJson() {
+            try {
+                const json = JSON.stringify(getFormDataAsObject(), null, 2);
+                await navigator.clipboard.writeText(json);
+                Toast.fire({
+                    icon: 'success',
+                    title: 'JSON е копиран успешно!'
+                });
+            } catch (err) {
+                Toast.fire({ icon: 'error', title: 'Грешка при копиране!' });
+            }
+        }
+
+        function downloadJson() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(getFormDataAsObject(), null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", "edit_" + (document.getElementById('Name').value || "item") + ".json");
+            dlAnchor.click();
+            Toast.fire({ icon: 'info', title: 'Файлът се изтегля...' });
+        }
+
+        function runFullImport() {
+            try {
+                const input = document.getElementById('json-input').value.trim();
+                if(!input) return;
+
+                const data = JSON.parse(input);
+                if (data.Name) document.getElementById('Name').value = data.Name;
+                if (data.Description) document.getElementById('Description').value = data.Description;
+                if (data.Price) document.getElementById('Price').value = data.Price;
+                if (data.Weight) document.getElementById('Weight').value = data.Weight;
+                if (data.PrintType !== undefined) document.getElementById('PrintType').value = data.PrintType;
+                if (data.MaterialType !== undefined) document.getElementById('MaterialType').value = data.MaterialType;
+
+                if (Array.isArray(data.PrintColors)) {
+                    document.querySelectorAll('.color-checkbox').forEach(cb => {
+                        cb.checked = data.PrintColors.some(c => c.toString().toLowerCase() === cb.value.toLowerCase());
+                    });
+                }
+
+                toggleJsonModal(false);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Импортирано!',
+                    text: 'Данните бяха попълнени автоматично.',
+                    confirmButtonColor: '#2563eb',
+                    background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#fff',
+                    color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
+                });
+
+            } catch (e) {
+                const err = document.getElementById('json-error');
+                err.innerText = "Невалиден JSON формат!";
+                err.classList.remove('hidden');
+                document.getElementById('json-input').classList.add('border-red-500');
+            }
+        }
     </script>
 }
