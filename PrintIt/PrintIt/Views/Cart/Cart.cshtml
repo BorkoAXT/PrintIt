@@ -2,6 +2,7 @@
 @using PrintIt.Enums
 @using System.Linq;
 @using System.Globalization
+@using System.Security.Claims
 @using Microsoft.AspNetCore.Identity
 @model PrintIt.Models.ShopCart
 @{
@@ -11,7 +12,7 @@
     var cartItems = Model.Items;
     decimal subtotal = cartItems.Sum(item => (item.Print?.Price ?? 0) * (item.Quantity > 0 ? item.Quantity : 1));
     decimal shippingLimit = 50.00m;
-    decimal shipping = (subtotal > shippingLimit || subtotal == 0) ? 0 : 5.00m;
+    decimal shipping = (subtotal >= shippingLimit || subtotal == 0) ? 0 : 5.00m;
     decimal total = subtotal + shipping;
 }
 
@@ -191,11 +192,81 @@
 }
 
 @section Scripts {
-    @* (JavaScript logic remains identical as it is already highly functional) *@
+    <script>
+        const updateTimeouts = {};
+
+        async function changeQty(uniqueId, delta) {
+            const qtyInput = document.getElementById(`qty-${uniqueId}`);
+            const qtyDisplay = document.getElementById(`qty-display-${uniqueId}`);
+            const priceElement = document.getElementById(`price-${uniqueId}`);
+
+            let currentQty = parseInt(qtyInput.value);
+            let newQty = currentQty + delta;
+
+            if (newQty < 1) return;
+
+            // Update UI Locally
+            qtyInput.value = newQty;
+            qtyDisplay.innerText = newQty;
+
+            const unitPrice = parseFloat(priceElement.getAttribute('data-unit-price'));
+            const newItemTotal = unitPrice * newQty;
+            priceElement.innerText = `€${newItemTotal.toFixed(2)}`;
+
+            updateSidebarTotals();
+
+            // Sync with Server (Debounced)
+            clearTimeout(updateTimeouts[uniqueId]);
+            updateTimeouts[uniqueId] = setTimeout(() => {
+                syncQtyWithServer(uniqueId, newQty);
+            }, 500);
+        }
+
+        function updateSidebarTotals() {
+            let newSubtotal = 0;
+            document.querySelectorAll('.item-total-price').forEach(el => {
+                newSubtotal += parseFloat(el.innerText.replace('€', ''));
+            });
+
+            const shippingLimit = 50.00;
+            const shippingCost = (newSubtotal >= shippingLimit || newSubtotal === 0) ? 0 : 5.00;
+            const total = newSubtotal + shippingCost;
+
+            document.getElementById('subtotal').innerText = `€${newSubtotal.toFixed(2)}`;
+            document.getElementById('shipping').innerText = shippingCost === 0 ? "Безплатна" : `€${shippingCost.toFixed(2)}`;
+            document.getElementById('grand-total').innerText = `€${total.toFixed(2)}`;
+
+            const promo = document.getElementById('free-shipping-promo');
+            const remainingEl = document.getElementById('remaining-for-free');
+
+            if (newSubtotal >= shippingLimit) {
+                promo.classList.add('hidden');
+            } else {
+                promo.classList.remove('hidden');
+                remainingEl.innerText = `€${(shippingLimit - newSubtotal).toFixed(2)}`;
+            }
+        }
+
+        async function syncQtyWithServer(id, quantity) {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            try {
+                await fetch('/Cart/UpdateQuantity', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': token
+                    },
+                    body: new URLSearchParams({ 'id': id, 'quantity': quantity })
+                });
+            } catch (error) {
+                console.error("Update error:", error);
+            }
+        }
+    </script>
 }
 
 <style>
-    /* Custom numeric input hidden buttons */
     input::-webkit-outer-spin-button,
     input::-webkit-inner-spin-button {
         -webkit-appearance: none;

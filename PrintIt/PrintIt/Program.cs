@@ -18,8 +18,11 @@ namespace PrintIt
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-            builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(connectionString));
+            if (!builder.Environment.IsEnvironment("Testing"))
+            {
+                builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                    options.UseSqlServer(connectionString));
+            }
 
             // =========================
             // Identity

@@ -14,7 +14,6 @@
 
 <input type="hidden" id="af-token" value="@tokens.RequestToken" />
 
-@* Background updated for Dark Mode compatibility *@
 <div class="min-h-screen bg-slate-50/50 dark:bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-500">
     <div class="max-w-6xl mx-auto">
         @* Breadcrumbs & Back Button *@
@@ -43,7 +42,6 @@
                 </div>
 
                 <div class="mt-8 grid grid-cols-2 gap-4">
-                    @* Material Spec *@
                     <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-4 transition-colors">
                         <div class="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-600 dark:text-blue-400">
                             <i class="bi bi-layers-half text-xl"></i>
@@ -53,7 +51,6 @@
                             <span class="text-slate-900 dark:text-white font-bold text-lg">@Model.MaterialType</span>
                         </div>
                     </div>
-                    @* Weight Spec *@
                     <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-4 transition-colors">
                         <div class="p-3 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-600 dark:text-orange-400">
                             <i class="bi bi-speedometer2 text-xl"></i>
@@ -83,7 +80,7 @@
                     </div>
                 </div>
 
-                @* Color Selection Area *@
+                @* Color Selection Area - Text Labels Removed *@
                 <div class="mt-10">
                     <div class="flex justify-between items-end mb-4">
                         <h3 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Избери цветове</h3>
@@ -99,26 +96,25 @@
                                 PrintColor.Blue => "bg-blue-600",
                                 PrintColor.Green => "bg-emerald-500",
                                 PrintColor.Yellow => "bg-yellow-400",
-                                PrintColor.Black => "bg-slate-900 border-slate-700",
-                                PrintColor.White => "bg-white border-slate-200",
+                                PrintColor.Black => "bg-slate-900 ring-1 ring-slate-700",
+                                PrintColor.White => "bg-white border border-slate-300",
                                 PrintColor.Gray => "bg-slate-400",
                                 PrintColor.Orange => "bg-orange-500",
                                 PrintColor.Purple => "bg-purple-600",
                                 PrintColor.Pink => "bg-pink-400",
                                 PrintColor.Brown => "bg-amber-800",
+                                PrintColor.Cyan => "bg-cyan-400",
+                                PrintColor.Magenta => "bg-pink-600",
+                                PrintColor.Lime => "bg-lime-400",
+                                PrintColor.Multiple => "bg-gradient-to-tr from-red-500 via-green-500 to-blue-500",
                                 _ => "bg-slate-200"
                             };
 
-                            <div class="group relative">
-                                <button type="button"
-                                        onclick="toggleColor(this, '@color')"
-                                        class="color-swatch @colorClass w-12 h-12 rounded-xl shadow-md border-2 border-transparent hover:scale-110 transition-all cursor-pointer ring-offset-2 dark:ring-offset-slate-950 flex items-center justify-center">
-                                    <i class="bi bi-check-lg text-white text-xl check-icon hidden"></i>
-                                </button>
-                                <span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                    @color
-                                </span>
-                            </div>
+                            <button type="button"
+                                    onclick="toggleColor(this, '@color')"
+                                    class="color-swatch @colorClass w-12 h-12 rounded-xl shadow-md border-2 border-transparent hover:scale-110 transition-all cursor-pointer ring-offset-2 dark:ring-offset-slate-950 flex items-center justify-center">
+                                <i class="bi bi-check-lg text-white text-xl check-icon hidden"></i>
+                            </button>
                         }
                     </div>
 
@@ -165,11 +161,22 @@
 @section Scripts {
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
-        // JS logic remains the same, but note the "isLight" check for checkmark colors
         const colorHexMap = {
-            'Red': '#ef4444', 'Blue': '#2563eb', 'Green': '#10b981', 'Yellow': '#facc15',
-            'Black': '#0f172a', 'White': '#ffffff', 'Gray': '#94a3b8', 'Orange': '#f97316',
-            'Purple': '#9333ea', 'Pink': '#f472b6', 'Brown': '#78350f'
+            'Red': '#ef4444',
+            'Blue': '#2563eb',
+            'Green': '#10b981',
+            'Yellow': '#facc15',
+            'Black': '#0f172a',
+            'White': '#ffffff',
+            'Gray': '#94a3b8',
+            'Orange': '#f97316',
+            'Purple': '#9333ea',
+            'Pink': '#f472b6',
+            'Brown': '#78350f',
+            'Cyan': '#22d3ee',
+            'Magenta': '#db2777',
+            'Lime': '#a3e635',
+            'Multiple': 'linear-gradient(to right, #ef4444, #10b981, #2563eb)'
         };
 
         let selectedColors = [];
@@ -187,7 +194,8 @@
                 element.classList.add('ring-4', 'ring-blue-500', 'border-white');
                 checkIcon.classList.remove('hidden');
 
-                if(colorName === 'White' || colorName === 'Yellow') {
+                const lightColors = ['White', 'Yellow', 'Lime', 'Cyan'];
+                if(lightColors.includes(colorName)) {
                     checkIcon.classList.replace('text-white', 'text-slate-900');
                 } else {
                     checkIcon.classList.replace('text-slate-900', 'text-white');
@@ -221,98 +229,62 @@
 
                         async function addToCart(event, form) {
             event.preventDefault();
-
-            // --- 1️⃣ Validation: Check if colors are selected ---
             if (selectedColors.length === 0) {
-                window.dispatchEvent(new CustomEvent('notify', {
-                    detail: { message: "Моля, изберете поне един цвят!" }
-                }));
+                window.dispatchEvent(new CustomEvent('notify', { detail: { message: "Моля, изберете поне един цвят!" } }));
                 return;
             }
 
             const button = form.querySelector('button');
             const originalContent = button.innerHTML;
-            const originalStyle = button.getAttribute('style') || '';
-
-            // Map selected colors to hex for the animation and button feedback
             const hexCodes = selectedColors.map(c => colorHexMap[c] || '#3b82f6');
             const firstColorHex = hexCodes[0];
 
             try {
-                // --- 2️⃣ Prepare the request ---
                 const formData = new FormData(form);
                 const response = await fetch(form.action, {
                     method: 'POST',
                     body: formData,
-                    headers: {
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    }
+                    headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value }
                 });
 
                 const result = await response.json();
 
-                // --- 3️⃣ Handle anonymous user redirect ---
-                if (!result.success && result.redirectUrl) {
-                    window.location.href = result.redirectUrl;
-                    return;
-                }
-
-                // --- 4️⃣ Update cart count ---
-                const newCount = result.total;
-                const badge = document.getElementById('cart-badge');
-                const countText = document.getElementById('cart-count-text');
-                const statusMsg = document.getElementById('cart-status-msg');
-
-                if (countText && badge) {
-                    countText.innerText = newCount;
-
-                    if (newCount > 0) {
-                        badge.classList.remove('hidden');
-                        badge.classList.add('flex');
+                if (result.success) {
+                    // 1. REFRESH NAVBAR IMMEDIATELY
+                    if (typeof window.refreshCartUI === "function") {
+                        await window.refreshCartUI();
                     }
+
+                    // 2. SHOW THE "+1" TOAST (from your component)
+                    const toast = document.getElementById('cart-status-msg');
+                    if (toast) {
+                        toast.classList.remove('opacity-0', '-translate-y-[10px]');
+                        toast.classList.add('opacity-100', 'translate-y-0');
+                        setTimeout(() => {
+                            toast.classList.add('opacity-0', '-translate-y-[10px]');
+                            toast.classList.remove('opacity-100', 'translate-y-0');
+                        }, 2000);
+                    }
+
+                    // 3. RUN FLY ANIMATION
+                    if (typeof animateFlyToCart === "function") {
+                        let fill = selectedColors.includes('Multiple')
+                            ? colorHexMap['Multiple']
+                            : (hexCodes.length > 1 ? `linear-gradient(to right, ${hexCodes.join(',')})` : firstColorHex);
+                        animateFlyToCart(button, fill);
+                    }
+
+                    // 4. BUTTON FEEDBACK
+                    button.style.background = selectedColors.includes('Multiple') ? colorHexMap['Multiple'] : (hexCodes.length > 1 ? `linear-gradient(to right, ${hexCodes.join(',')})` : firstColorHex);
+                    button.innerHTML = '<i class="bi bi-check-all"></i> Добавено!';
+                    button.disabled = true;
                 }
+            } catch (error) { console.error(error); }
 
-                // --- 5️⃣ Show "+1 добавен!" toast ---
-                if (statusMsg) {
-                    statusMsg.classList.remove('opacity-0', 'translate-y-[-5px]');
-                    statusMsg.classList.add('opacity-100', 'translate-y-0');
-
-                    setTimeout(() => {
-                        statusMsg.classList.replace('opacity-100', 'opacity-0');
-                        statusMsg.classList.replace('translate-y-0', 'translate-y-[-5px]');
-                    }, 2500);
-                }
-
-                // --- 6️⃣ Animate flying box to cart ---
-                if (typeof animateFlyToCart === "function") {
-                    const gradient = hexCodes.length > 1
-                        ? `linear-gradient(to right, ${hexCodes.join(',')})`
-                        : firstColorHex;
-                    animateFlyToCart(button, gradient);
-                }
-
-                // --- 7️⃣ Button feedback ---
-                if (hexCodes.length > 1) {
-                    button.style.background = `linear-gradient(to right, ${hexCodes.join(',')})`;
-                } else {
-                    button.style.background = 'none';
-                    button.style.backgroundColor = firstColorHex;
-                }
-
-                const isLight = selectedColors.includes('White') || selectedColors.includes('Yellow');
-                button.style.color = isLight ? '#0f172a' : '#ffffff';
-                button.innerHTML = '<i class="bi bi-check-all"></i> Добавено!';
-                button.disabled = true;
-
-            } catch (error) {
-                console.error("Cart Network Error:", error);
-            }
-
-            // --- 8️⃣ Reset button after delay ---
             setTimeout(() => {
                 button.disabled = false;
                 button.innerHTML = originalContent;
-                button.setAttribute('style', originalStyle);
+                button.style.background = '';
             }, 1500);
         }
 
@@ -325,15 +297,10 @@
             try {
                 const response = await fetch('/Store/ToggleWishlist', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'RequestVerificationToken': token
-                    },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
                     body: new URLSearchParams({ 'id': printId })
                 });
-
                 if (response.status === 401) { window.location.href = '/Identity/Account/Login'; return; }
-
                 const data = await response.json();
                 if (data.success) {
                     if (data.isFavorite) {
