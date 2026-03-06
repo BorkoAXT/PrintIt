@@ -77,9 +77,8 @@ x86/
 # ICO
 *.ico
 
-# 3D Images
-*.3dm
-
+# 3D Models
+*.stl
 
 # Visual Studio cache files
 .vs/
