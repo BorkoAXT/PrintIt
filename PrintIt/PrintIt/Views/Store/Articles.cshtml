@@ -93,7 +93,7 @@
                     @* Type Filter *@
                     <div>
                         <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-2.5 ml-1">Категория</label>
-                        <select name="SelectedType" class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-3.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-primary/20 transition-all cursor-pointer outline-none">
+                        <select name="SelectedType" class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-3.5 px-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-primary/20 transition-all cursor-pointer outline-none">
                             <option value="">Всички категории</option>
                             @foreach (var type in Enum.GetValues<PrintType>())
                             {
@@ -105,7 +105,7 @@
                     @* Material Filter *@
                     <div>
                         <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-2.5 ml-1">Материал</label>
-                        <select name="SelectedMaterial" class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-3.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-primary/20 transition-all cursor-pointer outline-none">
+                        <select name="SelectedMaterial" class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-3.5 px-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-primary/20 transition-all cursor-pointer outline-none">
                             <option value="">Всички материали</option>
                             @foreach (var mat in Enum.GetValues<MaterialType>())
                             {
@@ -121,13 +121,13 @@
                         <div>
                             <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-2">Мин. Цена</label>
                             <input type="number" name="MinPrice" value="@Model.MinPrice" placeholder="0" step="0.01"
-                                   class="w-28 bg-slate-50 dark:bg-slate-800 border-none rounded-xl py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-primary/20 outline-none" />
+                                   class="w-28 bg-slate-50 dark:bg-slate-800 border-none rounded-xl py-2.5 px-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-primary/20 outline-none" />
                         </div>
-                        <div class="mt-6 text-slate-300 dark:text-slate-700">—</div>
+                        <div class="mb-2.5 text-slate-300 dark:text-slate-700">—</div>
                         <div>
                             <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-2">Макс. Цена</label>
                             <input type="number" name="MaxPrice" value="@Model.MaxPrice" placeholder="999" step="0.01"
-                                   class="w-28 bg-slate-50 dark:bg-slate-800 border-none rounded-xl py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-primary/20 outline-none" />
+                                   class="w-28 bg-slate-50 dark:bg-slate-800 border-none rounded-xl py-2.5 px-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-primary/20 outline-none" />
                         </div>
                     </div>
 
