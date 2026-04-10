@@ -53,7 +53,7 @@
         <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Нова обява</h1>
-                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Създайте нов артикул ръчно или чрез JSON импорт.</p>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Създайте нов артикул с множество снимки и 3D модел.</p>
             </div>
 
             @* Toolbar: JSON Tools *@
@@ -113,7 +113,7 @@
                     </div>
                 </div>
 
-                @* Section: Colors & Image *@
+                @* Section: Colors & Media *@
                 <div class="p-8 space-y-8">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Налични цветове</label>
@@ -131,19 +131,40 @@
                         </div>
                     </div>
 
+                    @* Section: Product Images *@
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Снимка на продукта</label>
-                        <div class="mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-xl hover:border-blue-400 bg-white dark:bg-slate-900/50 transition-colors">
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Снимки на продукта</label>
+                        <div class="mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-xl hover:border-blue-400 bg-white dark:bg-slate-900/50 transition-colors cursor-pointer"
+                             ondrop="handleImageDrop(event)" ondragover="event.preventDefault()" ondragleave="this.classList.remove('border-blue-400')">
                             <div class="space-y-2 text-center">
-                                <i class="bi bi-cloud-arrow-up text-4xl text-slate-300 dark:text-slate-600"></i>
+                                <i class="bi bi-images text-4xl text-slate-300 dark:text-slate-600"></i>
                                 <div class="flex text-sm text-slate-600 dark:text-slate-400 items-center gap-2 justify-center">
-                                    <button type="button" onclick="document.getElementById('file-upload').click()" class="font-bold text-blue-600 dark:text-blue-400">Изберете файл</button>
-                                    <input id="file-upload" asp-for="File" type="file" class="hidden" accept="image/*" />
-                                    <p id="file-name" class="text-slate-400">или го пуснете тук</p>
+                                    <button type="button" onclick="document.getElementById('images-upload').click()" class="font-bold text-blue-600 dark:text-blue-400">Изберете файлове</button>
+                                    <input id="images-upload" name="Images" type="file" class="hidden" accept="image/*" multiple />
+                                    <p id="images-name" class="text-slate-400">или ги пуснете тук</p>
                                 </div>
-                                <p class="text-xs text-slate-400 uppercase tracking-widest font-bold">PNG, JPG до 10MB</p>
+                                <p class="text-xs text-slate-400 uppercase tracking-widest font-bold">PNG, JPG до 10MB всеки</p>
                             </div>
                         </div>
+                        <div id="images-preview" class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
+                    </div>
+
+                    @* Section: 3D Model *@
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">3D Модел файл</label>
+                        <div class="mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-xl hover:border-blue-400 bg-white dark:bg-slate-900/50 transition-colors cursor-pointer"
+                             ondrop="handleModelDrop(event)" ondragover="event.preventDefault()" ondragleave="this.classList.remove('border-blue-400')">
+                            <div class="space-y-2 text-center">
+                                <i class="bi bi-cube text-4xl text-slate-300 dark:text-slate-600"></i>
+                                <div class="flex text-sm text-slate-600 dark:text-slate-400 items-center gap-2 justify-center">
+                                    <button type="button" onclick="document.getElementById('model-upload').click()" class="font-bold text-blue-600 dark:text-blue-400">Изберете файл</button>
+                                    <input id="model-upload" name="ModelFile" type="file" class="hidden" accept=".stl,.obj,.3mf,.gcode" />
+                                    <p id="model-name" class="text-slate-400">или го пуснете тук</p>
+                                </div>
+                                <p class="text-xs text-slate-400 uppercase tracking-widest font-bold">STL, OBJ, 3MF, GCODE до 50MB</p>
+                            </div>
+                        </div>
+                        <div id="model-preview" class="mt-4"></div>
                     </div>
                 </div>
 
@@ -177,6 +198,10 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // Global file storage
+        let selectedImages = [];
+        let selectedModel = null;
+
         // SweetAlert2 Toast Setup
         const Toast = Swal.mixin({
             toast: true,
@@ -201,13 +226,140 @@
             }
         }
 
-        document.getElementById('file-upload').addEventListener('change', function () {
-            const fileNameEl = document.getElementById('file-name');
-            if (this.files && this.files.length > 0) {
-                fileNameEl.innerText = "Избран: " + this.files[0].name;
-                fileNameEl.classList.add('text-blue-600', 'font-bold');
-            }
+        // Image upload handling
+        document.getElementById('images-upload').addEventListener('change', function () {
+            handleImageFiles(this.files);
         });
+
+        function handleImageDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('border-blue-400');
+            const files = event.dataTransfer.files;
+            handleImageFiles(files);
+        }
+
+        function handleImageFiles(files) {
+            selectedImages = Array.from(files);
+            updateImagePreview();
+            const imagesNameEl = document.getElementById('images-name');
+            imagesNameEl.innerText = `Избрани: ${selectedImages.length} снимки`;
+            imagesNameEl.classList.add('text-blue-600', 'font-bold');
+        }
+
+        function updateImagePreview() {
+            const preview = document.getElementById('images-preview');
+            preview.innerHTML = '';
+
+            selectedImages.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const div = document.createElement('div');
+                    div.className = 'relative group rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 aspect-square';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" alt="${file.name}" class="w-full h-full object-cover" />
+                        <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button type="button" onclick="moveImageUp(${index})" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" title="Нагоре">
+                                <i class="bi bi-arrow-up"></i>
+                            </button>
+                            <button type="button" onclick="moveImageDown(${index})" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" title="Надолу">
+                                <i class="bi bi-arrow-down"></i>
+                            </button>
+                            <button type="button" onclick="removeImage(${index})" class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors" title="Премахни">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                    `;
+                    preview.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function moveImageUp(index) {
+            if (index > 0) {
+                [selectedImages[index - 1], selectedImages[index]] = [selectedImages[index], selectedImages[index - 1]];
+                updateImagePreview();
+            }
+        }
+
+        function moveImageDown(index) {
+            if (index < selectedImages.length - 1) {
+                [selectedImages[index], selectedImages[index + 1]] = [selectedImages[index + 1], selectedImages[index]];
+                updateImagePreview();
+            }
+        }
+
+        function removeImage(index) {
+            selectedImages.splice(index, 1);
+            updateImagePreview();
+            if (selectedImages.length === 0) {
+                document.getElementById('images-name').innerText = 'или ги пуснете тук';
+                document.getElementById('images-name').classList.remove('text-blue-600', 'font-bold');
+            }
+        }
+
+        // Model upload handling
+        document.getElementById('model-upload').addEventListener('change', function () {
+            handleModelFile(this.files[0]);
+        });
+
+        function handleModelDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('border-blue-400');
+            const file = event.dataTransfer.files[0];
+            if (file) {
+                handleModelFile(file);
+            }
+        }
+
+        function handleModelFile(file) {
+            const validExtensions = ['stl', 'obj', '3mf', 'gcode'];
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+
+            if (!validExtensions.includes(fileExtension)) {
+                Toast.fire({
+                    icon: 'error',
+                    title: 'Невалиден формат! Приемат се: STL, OBJ, 3MF, GCODE'
+                });
+                return;
+            }
+
+            selectedModel = file;
+            updateModelPreview();
+        }
+
+        function updateModelPreview() {
+            const preview = document.getElementById('model-preview');
+            preview.innerHTML = '';
+
+            if (selectedModel) {
+                const div = document.createElement('div');
+                div.className = 'p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-between';
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <i class="bi bi-cube text-2xl text-blue-600"></i>
+                        <div>
+                            <p class="font-bold text-slate-900 dark:text-white">${selectedModel.name}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">${(selectedModel.size / 1024 / 1024).toFixed(2)} MB</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="removeModel()" class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                `;
+                preview.appendChild(div);
+                document.getElementById('model-name').innerText = `Избран: ${selectedModel.name}`;
+                document.getElementById('model-name').classList.add('text-blue-600', 'font-bold');
+            }
+        }
+
+        function removeModel() {
+            selectedModel = null;
+            updateModelPreview();
+            document.getElementById('model-name').innerText = 'или го пуснете тук';
+            document.getElementById('model-name').classList.remove('text-blue-600', 'font-bold');
+            document.getElementById('model-upload').value = '';
+        }
 
         function getFormDataAsObject() {
             const colors = Array.from(document.querySelectorAll('.color-checkbox:checked')).map(cb => cb.value);
@@ -218,7 +370,9 @@
                 MaterialType: parseInt(document.getElementById('MaterialType').value),
                 Price: parseFloat(document.getElementById('Price').value) || 0,
                 Weight: parseFloat(document.getElementById('Weight').value) || 0,
-                PrintColors: colors
+                PrintColors: colors,
+                ImageCount: selectedImages.length,
+                HasModel: selectedModel !== null
             };
         }
 
@@ -281,5 +435,64 @@
                 document.getElementById('json-input').classList.add('border-red-500');
             }
         }
+
+        // Form submission - populate hidden inputs with file data
+        document.getElementById('mainForm').addEventListener('submit', async function(e) {
+            if (selectedImages.length === 0) {
+                e.preventDefault();
+                Toast.fire({
+                    icon: 'warning',
+                    title: 'Моля, добавете поне една снимка!'
+                });
+                return;
+            }
+
+            // Create FormData and add images and model in correct order
+            const formData = new FormData(this);
+
+            // Clear existing images/model
+            formData.delete('Images');
+            formData.delete('ModelFile');
+
+            // Add images in order
+            selectedImages.forEach((file) => {
+                formData.append('Images', file);
+            });
+
+            // Add model if exists
+            if (selectedModel) {
+                formData.append('ModelFile', selectedModel);
+            }
+
+            // Replace form submission with custom fetch
+            e.preventDefault();
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    Toast.fire({
+                        icon: 'success',
+                        title: 'Артикулът е публикуван!'
+                    });
+                    setTimeout(() => {
+                        window.location.href = '@Url.Action("Articles", "Store")';
+                    }, 1500);
+                } else {
+                    Toast.fire({
+                        icon: 'error',
+                        title: 'Грешка при публикуване!'
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Toast.fire({
+                    icon: 'error',
+                    title: 'Грешка при отправяне!'
+                });
+            }
+        });
     </script>
 }

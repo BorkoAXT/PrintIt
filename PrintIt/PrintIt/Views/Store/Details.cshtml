@@ -2,14 +2,22 @@
 @using PrintIt.Enums
 @using System.Security.Claims
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@inject PrintIt.Services.IFileService FileService
 @{
     ViewData["Title"] = Model.Name;
     Layout = "~/Views/Shared/_Layout.cshtml";
     bool isFav = ViewBag.IsFavorite ?? false;
     var tokens = Antiforgery.GetAndStoreTokens(Context);
-    var imageSrc = !string.IsNullOrEmpty(Model.FilePath)
-                    ? Model.FilePath
-                    : $"/images/{Model.Id}.png";
+
+    // Get media from new folder structure
+    var images = new List<string>();
+    var model3D = string.Empty;
+
+    if (!string.IsNullOrEmpty(Model.MediaFolderPath))
+    {
+        images = FileService.GetPrintImages(Model.MediaFolderPath);
+        model3D = FileService.GetPrint3DModel(Model.MediaFolderPath) ?? string.Empty;
+    }
 }
 
 <input type="hidden" id="af-token" value="@tokens.RequestToken" />
@@ -35,12 +43,98 @@
         </div>
 
         <div class="lg:grid lg:grid-cols-2 lg:gap-x-12 lg:items-start">
-            @* Left Column: Image and Tech Specs *@
+            @* Left Column: Media Viewer *@
             <div class="flex flex-col">
-                <div class="w-full aspect-square rounded-3xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors">
-                    <img src="@imageSrc" alt="@Model.Name" class="w-full h-full object-center object-cover hover:scale-105 transition-transform duration-700">
-                </div>
+                @* Media Type Tabs *@
+                @if (images.Any() || !string.IsNullOrEmpty(model3D))
+                {
+                    <div class="flex gap-2 mb-4">
+                        @if (images.Any())
+                        {
+                            <button type="button" onclick="switchMediaType('images')" id="images-tab" class="px-4 py-2 rounded-xl font-bold text-sm transition-all bg-blue-600 text-white shadow-lg">
+                                <i class="bi bi-images mr-2"></i>Снимки (@images.Count)
+                            </button>
+                        }
+                        @if (!string.IsNullOrEmpty(model3D))
+                        {
+                            <button type="button" onclick="switchMediaType('model')" id="model-tab" class="px-4 py-2 rounded-xl font-bold text-sm transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800">
+                                <i class="bi bi-cube mr-2"></i>3D Модел
+                            </button>
+                        }
+                    </div>
+                }
 
+                @* Image Viewer Section *@
+                @if (images.Any())
+                {
+                    <div id="images-container" class="flex flex-col gap-4">
+                        @* Main Image Display *@
+                        <div class="w-full aspect-square rounded-3xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl relative group">
+                            <img id="main-image" src="@images.First()" alt="@Model.Name" class="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform duration-700" onclick="openImageLightbox(0)">
+
+                            @* Image Navigation Arrows *@
+                            <button type="button" onclick="previousImage()" class="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 dark:bg-slate-900/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white dark:hover:bg-slate-800 shadow-lg">
+                                <i class="bi bi-chevron-left text-slate-900 dark:text-white text-xl"></i>
+                            </button>
+                            <button type="button" onclick="nextImage()" class="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 dark:bg-slate-900/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white dark:hover:bg-slate-800 shadow-lg">
+                                <i class="bi bi-chevron-right text-slate-900 dark:text-white text-xl"></i>
+                            </button>
+
+                            @* Fullscreen Button *@
+                            <button type="button" onclick="openImageLightbox(currentImageIndex)" class="absolute top-4 right-4 p-2 bg-white/80 dark:bg-slate-900/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white dark:hover:bg-slate-800 shadow-lg">
+                                <i class="bi bi-arrows-fullscreen text-slate-900 dark:text-white text-xl"></i>
+                            </button>
+
+                            @* Image Counter *@
+                            <div class="absolute bottom-4 left-4 bg-slate-900/70 dark:bg-slate-100/10 text-white px-3 py-1 rounded-full text-sm font-bold backdrop-blur-sm">
+                                <span id="image-counter">1</span> / @images.Count
+                            </div>
+                        </div>
+
+                        @* Image Carousel Thumbnails *@
+                        @if (images.Count > 1)
+                        {
+                            <div class="flex gap-2 overflow-x-auto pb-2">
+                                @for (int i = 0; i < images.Count; i++)
+                                {
+                                    <button type="button" onclick="goToImage(@i)" id="thumb-@i" class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 border-transparent hover:border-blue-400 transition-all @(i == 0 ? "border-blue-600" : "border-slate-200 dark:border-slate-700")">
+                                        <img src="@images[i]" alt="Thumbnail @(i + 1)" class="w-full h-full object-cover">
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                @* 3D Model Viewer Section *@
+                @if (!string.IsNullOrEmpty(model3D))
+                {
+                    <div id="model-container" class="hidden flex flex-col gap-4">
+                        @* 3D Viewer Canvas *@
+                        <div id="canvas-container" class="w-full aspect-square rounded-3xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl relative">
+                            <canvas id="3d-canvas" class="w-full h-full"></canvas>
+
+                            @* 3D Controls Info *@
+                            <div class="absolute bottom-4 left-4 bg-slate-900/70 dark:bg-slate-100/10 text-white px-3 py-2 rounded-lg text-xs font-bold backdrop-blur-sm space-y-1">
+                                <div><i class="bi bi-mouse text-blue-400 mr-1"></i>Завърти: ЛКМ + Влачи</div>
+                                <div><i class="bi bi-zoom-in text-blue-400 mr-1"></i>Увеличи: Скрол</div>
+                                <div><i class="bi bi-arrows-move text-blue-400 mr-1"></i>Премести: Дясна КМ</div>
+                            </div>
+
+                            @* 3D Controls Buttons *@
+                            <div class="absolute top-4 right-4 flex gap-2">
+                                <button type="button" onclick="reset3DView()" class="p-2 bg-white/80 dark:bg-slate-900/80 rounded-full hover:bg-white dark:hover:bg-slate-800 shadow-lg transition-colors" title="Нулиране на изгледа">
+                                    <i class="bi bi-arrow-counterclockwise text-slate-900 dark:text-white"></i>
+                                </button>
+                                <button type="button" onclick="download3DModel()" class="p-2 bg-white/80 dark:bg-slate-900/80 rounded-full hover:bg-white dark:hover:bg-slate-800 shadow-lg transition-colors" title="Изтегли модел">
+                                    <i class="bi bi-download text-slate-900 dark:text-white"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @* Tech Specs *@
                 <div class="mt-8 grid grid-cols-2 gap-4">
                     <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-4 transition-colors">
                         <div class="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-600 dark:text-blue-400">
@@ -80,7 +174,7 @@
                     </div>
                 </div>
 
-                @* Color Selection Area - Text Labels Removed *@
+                @* Color Selection Area *@
                 <div class="mt-10">
                     <div class="flex justify-between items-end mb-4">
                         <h3 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Избери цветове</h3>
@@ -158,9 +252,288 @@
     </div>
 </div>
 
+@* Image Lightbox Modal *@
+<div id="lightbox" class="hidden fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="relative w-full h-full flex flex-col items-center justify-center">
+        @* Close Button *@
+        <button type="button" onclick="closeLightbox()" class="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors z-10">
+            <i class="bi bi-x-lg text-white text-2xl"></i>
+        </button>
+
+        @* Main Lightbox Image *@
+        <div class="relative flex-1 flex items-center justify-center max-w-4xl">
+            <img id="lightbox-image" src="" alt="Увеличено изображение" class="max-w-full max-h-full object-contain">
+
+            @* Navigation Arrows *@
+            <button type="button" onclick="previousImageLightbox()" class="absolute left-4 p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors">
+                <i class="bi bi-chevron-left text-white text-2xl"></i>
+            </button>
+            <button type="button" onclick="nextImageLightbox()" class="absolute right-4 p-3 bg-white/10 hover:bg-white/20 rounded-colors">
+                <i class="bi bi-chevron-right text-white text-2xl"></i>
+            </button>
+
+            @* Zoom Controls *@
+            <div class="absolute bottom-4 left-4 flex gap-2 bg-white/10 backdrop-blur-sm p-3 rounded-lg">
+                <button type="button" onclick="zoomImage(-0.1)" class="p-2 hover:bg-white/20 rounded transition-colors">
+                    <i class="bi bi-zoom-out text-white"></i>
+                </button>
+                <div class="w-px bg-white/20"></div>
+                <button type="button" onclick="resetImageZoom()" class="px-3 py-2 text-white text-sm font-bold hover:bg-white/20 rounded transition-colors">
+                    Нулиране
+                </button>
+                <div class="w-px bg-white/20"></div>
+                <button type="button" onclick="zoomImage(0.1)" class="p-2 hover:bg-white/20 rounded transition-colors">
+                    <i class="bi bi-zoom-in text-white"></i>
+                </button>
+            </div>
+        </div>
+
+        @* Image Counter *@
+        <div class="mt-4 text-white text-sm font-bold">
+            <span id="lightbox-counter">1</span> / @images.Count
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@r128/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@r128/examples/js/controls/OrbitControls.js"></script>
+
     <script>
+        // Image Gallery Variables
+        const images = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(images));
+        const model3DPath = '@model3D';
+        let currentImageIndex = 0;
+        let lightboxZoom = 1;
+        let scene, camera, renderer, controls, model3D;
+
+        // ===== IMAGE GALLERY FUNCTIONS =====
+        function switchMediaType(type) {
+            const imagesContainer = document.getElementById('images-container');
+            const modelContainer = document.getElementById('model-container');
+            const imagesTab = document.getElementById('images-tab');
+            const modelTab = document.getElementById('model-tab');
+
+            if (type === 'images') {
+                imagesContainer.classList.remove('hidden');
+                modelContainer.classList.add('hidden');
+                imagesTab.classList.add('bg-blue-600', 'text-white', 'shadow-lg');
+                imagesTab.classList.remove('bg-white', 'dark:bg-slate-900', 'text-slate-900', 'dark:text-white', 'border', 'border-slate-200', 'dark:border-slate-800');
+                modelTab.classList.remove('bg-blue-600', 'text-white', 'shadow-lg');
+                modelTab.classList.add('bg-white', 'dark:bg-slate-900', 'text-slate-900', 'dark:text-white', 'border', 'border-slate-200', 'dark:border-slate-800');
+            } else {
+                imagesContainer.classList.add('hidden');
+                modelContainer.classList.remove('hidden');
+                modelTab.classList.add('bg-blue-600', 'text-white', 'shadow-lg');
+                modelTab.classList.remove('bg-white', 'dark:bg-slate-900', 'text-slate-900', 'dark:text-white', 'border', 'border-slate-200', 'dark:border-slate-800');
+                imagesTab.classList.remove('bg-blue-600', 'text-white', 'shadow-lg');
+                imagesTab.classList.add('bg-white', 'dark:bg-slate-900', 'text-slate-900', 'dark:text-white', 'border', 'border-slate-200', 'dark:border-slate-800');
+                if (!renderer) init3DViewer();
+            }
+        }
+
+        function goToImage(index) {
+            currentImageIndex = index;
+            updateMainImage();
+            updateThumbnails();
+        }
+
+        function nextImage() {
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            updateMainImage();
+            updateThumbnails();
+        }
+
+        function previousImage() {
+            currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+            updateMainImage();
+            updateThumbnails();
+        }
+
+        function updateMainImage() {
+            document.getElementById('main-image').src = images[currentImageIndex];
+            document.getElementById('image-counter').textContent = currentImageIndex + 1;
+        }
+
+        function updateThumbnails() {
+            document.querySelectorAll('[id^="thumb-"]').forEach((thumb, i) => {
+                if (i === currentImageIndex) {
+                    thumb.classList.add('border-blue-600');
+                    thumb.classList.remove('border-slate-200', 'dark:border-slate-700');
+                } else {
+                    thumb.classList.remove('border-blue-600');
+                    thumb.classList.add('border-slate-200', 'dark:border-slate-700');
+                }
+            });
+        }
+
+        function openImageLightbox(index) {
+            currentImageIndex = index;
+            document.getElementById('lightbox-image').src = images[currentImageIndex];
+            document.getElementById('lightbox-counter').textContent = currentImageIndex + 1;
+            document.getElementById('lightbox').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            lightboxZoom = 1;
+            updateLightboxImageZoom();
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.add('hidden');
+            document.body.style.overflow = '';
+            lightboxZoom = 1;
+        }
+
+        function nextImageLightbox() {
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            document.getElementById('lightbox-image').src = images[currentImageIndex];
+            document.getElementById('lightbox-counter').textContent = currentImageIndex + 1;
+            lightboxZoom = 1;
+            updateLightboxImageZoom();
+        }
+
+        function previousImageLightbox() {
+            currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+            document.getElementById('lightbox-image').src = images[currentImageIndex];
+            document.getElementById('lightbox-counter').textContent = currentImageIndex + 1;
+            lightboxZoom = 1;
+            updateLightboxImageZoom();
+        }
+
+        function zoomImage(delta) {
+            lightboxZoom = Math.max(0.5, Math.min(3, lightboxZoom + delta));
+            updateLightboxImageZoom();
+        }
+
+        function resetImageZoom() {
+            lightboxZoom = 1;
+            updateLightboxImageZoom();
+        }
+
+        function updateLightboxImageZoom() {
+            const img = document.getElementById('lightbox-image');
+            img.style.transform = `scale(${lightboxZoom})`;
+            img.style.transition = 'transform 0.3s ease';
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            const lightbox = document.getElementById('lightbox');
+            if (lightbox.classList.contains('hidden')) return;
+
+            if (e.key === 'ArrowRight') nextImageLightbox();
+            if (e.key === 'ArrowLeft') previousImageLightbox();
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === '+' || e.key === '=') zoomImage(0.1);
+            if (e.key === '-') zoomImage(-0.1);
+            if (e.key === '0') resetImageZoom();
+        });
+
+        // ===== 3D VIEWER FUNCTIONS =====
+        function init3DViewer() {
+            const container = document.getElementById('canvas-container');
+            const canvas = document.getElementById('3d-canvas');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf8fafc);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.z = 150;
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 10, 7);
+            scene.add(directionalLight);
+
+            // Controls
+            controls = new THREE.OrbitControls(camera, canvas);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 4;
+
+            // Load 3D model
+            load3DModel();
+
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                const newWidth = container.clientWidth;
+                const newHeight = container.clientHeight;
+                camera.aspect = newWidth / newHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(newWidth, newHeight);
+            });
+        }
+
+        function load3DModel() {
+            if (!model3DPath) return;
+
+            const loader = new THREE.STLLoader();
+            loader.load(model3DPath, (geometry) => {
+                geometry.computeBoundingBox();
+                geometry.center();
+
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0x2563eb,
+                    emissive: 0x072534,
+                    shininess: 200
+                });
+                model3D = new THREE.Mesh(geometry, material);
+                scene.add(model3D);
+
+                // Fit camera to model
+                const bbox = geometry.boundingBox;
+                const size = bbox.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                camera.position.z = maxDim * 2;
+                controls.target.copy(geometry.boundingSphere.center);
+                controls.update();
+            });
+        }
+
+        function reset3DView() {
+            if (model3D) {
+                controls.reset();
+                const bbox = model3D.geometry.boundingBox;
+                const size = bbox.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                camera.position.z = maxDim * 2;
+                controls.target.copy(model3D.geometry.boundingSphere.center);
+                controls.update();
+            }
+        }
+
+        function download3DModel() {
+            const link = document.createElement('a');
+            link.href = model3DPath;
+            link.download = '@Model.Name.Replace(" ", "_") + "_3D_Model"';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // ===== EXISTING COLOR AND CART FUNCTIONS =====
         const colorHexMap = {
             'Red': '#ef4444',
             'Blue': '#2563eb',
@@ -227,7 +600,7 @@
             }
         }
 
-                        async function addToCart(event, form) {
+        async function addToCart(event, form) {
             event.preventDefault();
             if (selectedColors.length === 0) {
                 window.dispatchEvent(new CustomEvent('notify', { detail: { message: "Моля, изберете поне един цвят!" } }));
@@ -250,12 +623,10 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // 1. REFRESH NAVBAR IMMEDIATELY
                     if (typeof window.refreshCartUI === "function") {
                         await window.refreshCartUI();
                     }
 
-                    // 2. SHOW THE "+1" TOAST (from your component)
                     const toast = document.getElementById('cart-status-msg');
                     if (toast) {
                         toast.classList.remove('opacity-0', '-translate-y-[10px]');
@@ -266,7 +637,6 @@
                         }, 2000);
                     }
 
-                    // 3. RUN FLY ANIMATION
                     if (typeof animateFlyToCart === "function") {
                         let fill = selectedColors.includes('Multiple')
                             ? colorHexMap['Multiple']
@@ -274,7 +644,6 @@
                         animateFlyToCart(button, fill);
                     }
 
-                    // 4. BUTTON FEEDBACK
                     button.style.background = selectedColors.includes('Multiple') ? colorHexMap['Multiple'] : (hexCodes.length > 1 ? `linear-gradient(to right, ${hexCodes.join(',')})` : firstColorHex);
                     button.innerHTML = '<i class="bi bi-check-all"></i> Добавено!';
                     button.disabled = true;
