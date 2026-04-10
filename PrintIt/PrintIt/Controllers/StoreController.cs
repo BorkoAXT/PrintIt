@@ -101,17 +101,40 @@ public class StoreController : Controller
 
         try
         {
-            string filePath = "/images/placeholder-figure.jpg";
-            if (model.File != null)
-            {
-                filePath = await _fileService.UploadImageAsync(model.File, model.PrintType);
-                _logger.LogInformation("Admin uploaded new image: {FilePath}", filePath);
-            }
-
+            // Create a new print with temporary media folder path
             var print = new Print(
                 model.Name, model.Description, model.MaterialType, model.Weight,
-                model.Price, filePath, model.PrintType, model.PrintColors
+                model.Price, null, model.PrintType, model.PrintColors
             );
+
+            // Create the media folder for this print
+            string mediaFolderPath = _fileService.CreatePrintMediaFolder(print.Id, model.PrintType);
+            print.MediaFolderPath = mediaFolderPath;
+
+            _logger.LogInformation("Created media folder for Print {PrintId}: {MediaFolderPath}", print.Id, mediaFolderPath);
+
+            // Upload image if provided
+            if (model.File != null)
+            {
+                string imagePath = await _fileService.UploadPrintImageAsync(model.File, mediaFolderPath);
+                _logger.LogInformation("Admin uploaded image for Print {PrintId}: {ImagePath}", print.Id, imagePath);
+            }
+
+            // Upload 3D model if provided
+            if (model.ModelFile != null)
+            {
+                try
+                {
+                    string modelPath = await _fileService.Upload3DModelAsync(model.ModelFile, mediaFolderPath);
+                    _logger.LogInformation("Admin uploaded 3D model for Print {PrintId}: {ModelPath}", print.Id, modelPath);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _logger.LogWarning(ex, "Failed to upload 3D model for Print {PrintId}", print.Id);
+                    ModelState.AddModelError("ModelFile", ex.Message);
+                    return View(model);
+                }
+            }
 
             await _printService.AddAsync(print);
             _logger.LogInformation("Admin created new product: {PrintName} ({PrintId})", print.Name, print.Id);
@@ -172,8 +195,15 @@ public class StoreController : Controller
             MaterialType = print.MaterialType,
             PrintType = print.PrintType,
             PrintColors = print.PrintColors ?? new List<PrintColor>(),
-            FilePath = print.FilePath
+            MediaFolderPath = print.MediaFolderPath
         };
+
+        // Load existing images and 3D model
+        if (!string.IsNullOrEmpty(print.MediaFolderPath))
+        {
+            viewModel.ExistingImages = _fileService.GetPrintImages(print.MediaFolderPath);
+            viewModel.Existing3DModel = _fileService.GetPrint3DModel(print.MediaFolderPath);
+        }
 
         return View("~/Views/Store/Edit.cshtml", viewModel);
     }
@@ -202,11 +232,41 @@ public class StoreController : Controller
             existing.PrintType = model.PrintType;
             existing.PrintColors = model.PrintColors;
 
+            // Ensure media folder exists
+            if (string.IsNullOrEmpty(existing.MediaFolderPath))
+            {
+                existing.MediaFolderPath = _fileService.CreatePrintMediaFolder(existing.Id, model.PrintType);
+                _logger.LogInformation("Created missing media folder for Print {PrintId}", existing.Id);
+            }
+
+            // Upload new image if provided
             if (model.File != null)
             {
-                _logger.LogDebug("Replacing image for Print {PrintId}", model.Id);
-                await _fileService.DeleteImageAsync(existing.FilePath);
-                existing.FilePath = await _fileService.UploadImageAsync(model.File, model.PrintType);
+                _logger.LogDebug("Adding new image for Print {PrintId}", model.Id);
+                await _fileService.UploadPrintImageAsync(model.File, existing.MediaFolderPath);
+            }
+
+            // Upload new 3D model if provided
+            if (model.ModelFile != null)
+            {
+                try
+                {
+                    _logger.LogDebug("Uploading new 3D model for Print {PrintId}", model.Id);
+                    await _fileService.Upload3DModelAsync(model.ModelFile, existing.MediaFolderPath);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _logger.LogWarning(ex, "Failed to upload 3D model for Print {PrintId}", model.Id);
+                    ModelState.AddModelError("ModelFile", ex.Message);
+                    return View(model);
+                }
+            }
+
+            // Remove image if requested
+            if (!string.IsNullOrEmpty(model.RemoveImagePath))
+            {
+                await _fileService.DeleteImageAsync(model.RemoveImagePath);
+                _logger.LogInformation("Admin removed image from Print {PrintId}: {ImagePath}", model.Id, model.RemoveImagePath);
             }
 
             await _printService.UpdateAsync(existing);
@@ -234,9 +294,11 @@ public class StoreController : Controller
             await _cartService.RemoveAllByPrintIdAsync(id);
             await _wishlistService.RemoveAllByPrintIdAsync(id);
 
-            if (!string.IsNullOrEmpty(print.FilePath) && !print.FilePath.Contains("placeholder"))
+            // Delete entire media folder and its contents
+            if (!string.IsNullOrEmpty(print.MediaFolderPath))
             {
-                await _fileService.DeleteImageAsync(print.FilePath);
+                await _fileService.DeletePrintMediaAsync(print.MediaFolderPath);
+                _logger.LogInformation("Deleted media folder for Print {PrintId}: {MediaFolderPath}", id, print.MediaFolderPath);
             }
 
             await _printService.DeleteAsync(print);

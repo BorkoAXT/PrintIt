@@ -43,9 +43,9 @@ namespace PrintIt.Models
         public decimal Price { get; set; }
 
         /// <summary>
-        /// Gets or sets the file path (or URL) for the print image.
+        /// Gets or sets the folder path containing all print images and 3D files.
         /// </summary>
-        public string? FilePath { get; set; }
+        public string? MediaFolderPath { get; set; }
 
         /// <summary>
         /// Gets or sets the type of the print.
@@ -71,7 +71,7 @@ namespace PrintIt.Models
             MaterialType materialType,
             double weight,
             decimal price,
-            string? filePath,
+            string? mediaFolderPath,
             PrintType printType,
             List<PrintColor> colors)
         {
@@ -82,7 +82,7 @@ namespace PrintIt.Models
             MaterialType = materialType;
             Weight = weight;
             Price = price;
-            FilePath = filePath;
+            MediaFolderPath = mediaFolderPath;
             PrintType = printType;
             PrintColors = colors ?? new() { PrintColor.None };
         }

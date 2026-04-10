@@ -5,6 +5,7 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Identity
 @model PrintIt.Models.ShopCart
+@inject PrintIt.Services.IFileService FileService
 @{
     ViewData["Title"] = "Shopping Cart";
     Layout = "_Layout";
@@ -37,11 +38,19 @@
                     decimal unitPrice = item.Print?.Price ?? 0;
                     var uniqueId = item.Id;
 
+                    // Get the first image from the media folder or use placeholder
+                    string imageUrl = "/images/placeholder.jpg";
+                    if (!string.IsNullOrEmpty(item.Print?.MediaFolderPath))
+                    {
+                        var images = FileService.GetPrintImages(item.Print.MediaFolderPath);
+                        imageUrl = images.FirstOrDefault() ?? "/images/placeholder.jpg";
+                    }
+
                     <div class="group bg-white dark:bg-slate-900/50 rounded-3xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-center gap-6">
 
                         @* Image Section *@
                         <div class="h-32 w-32 shrink-0 overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
-                            <img src="@(string.IsNullOrEmpty(item.Print?.FilePath) ? "/images/placeholder.jpg" : item.Print.FilePath)"
+                            <img src="@imageUrl"
                                  alt="@item.Print?.Name"
                                  class="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         </div>
