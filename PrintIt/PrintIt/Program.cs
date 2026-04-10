@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PrintIt.Data;
 using PrintIt.Models;
 using PrintIt.Services;
+using PrintIt.Services.Identity;
 
 namespace PrintIt
 {
@@ -37,6 +38,7 @@ namespace PrintIt
                     options.Password.RequireNonAlphanumeric = false;
                     options.Password.RequireLowercase = false;
                 })
+                .AddErrorDescriber<BulgarianIdentityErrorDescriber>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders()
                 .AddDefaultUI();

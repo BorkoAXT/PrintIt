@@ -52,6 +52,11 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
         /// </summary>
         public class InputModel
         {
+            [Required]
+            [StringLength(256)]
+            [Display(Name = "Потребителско име")]
+            public string Username { get; set; }
+
             /// <summary>
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
@@ -70,6 +75,7 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
 
             Input = new InputModel
             {
+                Username = userName,
                 PhoneNumber = phoneNumber
             };
         }
@@ -96,8 +102,22 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
 
             if (!ModelState.IsValid)
             {
-                await LoadAsync(user);
                 return Page();
+            }
+
+            var userName = await _userManager.GetUserNameAsync(user);
+            if (Input.Username != userName)
+            {
+                var setUserNameResult = await _userManager.SetUserNameAsync(user, Input.Username);
+                if (!setUserNameResult.Succeeded)
+                {
+                    foreach (var error in setUserNameResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+
+                    return Page();
+                }
             }
 
             var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
@@ -106,8 +126,12 @@ namespace PrintIt.Areas.Identity.Pages.Account.Manage
                 var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
                 if (!setPhoneResult.Succeeded)
                 {
-                    StatusMessage = "Неочаквана грешка при опит за задаване на телефонен номер.";
-                    return RedirectToPage();
+                    foreach (var error in setPhoneResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+
+                    return Page();
                 }
             }
 
