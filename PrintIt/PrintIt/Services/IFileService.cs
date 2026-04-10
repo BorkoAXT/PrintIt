@@ -15,9 +15,9 @@ namespace PrintIt.Services
         string CreatePrintMediaFolder(Guid printId, PrintType type);
 
         /// <summary>
-        /// Uploads an image to a print's media folder.
+        /// Uploads an image to a print's media folder with sequence ordering.
         /// </summary>
-        Task<string> UploadPrintImageAsync(IFormFile file, string mediaFolderPath);
+        Task<string> UploadPrintImageAsync(IFormFile file, string mediaFolderPath, int sequenceNumber);
 
         /// <summary>
         /// Uploads a 3D model file to a print's media folder.
@@ -30,7 +30,12 @@ namespace PrintIt.Services
         List<string> GetPrintImages(string mediaFolderPath);
 
         /// <summary>
-        /// Gets the 3D model file in a print's media folder (if exists).
+        /// Gets all 3D model files in a print's media folder.
+        /// </summary>
+        List<string> GetPrint3DModels(string mediaFolderPath);
+
+        /// <summary>
+        /// Gets the first 3D model file in a print's media folder (if exists).
         /// </summary>
         string? GetPrint3DModel(string mediaFolderPath);
 
@@ -43,5 +48,15 @@ namespace PrintIt.Services
         /// Deletes an entire print's media folder and all its contents.
         /// </summary>
         Task DeletePrintMediaAsync(string mediaFolderPath);
+
+        /// <summary>
+        /// Recalculates sequence numbers for images after deletion.
+        /// </summary>
+        Task RecalculateImageSequenceAsync(string mediaFolderPath);
+
+        /// <summary>
+        /// Reorders images based on provided file paths.
+        /// </summary>
+        Task ReorderImagesAsync(string mediaFolderPath, string[] orderedPaths);
     }
 }

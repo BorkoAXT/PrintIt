@@ -95,7 +95,7 @@ namespace PrintIt.Controllers
         [HttpPost("Store/Add")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Add3DPrint(PrintsViewModel model, IFormFileCollection? Images, IFormFile? ModelFile)
+        public async Task<IActionResult> Add3DPrint(PrintsViewModel model, IFormFileCollection? Images, IFormFileCollection? ModelFiles)
         {
             if (!ModelState.IsValid)
             {
@@ -133,7 +133,7 @@ namespace PrintIt.Controllers
                     {
                         try
                         {
-                            string imagePath = await _fileService.UploadPrintImageAsync(imageFile, mediaFolderPath);
+                            string imagePath = await _fileService.UploadPrintImageAsync(imageFile, mediaFolderPath, imageCount + 1);
                             _logger.LogInformation("Admin uploaded image {ImageCount} for Print {PrintId}: {ImagePath}", ++imageCount, print.Id, imagePath);
                         }
                         catch (Exception ex)
@@ -149,28 +149,35 @@ namespace PrintIt.Controllers
                     return View(model);
                 }
 
-                // Upload 3D model if provided
-                if (ModelFile != null && ModelFile.Length > 0)
+                // Upload all 3D models if provided
+                int modelCount = 0;
+                if (ModelFiles != null && ModelFiles.Count > 0)
                 {
-                    try
+                    foreach (var modelFile in ModelFiles)
                     {
-                        string modelPath = await _fileService.Upload3DModelAsync(ModelFile, mediaFolderPath);
-                        _logger.LogInformation("Admin uploaded 3D model for Print {PrintId}: {ModelPath}", print.Id, modelPath);
-                    }
-                    catch (InvalidOperationException ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to upload 3D model for Print {PrintId}", print.Id);
-                        ModelState.AddModelError("ModelFile", ex.Message);
-                        return View(model);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Unexpected error uploading 3D model for Print {PrintId}", print.Id);
+                        if (modelFile != null && modelFile.Length > 0)
+                        {
+                            try
+                            {
+                                string modelPath = await _fileService.Upload3DModelAsync(modelFile, mediaFolderPath);
+                                _logger.LogInformation("Admin uploaded 3D model {ModelCount} for Print {PrintId}: {ModelPath}", ++modelCount, print.Id, modelPath);
+                            }
+                            catch (InvalidOperationException ex)
+                            {
+                                _logger.LogWarning(ex, "Failed to upload 3D model for Print {PrintId}", print.Id);
+                                ModelState.AddModelError("ModelFiles", ex.Message);
+                                return View(model);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "Unexpected error uploading 3D model for Print {PrintId}", print.Id);
+                            }
+                        }
                     }
                 }
 
                 await _printService.AddAsync(print);
-                _logger.LogInformation("Admin created new product: {PrintName} ({PrintId}) with {ImageCount} images", print.Name, print.Id, imageCount);
+                _logger.LogInformation("Admin created new product: {PrintName} ({PrintId}) with {ImageCount} images and {ModelCount} 3D models", print.Name, print.Id, imageCount, modelCount);
 
                 return RedirectToAction(nameof(Articles));
             }
@@ -232,11 +239,13 @@ namespace PrintIt.Controllers
                 MediaFolderPath = print.MediaFolderPath
             };
 
-            // Load existing images and 3D model
+            // Load existing images and 3D models
             if (!string.IsNullOrEmpty(print.MediaFolderPath))
             {
                 viewModel.ExistingImages = _fileService.GetPrintImages(print.MediaFolderPath);
                 viewModel.Existing3DModel = _fileService.GetPrint3DModel(print.MediaFolderPath);
+                // Load ALL 3D models
+                viewModel.ExistingModels = _fileService.GetPrint3DModels(print.MediaFolderPath);
             }
 
             return View("~/Views/Store/Edit.cshtml", viewModel);
@@ -246,7 +255,7 @@ namespace PrintIt.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(PrintsViewModel model, IFormFileCollection? Images, IFormFile? ModelFile, string[]? RemovedImagePaths)
+        public async Task<IActionResult> Edit(PrintsViewModel model, IFormFileCollection? Images, IFormFileCollection? ModelFiles, string[]? RemovedImagePaths, string[]? RemovedModelPaths, string[]? ReorderedImagePaths)
         {
             if (model.Id == Guid.Empty) return BadRequest();
             if (!ModelState.IsValid) return View(model);
@@ -291,20 +300,55 @@ namespace PrintIt.Controllers
                             }
                         }
                     }
+
+                    // Recalculate sequence numbers after deletion
+                    await _fileService.RecalculateImageSequenceAsync(existing.MediaFolderPath);
+                    _logger.LogInformation("Recalculated image sequence numbers for Print {PrintId}", model.Id);
+                }
+
+                // Remove 3D models if requested
+                if (RemovedModelPaths != null && RemovedModelPaths.Length > 0)
+                {
+                    foreach (var modelPath in RemovedModelPaths)
+                    {
+                        if (!string.IsNullOrEmpty(modelPath))
+                        {
+                            try
+                            {
+                                await _fileService.DeleteImageAsync(modelPath);
+                                _logger.LogInformation("Admin removed 3D model from Print {PrintId}: {ModelPath}", model.Id, modelPath);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "Failed to delete 3D model {ModelPath} for Print {PrintId}", modelPath, model.Id);
+                            }
+                        }
+                    }
+                }
+
+                // Handle image reordering if provided
+                if (ReorderedImagePaths != null && ReorderedImagePaths.Length > 0)
+                {
+                    await _fileService.ReorderImagesAsync(existing.MediaFolderPath, ReorderedImagePaths);
+                    _logger.LogInformation("Reordered images for Print {PrintId}", model.Id);
                 }
 
                 // Upload new images if provided
                 if (Images != null && Images.Count > 0)
                 {
+                    var existingImages = _fileService.GetPrintImages(existing.MediaFolderPath);
+                    int nextSequenceNumber = existingImages.Count + 1;
                     int uploadedCount = 0;
+
                     foreach (var imageFile in Images)
                     {
                         if (imageFile != null && imageFile.Length > 0)
                         {
                             try
                             {
-                                await _fileService.UploadPrintImageAsync(imageFile, existing.MediaFolderPath);
+                                await _fileService.UploadPrintImageAsync(imageFile, existing.MediaFolderPath, nextSequenceNumber);
                                 uploadedCount++;
+                                nextSequenceNumber++;
                                 _logger.LogDebug("Added new image to Print {PrintId}", model.Id);
                             }
                             catch (Exception ex)
@@ -320,42 +364,29 @@ namespace PrintIt.Controllers
                     }
                 }
 
-                // Upload new 3D model if provided
-                if (ModelFile != null && ModelFile.Length > 0)
+                // Upload new 3D models if provided
+                int modelCount = 0;
+                if (ModelFiles != null && ModelFiles.Count > 0)
                 {
-                    try
+                    foreach (var modelFile in ModelFiles)
                     {
-                        _logger.LogDebug("Uploading new 3D model for Print {PrintId}", model.Id);
-                        await _fileService.Upload3DModelAsync(ModelFile, existing.MediaFolderPath);
-                    }
-                    catch (InvalidOperationException ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to upload 3D model for Print {PrintId}", model.Id);
-                        ModelState.AddModelError("ModelFile", ex.Message);
-                        return View(model);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Unexpected error uploading 3D model for Print {PrintId}", model.Id);
-                    }
-                }
-
-                // Handle existing model deletion if requested
-                if (Request.Form.ContainsKey("DeleteExistingModel"))
-                {
-                    if (!string.IsNullOrEmpty(existing.MediaFolderPath))
-                    {
-                        var model3D = _fileService.GetPrint3DModel(existing.MediaFolderPath);
-                        if (!string.IsNullOrEmpty(model3D))
+                        if (modelFile != null && modelFile.Length > 0)
                         {
                             try
                             {
-                                await _fileService.DeleteImageAsync(model3D);
-                                _logger.LogInformation("Admin removed 3D model from Print {PrintId}: {ModelPath}", model.Id, model3D);
+                                string modelPath = await _fileService.Upload3DModelAsync(modelFile, existing.MediaFolderPath);
+                                _logger.LogInformation("Admin uploaded 3D model for Print {PrintId}: {ModelPath}", model.Id, modelPath);
+                                modelCount++;
+                            }
+                            catch (InvalidOperationException ex)
+                            {
+                                _logger.LogWarning(ex, "Failed to upload 3D model for Print {PrintId}", model.Id);
+                                ModelState.AddModelError("ModelFiles", ex.Message);
+                                return View(model);
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogWarning(ex, "Failed to delete 3D model for Print {PrintId}", model.Id);
+                                _logger.LogWarning(ex, "Unexpected error uploading 3D model for Print {PrintId}", model.Id);
                             }
                         }
                     }

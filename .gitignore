@@ -79,6 +79,8 @@ x86/
 
 # 3D Models
 *.stl
+*.obj
+*.step
 
 # Visual Studio cache files
 .vs/
