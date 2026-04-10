@@ -3,56 +3,192 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="min-h-[75vh] flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 transition-colors duration-500">
-    <div class="max-w-2xl w-full">
-        @* Main Card *@
-        <div class="relative bg-white dark:bg-slate-900 rounded-[2.8rem] shadow-xl shadow-blue-100/40 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden p-12 md:p-14 text-center transition-colors">
+<div class="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-500">
+    <div class="max-w-6xl mx-auto">
 
-            @* Decorative Background Elements *@
-            <div class="absolute -top-20 -right-20 w-52 h-52 bg-blue-50 dark:bg-blue-600/10 rounded-full blur-3xl opacity-60"></div>
-            <div class="absolute -bottom-20 -left-20 w-52 h-52 bg-indigo-50 dark:bg-indigo-600/10 rounded-full blur-3xl opacity-60"></div>
+        <div class="mb-12 text-center">
+            <h1 class="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
+                Вашият проект, <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">нашата реализация</span>
+            </h1>
+            <p class="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-medium">
+                Качете вашия 3D модел или конфигурирайте параметрите за печат. Използваме прецизни технологии за превръщане на дигитални идеи във физически обекти.
+            </p>
+        </div>
 
-            @* Icon with Animation *@
-            <div class="relative mb-7 inline-flex items-center justify-center">
-                <div class="absolute inset-0 bg-blue-100 dark:bg-blue-900/30 rounded-2xl rotate-6 scale-110 opacity-30"></div>
-                <div class="relative bg-gradient-to-br from-blue-600 to-indigo-700 p-4.5 rounded-2xl shadow-lg shadow-blue-200 dark:shadow-blue-900/20">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-11 w-11 text-white animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
-                    </svg>
+        <div class="flex items-center justify-center mb-16">
+            <div class="flex items-center w-full max-w-md">
+                <div class="flex flex-col items-center relative">
+                    <div class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold shadow-lg shadow-blue-500/30">1</div>
+                    <span class="absolute -bottom-7 text-[10px] font-bold uppercase tracking-widest text-blue-600 whitespace-nowrap">Качване</span>
                 </div>
-            </div>
-
-            @* Text Content *@
-            <div class="relative">
-                <h2 class="text-[11px] font-black uppercase tracking-[0.35em] text-blue-500 dark:text-blue-400 mb-5">Очаквайте скоро</h2>
-
-                <h1 class="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-7 tracking-tight leading-tight">
-                    Вашият проект, <br />
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">нашата реализация.</span>
-                </h1>
-
-                <div class="w-14 h-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 mx-auto rounded-full mb-7"></div>
-
-                <p class="text-base md:text-lg text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed font-medium">
-                    Работим върху нова система за персонализирани 3D поръчки. Очаквайте възможност за качване на ваши модели и директен дизайн.
-                </p>
-            </div>
-
-            @* Subtle Status Tag *@
-            <div class="mt-9 inline-flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 dark:bg-slate-950 rounded-full border border-slate-100 dark:border-slate-800 transition-colors">
-                <span class="relative flex h-2 w-2">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                </span>
-                <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">В процес на разработка</span>
+                <div class="flex-auto border-t-2 border-blue-600 mx-4"></div>
+                <div class="flex flex-col items-center relative">
+                    <div class="w-10 h-10 bg-white dark:bg-slate-900 border-2 border-blue-600 text-blue-600 rounded-full flex items-center justify-center font-bold">2</div>
+                    <span class="absolute -bottom-7 text-[10px] font-bold uppercase tracking-widest text-slate-500 whitespace-nowrap">Конфигурация</span>
+                </div>
+                <div class="flex-auto border-t-2 border-slate-200 dark:border-slate-800 mx-4"></div>
+                <div class="flex flex-col items-center relative text-slate-400">
+                    <div class="w-10 h-10 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-full flex items-center justify-center font-bold">3</div>
+                    <span class="absolute -bottom-7 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Поръчка</span>
+                </div>
             </div>
         </div>
 
-        @* Return Link *@
-        <div class="mt-9 text-center">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <div class="lg:col-span-2 space-y-12">
+
+                <section class="space-y-6">
+                    <h3 class="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 text-sm font-bold">01</span>
+                        Файл на модела
+                    </h3>
+                    <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800 p-12 transition-all hover:border-blue-400 group relative overflow-hidden">
+                        <div class="absolute inset-0 bg-blue-50/50 dark:bg-blue-900/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div class="relative flex flex-col items-center text-center">
+                            <div class="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                </svg>
+                            </div>
+                            <h4 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Провлачете вашия 3D модел</h4>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">Поддържани формати: .STL, .OBJ, .STEP (макс. 50MB)</p>
+                            <label class="px-8 py-3 bg-slate-900 dark:bg-blue-600 text-white rounded-2xl font-bold text-sm hover:shadow-xl hover:shadow-blue-500/20 transition-all cursor-pointer">
+                                Изберете файл
+                                <input type="file" class="hidden" />
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="space-y-6">
+                    <h3 class="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 text-sm font-bold">02</span>
+                        Избор на материал
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <label class="relative group cursor-pointer">
+                            <input type="radio" name="material" class="peer sr-only" checked />
+                            <div class="h-full p-6 rounded-[2rem] bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 peer-checked:border-blue-600 peer-checked:ring-4 peer-checked:ring-blue-600/10 transition-all">
+                                <div class="w-12 h-12 mb-4 rounded-xl bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                </div>
+                                <h4 class="font-bold text-slate-900 dark:text-white">Стандартен PLA</h4>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Екологичен, идеален за прототипи и декорации.</p>
+                            </div>
+                        </label>
+
+                        <label class="relative group cursor-pointer">
+                            <input type="radio" name="material" class="peer sr-only" />
+                            <div class="h-full p-6 rounded-[2rem] bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 peer-checked:border-blue-600 peer-checked:ring-4 peer-checked:ring-blue-600/10 transition-all">
+                                <div class="w-12 h-12 mb-4 rounded-xl bg-purple-100 dark:bg-purple-900/20 text-purple-600 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.628.283a2 2 0 01-1.186.127l-2.383-.477a2 2 0 00-2.014 2.014v1.518a2 2 0 00.586 1.414l1.414 1.414a2 2 0 001.414.586h1.518a2 2 0 002.014-2.014v-1.518a2 2 0 01.586-1.414l1.414-1.414a2 2 0 00.586-1.414v-1.518z" />
+                                    </svg>
+                                </div>
+                                <h4 class="font-bold text-slate-900 dark:text-white">Resin (Смола)</h4>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Висока детайлност, подходящо за фигурки и бижута.</p>
+                            </div>
+                        </label>
+
+                        <label class="relative group cursor-pointer">
+                            <input type="radio" name="material" class="peer sr-only" />
+                            <div class="h-full p-6 rounded-[2rem] bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 peer-checked:border-blue-600 peer-checked:ring-4 peer-checked:ring-blue-600/10 transition-all">
+                                <div class="w-12 h-12 mb-4 rounded-xl bg-orange-100 dark:bg-orange-900/20 text-orange-600 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                </div>
+                                <h4 class="font-bold text-slate-900 dark:text-white">Индустриален PETG</h4>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Устойчив на температура и здравина за функционални части.</p>
+                            </div>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 border border-slate-100 dark:border-slate-800">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-8">Допълнителни настройки</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">Запълване (Infill)</label>
+                            <input type="range" class="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                            <div class="flex justify-between text-xs font-bold text-slate-500 mt-2">
+                                <span>20% (Леко)</span>
+                                <span>100% (Солидно)</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">Цвят</label>
+                            <div class="flex gap-3">
+                                <button class="w-8 h-8 rounded-full bg-slate-900 ring-2 ring-offset-2 ring-blue-600 dark:ring-offset-slate-900"></button>
+                                <button class="w-8 h-8 rounded-full bg-white border border-slate-200"></button>
+                                <button class="w-8 h-8 rounded-full bg-blue-500"></button>
+                                <button class="w-8 h-8 rounded-full bg-red-500"></button>
+                                <button class="w-8 h-8 rounded-full bg-gray-400"></button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="lg:col-span-1">
+                <div class="sticky top-8 space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800">
+                        <h3 class="text-xl font-black text-slate-900 dark:text-white mb-6">Резюме на поръчката</h3>
+
+                        <div class="space-y-4 mb-8">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-500 font-medium">Модел:</span>
+                                <span class="text-slate-900 dark:text-white font-bold">Очаква се файл...</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-500 font-medium">Материал:</span>
+                                <span class="text-slate-900 dark:text-white font-bold">Standard PLA</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-500 font-medium">Точност:</span>
+                                <span class="text-slate-900 dark:text-white font-bold">0.2mm (Стандарт)</span>
+                            </div>
+                            <hr class="border-slate-100 dark:border-slate-800" />
+                            <div class="flex justify-between items-center pt-2">
+                                <span class="text-slate-900 dark:text-white font-black text-lg">Ориентировъчна цена:</span>
+                                <span class="text-2xl font-black text-blue-600">-- лв.</span>
+                            </div>
+                        </div>
+
+                        <button class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-black text-lg hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-blue-500/25">
+                            Изпрати запитване
+                        </button>
+
+                        <p class="text-[10px] text-center text-slate-400 mt-4 leading-relaxed uppercase tracking-tighter">
+                            * Крайната цена се потвърждава след преглед на модела от наш специалист.
+                        </p>
+                    </div>
+
+                    <div class="bg-blue-600 rounded-[2rem] p-6 text-white overflow-hidden relative group">
+                        <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-32 w-32" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h4 class="font-bold mb-2">Имате нужда от помощ?</h4>
+                        <p class="text-blue-100 text-xs mb-4">Нашите инженери могат да прегледат вашия проект безплатно.</p>
+                        <a href="#" class="text-xs font-black uppercase tracking-widest border-b border-white/40 pb-1">Свържете се с нас</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="mt-16 text-center">
             <a asp-controller="Store" asp-action="Articles" class="text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 font-bold text-sm uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2.5 group">
-                <i class="bi bi-chevron-left text-xs transition-transform group-hover:-translate-x-1"></i>
-                Разгледайте магазина
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Обратно към магазина
             </a>
         </div>
     </div>

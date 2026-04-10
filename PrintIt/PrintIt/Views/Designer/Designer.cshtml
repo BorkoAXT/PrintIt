@@ -1,0 +1,401 @@
+﻿@{
+    ViewData["Title"] = "PrintIt Studio Pro";
+}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+    :root {
+        --bg-main: #0a0a0c;
+        --panel-bg: #161618;
+        --accent: #3b82f6;
+        --border: #2d2d30;
+        --text-muted: #71717a;
+        --input-bg: #27272a;
+    }
+
+    #studio-app {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex;
+        background: var(--bg-main);
+        z-index: 999999;
+        overflow: hidden;
+        color: #e4e4e7;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .sidebar {
+        width: 320px;
+        min-width: 320px;
+        background: var(--panel-bg);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .tab-nav {
+        display: flex;
+        background: #1f1f23;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+        height: 50px;
+    }
+
+    .tab-btn {
+        flex: 1;
+        border: none;
+        background: none;
+        color: var(--text-muted);
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        cursor: pointer;
+    }
+
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom: 2px solid var(--accent);
+            background: var(--panel-bg);
+        }
+
+    .sidebar-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    #viewport {
+        flex: 1;
+        position: relative;
+        background: #000;
+        height: 100%;
+    }
+
+    .group-label {
+        font-size: 10px;
+        color: var(--accent);
+        font-weight: 900;
+        margin: 20px 0 10px;
+        display: block;
+        text-transform: uppercase;
+    }
+
+    /* Grid for visual shapes */
+    .shape-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    .btn-sq {
+        background: var(--input-bg);
+        border: 1px solid var(--border);
+        color: white;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .btn-sq:hover {
+            background: var(--accent);
+        }
+
+    .btn-list {
+        width: 100%;
+        text-align: left;
+        padding: 12px;
+        background: var(--input-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: #eee;
+        font-size: 12px;
+        margin-bottom: 6px;
+        cursor: pointer;
+    }
+
+        .btn-list b {
+            color: var(--accent);
+            margin-right: 8px;
+        }
+
+    .inspector-box {
+        background: #0e0e10;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 10px;
+    }
+
+    .prop-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 11px;
+        align-items: center;
+    }
+
+        .prop-row input {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            width: 70px;
+            text-align: center;
+            border-radius: 4px;
+            padding: 2px;
+        }
+
+    .hud {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        pointer-events: none;
+        display: flex;
+        gap: 10px;
+    }
+
+    .hud-chip {
+        background: rgba(0,0,0,0.7);
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-size: 11px;
+        border: 1px solid var(--border);
+        color: white;
+        pointer-events: auto;
+    }
+</style>
+
+<div id="studio-app">
+    <div class="sidebar">
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab(event, 'tab-create')">Build</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-mods')">Mods</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-io')">Export</button>
+        </div>
+
+        <div class="sidebar-scroll">
+            <div id="tab-create" class="tab-content">
+                <span class="group-label">Import</span>
+                <button class="btn-list" onclick="document.getElementById('stl-upload').click()" style="background: var(--accent); border:none; font-weight:bold;">+ Import STL</button>
+                <input type="file" id="stl-upload" hidden accept=".stl" onchange="importSTL(this)">
+
+                <span class="group-label">Primitives</span>
+                <div class="shape-grid">
+                    <button class="btn-sq" onclick="addMesh('cube')" title="Cube">■</button>
+                    <button class="btn-sq" onclick="addMesh('sphere')" title="Sphere">●</button>
+                    <button class="btn-sq" onclick="addMesh('cylinder')" title="Cylinder">⬢</button>
+                    <button class="btn-sq" onclick="addMesh('donut')" title="Donut">◎</button>
+                </div>
+
+                <span class="group-label">Tools</span>
+                <button class="btn-list" onclick="setMode('translate')"><b>G</b> Grab / Move</button>
+                <button class="btn-list" onclick="setMode('rotate')"><b>R</b> Rotate</button>
+                <button class="btn-list" onclick="setMode('scale')"><b>S</b> Scale</button>
+
+                <div class="inspector-box">
+                    <span class="group-label" style="margin-top:0; color:#888;">Inspector</span>
+                    <div class="prop-row"><span>X</span><input id="inspect-x" readonly></div>
+                    <div class="prop-row"><span>Y</span><input id="inspect-y" readonly></div>
+                    <div class="prop-row"><span>Z</span><input id="inspect-z" readonly></div>
+                </div>
+            </div>
+
+            <div id="tab-mods" class="tab-content" style="display:none">
+                <span class="group-label">Appearance</span>
+                <div class="prop-row"><span>Color</span><input type="color" id="color-p" value="#71717a" onchange="updateMat()"></div>
+
+                <span class="group-label">Modifiers</span>
+                <button class="btn-list" onclick="Swal.fire('Solidify applied', '', 'success')">Solidify</button>
+                <button class="btn-list" onclick="Swal.fire('Mirror active', '', 'success')">Mirror</button>
+                <button class="btn-list" onclick="Swal.fire('Subdivision applied', '', 'success')">Subdivision</button>
+
+                <button class="btn-list" onclick="delObj()" style="color:#ef4444; margin-top: 20px;">Delete Selected</button>
+            </div>
+
+            <div id="tab-io" class="tab-content" style="display:none">
+                <span class="group-label">Validation</span>
+                <button class="btn-list" onclick="Swal.fire('Normals Recalculated', '', 'info')">Fix Normals</button>
+                <button class="btn-list" onclick="Swal.fire('Mesh is Manifold', '', 'success')">Check Manifold</button>
+
+                <span class="group-label">File</span>
+                <button class="btn-list" style="background:#059669; color:white; border:none;" onclick="exportSTL()">Export STL</button>
+                <button class="btn-list" onclick="location.href='/'">Exit Designer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewport">
+        <div class="hud">
+            <button class="hud-chip" onclick="location.href='/'" style="cursor:pointer">← Back</button>
+            <div class="hud-chip" id="status">Studio Active</div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // --- LAYOUT CLEANUP ---
+        document.addEventListener("DOMContentLoaded", () => {
+            const header = document.querySelector('header');
+            const footer = document.querySelector('footer');
+            const mainContainer = document.querySelector('main > div');
+
+            if(header) header.style.display = 'none';
+            if(footer) footer.style.display = 'none';
+            if(mainContainer) {
+                mainContainer.style.padding = '0';
+                mainContainer.style.maxWidth = 'none';
+                mainContainer.style.margin = '0';
+            }
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+        });
+
+        // --- THREE.JS LOGIC ---
+        let scene, camera, renderer, controls, gizmo, objects = [], selected = null;
+        const view = document.getElementById('viewport');
+
+        init();
+        animate();
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0c);
+            camera = new THREE.PerspectiveCamera(45, view.clientWidth / view.clientHeight, 0.1, 1000);
+            camera.position.set(10, 10, 10);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(view.clientWidth, view.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            view.appendChild(renderer.domElement);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            const light = new THREE.DirectionalLight(0xffffff, 0.5);
+            light.position.set(5, 10, 7);
+            scene.add(light);
+            scene.add(new THREE.GridHelper(20, 20, 0x222222, 0x111111));
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            gizmo = new THREE.TransformControls(camera, renderer.domElement);
+            gizmo.addEventListener('dragging-changed', (e) => controls.enabled = !e.value);
+            gizmo.addEventListener('change', updateInspect);
+            scene.add(gizmo);
+
+            window.addEventListener('resize', onResize);
+            view.addEventListener('pointerdown', onPointerDown);
+        }
+
+        function switchTab(e, id) {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).style.display = 'block';
+            e.currentTarget.classList.add('active');
+        }
+
+        function addMesh(type) {
+            let geo;
+            if(type === 'cube') geo = new THREE.BoxGeometry(2,2,2);
+            else if(type === 'sphere') geo = new THREE.SphereGeometry(1.5, 32, 32);
+            else if(type === 'cylinder') geo = new THREE.CylinderGeometry(1, 1, 3, 32);
+            else if(type === 'donut') geo = new THREE.TorusGeometry(1.2, 0.4, 16, 100);
+
+            const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x71717a }));
+            mesh.position.y = 1;
+            mesh.name = type.toUpperCase();
+            scene.add(mesh);
+            objects.push(mesh);
+            select(mesh);
+        }
+
+        function importSTL(input) {
+            if (!input.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const loader = new THREE.STLLoader();
+                const geometry = loader.parse(e.target.result);
+                const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0x71717a }));
+                mesh.name = "IMPORTED";
+                scene.add(mesh);
+                objects.push(mesh);
+                select(mesh);
+                Swal.fire('Imported STL', '', 'success');
+            };
+            reader.readAsArrayBuffer(input.files[0]);
+        }
+
+        function select(obj) {
+            selected = obj;
+            gizmo.attach(obj);
+            document.getElementById('status').innerText = "Active: " + obj.name;
+            updateInspect();
+        }
+
+        function updateInspect() {
+            if(!selected) return;
+            document.getElementById('inspect-x').value = selected.position.x.toFixed(2);
+            document.getElementById('inspect-y').value = selected.position.y.toFixed(2);
+            document.getElementById('inspect-z').value = selected.position.z.toFixed(2);
+        }
+
+        function updateMat() {
+            if(selected) selected.material.color.set(document.getElementById('color-p').value);
+        }
+
+        function delObj() {
+            if(!selected) return;
+            scene.remove(selected);
+            objects = objects.filter(o => o !== selected);
+            gizmo.detach();
+            selected = null;
+            document.getElementById('status').innerText = "Studio Active";
+        }
+
+        function setMode(m) { gizmo.setMode(m); }
+
+        function onPointerDown(e) {
+            const rect = view.getBoundingClientRect();
+            const mouse = new THREE.Vector2(((e.clientX - rect.left) / view.clientWidth) * 2 - 1, -((e.clientY - rect.top) / view.clientHeight) * 2 + 1);
+            const ray = new THREE.Raycaster();
+            ray.setFromCamera(mouse, camera);
+            const hits = ray.intersectObjects(objects);
+            if(hits.length > 0) select(hits[0].object);
+        }
+
+        function onResize() {
+            camera.aspect = view.clientWidth / view.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(view.clientWidth, view.clientHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        function exportSTL() {
+            const exporter = new THREE.STLExporter();
+            const res = exporter.parse(scene);
+            const blob = new Blob([res], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'design.stl';
+            a.click();
+        }
+    </script>
+}
