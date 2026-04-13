@@ -1,23 +1,37 @@
-﻿@{
-    ViewData["Title"] = "PrintIt Studio Pro";
-}
+@page
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <style>
     :root {
         --bg-main: #0a0a0c;
         --panel-bg: #161618;
+        --panel-bg2: #1c1c1f;
         --accent: #3b82f6;
+        --accent-hover: #2563eb;
+        --accent-glow: rgba(59, 130, 246, 0.15);
+        --green: #22c55e;
+        --red: #ef4444;
+        --orange: #f59e0b;
+        --purple: #a855f7;
         --border: #2d2d30;
+        --border-light: #3a3a3d;
+        --text: #e4e4e7;
         --text-muted: #71717a;
+        --text-dim: #52525b;
         --input-bg: #27272a;
+        --input-bg-hover: #303033;
     }
+
+    * { box-sizing: border-box; }
 
     #studio-app {
         position: fixed !important;
@@ -28,237 +42,759 @@
         margin: 0 !important;
         padding: 0 !important;
         display: flex;
+        flex-direction: column;
         background: var(--bg-main);
         z-index: 999999;
         overflow: hidden;
-        color: #e4e4e7;
-        font-family: 'Inter', sans-serif;
+        color: var(--text);
+        font-family: 'Inter', -apple-system, sans-serif;
+        font-size: 12px;
     }
 
-    .sidebar {
-        width: 320px;
-        min-width: 320px;
+    /* ─── TOP TOOLBAR ─── */
+    .top-toolbar {
+        height: 44px;
+        min-height: 44px;
+        background: var(--panel-bg);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        gap: 6px;
+        z-index: 10;
+    }
+    .toolbar-brand {
+        font-weight: 800;
+        font-size: 13px;
+        color: var(--accent);
+        margin-right: 16px;
+        cursor: pointer;
+        letter-spacing: -0.3px;
+    }
+    .toolbar-divider {
+        width: 1px;
+        height: 24px;
+        background: var(--border);
+        margin: 0 6px;
+    }
+    .tb-btn {
+        background: none;
+        border: 1px solid transparent;
+        color: var(--text-muted);
+        padding: 5px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 11px;
+        font-family: inherit;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.15s;
+    }
+    .tb-btn:hover { background: var(--input-bg); color: var(--text); }
+    .tb-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .tb-btn.danger:hover { background: var(--red); color: white; }
+    .tb-btn svg { width: 14px; height: 14px; }
+    .toolbar-spacer { flex: 1; }
+    .toolbar-status {
+        font-size: 10px;
+        color: var(--text-dim);
+        margin-right: 8px;
+    }
+
+    /* ─── MAIN AREA ─── */
+    .main-area {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+    }
+
+    /* ─── LEFT SIDEBAR ─── */
+    .sidebar-left {
+        width: 280px;
+        min-width: 280px;
         background: var(--panel-bg);
         border-right: 1px solid var(--border);
         display: flex;
         flex-direction: column;
         height: 100%;
     }
-
-    .tab-nav {
+    .sidebar-tabs {
         display: flex;
-        background: #1f1f23;
         border-bottom: 1px solid var(--border);
         flex-shrink: 0;
-        height: 50px;
     }
-
-    .tab-btn {
+    .sidebar-tab {
         flex: 1;
         border: none;
         background: none;
         color: var(--text-muted);
         font-size: 10px;
-        font-weight: 800;
+        font-weight: 700;
         text-transform: uppercase;
+        letter-spacing: 0.5px;
         cursor: pointer;
+        padding: 10px 0;
+        font-family: inherit;
+        transition: all 0.15s;
+        border-bottom: 2px solid transparent;
     }
-
-        .tab-btn.active {
-            color: var(--accent);
-            border-bottom: 2px solid var(--accent);
-            background: var(--panel-bg);
-        }
-
-    .sidebar-scroll {
+    .sidebar-tab:hover { color: var(--text); }
+    .sidebar-tab.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+        background: rgba(59,130,246,0.05);
+    }
+    .sidebar-body {
         flex: 1;
         overflow-y: auto;
-        padding: 20px;
+        padding: 14px;
     }
+    .sidebar-body::-webkit-scrollbar { width: 4px; }
+    .sidebar-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
+    /* ─── RIGHT PANEL ─── */
+    .sidebar-right {
+        width: 280px;
+        min-width: 280px;
+        background: var(--panel-bg);
+        border-left: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    .right-header {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+    }
+    .right-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 14px;
+    }
+    .right-body::-webkit-scrollbar { width: 4px; }
+    .right-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ─── VIEWPORT ─── */
     #viewport {
         flex: 1;
         position: relative;
         background: #000;
         height: 100%;
     }
+    #viewport canvas { display: block; }
 
-    .group-label {
-        font-size: 10px;
+    /* ─── SHARED COMPONENT STYLES ─── */
+    .section-label {
+        font-size: 9px;
         color: var(--accent);
-        font-weight: 900;
-        margin: 20px 0 10px;
+        font-weight: 800;
+        margin: 16px 0 8px;
         display: block;
         text-transform: uppercase;
+        letter-spacing: 0.8px;
     }
+    .section-label:first-child { margin-top: 0; }
 
-    /* Grid for visual shapes */
     .shape-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
-        margin-bottom: 15px;
+        gap: 6px;
+        margin-bottom: 10px;
     }
-
     .btn-sq {
         background: var(--input-bg);
         border: 1px solid var(--border);
-        color: white;
+        color: var(--text-muted);
         aspect-ratio: 1;
-        border-radius: 8px;
+        border-radius: 6px;
         cursor: pointer;
-        font-size: 16px;
+        font-size: 15px;
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-direction: column;
+        gap: 2px;
+        transition: all 0.15s;
     }
+    .btn-sq:hover { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn-sq .btn-sq-label { font-size: 7px; font-weight: 700; text-transform: uppercase; }
 
-        .btn-sq:hover {
-            background: var(--accent);
-        }
-
-    .btn-list {
+    .btn-action {
         width: 100%;
         text-align: left;
-        padding: 12px;
+        padding: 8px 10px;
         background: var(--input-bg);
         border: 1px solid var(--border);
-        border-radius: 8px;
-        color: #eee;
-        font-size: 12px;
-        margin-bottom: 6px;
+        border-radius: 6px;
+        color: var(--text);
+        font-size: 11px;
+        margin-bottom: 4px;
         cursor: pointer;
+        font-family: inherit;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.15s;
     }
+    .btn-action:hover { background: var(--input-bg-hover); border-color: var(--border-light); }
+    .btn-action .shortcut {
+        margin-left: auto;
+        font-size: 9px;
+        color: var(--text-dim);
+        background: var(--panel-bg);
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-weight: 600;
+    }
+    .btn-action.primary { background: var(--accent); border-color: var(--accent); color: white; font-weight: 600; }
+    .btn-action.primary:hover { background: var(--accent-hover); }
+    .btn-action.danger { color: var(--red); }
+    .btn-action.danger:hover { background: rgba(239,68,68,0.1); }
+    .btn-action.success { background: var(--green); border-color: var(--green); color: white; font-weight: 600; }
 
-        .btn-list b {
-            color: var(--accent);
-            margin-right: 8px;
-        }
-
-    .inspector-box {
-        background: #0e0e10;
+    /* ─── INSPECTOR STYLES ─── */
+    .inspector-card {
+        background: var(--bg-main);
         border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 15px;
-        margin-top: 10px;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
     }
-
+    .inspector-card-title {
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+    }
     .prop-row {
         display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-        font-size: 11px;
         align-items: center;
+        margin-bottom: 5px;
+        gap: 6px;
     }
-
-        .prop-row input {
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            color: var(--accent);
-            width: 70px;
-            text-align: center;
-            border-radius: 4px;
-            padding: 2px;
-        }
-
-    .hud {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        pointer-events: none;
-        display: flex;
-        gap: 10px;
+    .prop-label {
+        font-size: 10px;
+        font-weight: 700;
+        width: 14px;
+        text-align: center;
+        flex-shrink: 0;
     }
-
-    .hud-chip {
-        background: rgba(0,0,0,0.7);
-        padding: 8px 15px;
-        border-radius: 8px;
-        font-size: 11px;
+    .prop-label.x { color: var(--red); }
+    .prop-label.y { color: var(--green); }
+    .prop-label.z { color: var(--accent); }
+    .prop-input {
+        flex: 1;
+        background: var(--input-bg);
         border: 1px solid var(--border);
-        color: white;
+        color: var(--text);
+        padding: 4px 6px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-family: 'Inter', monospace;
+        text-align: center;
+        outline: none;
+        transition: border-color 0.15s;
+    }
+    .prop-input:focus { border-color: var(--accent); }
+    .prop-input:hover { background: var(--input-bg-hover); }
+
+    .mat-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+    }
+    .mat-row label {
+        font-size: 10px;
+        color: var(--text-muted);
+    }
+    .mat-row input[type="range"] {
+        width: 100px;
+        accent-color: var(--accent);
+        height: 3px;
+    }
+    .mat-row input[type="color"] {
+        width: 28px;
+        height: 22px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        cursor: pointer;
+        background: none;
+        padding: 0;
+    }
+    .mat-row input[type="checkbox"] { accent-color: var(--accent); }
+    .mat-row .val-display {
+        font-size: 10px;
+        color: var(--text-dim);
+        width: 30px;
+        text-align: right;
+    }
+
+    /* ─── OUTLINER ─── */
+    .outliner-item {
+        display: flex;
+        align-items: center;
+        padding: 6px 8px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-bottom: 2px;
+        font-size: 11px;
+        gap: 8px;
+        transition: all 0.1s;
+    }
+    .outliner-item:hover { background: var(--input-bg); }
+    .outliner-item.active { background: var(--accent-glow); border: 1px solid var(--accent); }
+    .outliner-item .obj-icon { font-size: 12px; opacity: 0.5; }
+    .outliner-item .obj-name { flex: 1; }
+    .outliner-item .obj-vis {
+        opacity: 0.3;
+        cursor: pointer;
+        font-size: 10px;
+    }
+    .outliner-item .obj-vis:hover { opacity: 1; }
+    .outliner-empty {
+        color: var(--text-dim);
+        font-size: 11px;
+        text-align: center;
+        padding: 20px;
+    }
+
+    /* ─── HUD OVERLAYS ─── */
+    .hud-bottom {
+        position: absolute;
+        bottom: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 4px;
         pointer-events: auto;
     }
+    .hud-pill {
+        background: rgba(0,0,0,0.8);
+        backdrop-filter: blur(10px);
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 10px;
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+    }
+    .hud-top-right {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        display: flex;
+        gap: 4px;
+    }
+    .view-btn {
+        background: rgba(0,0,0,0.75);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 10px;
+        font-family: inherit;
+        font-weight: 600;
+        transition: all 0.15s;
+    }
+    .view-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+    /* ─── CONTEXT MENU ─── */
+    .ctx-menu {
+        position: fixed;
+        background: var(--panel-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 4px;
+        min-width: 180px;
+        z-index: 100000;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        display: none;
+    }
+    .ctx-item {
+        padding: 7px 12px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text);
+    }
+    .ctx-item:hover { background: var(--accent); color: white; }
+    .ctx-item .ctx-short { margin-left: auto; color: var(--text-dim); font-size: 9px; }
+    .ctx-item:hover .ctx-short { color: rgba(255,255,255,0.6); }
+    .ctx-sep { height: 1px; background: var(--border); margin: 4px 0; }
+
+    /* ─── SNAP INDICATOR ─── */
+    .snap-indicator {
+        position: absolute;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--orange);
+        color: black;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 700;
+        display: none;
+        z-index: 10;
+    }
+    .snap-indicator.visible { display: block; }
+
+    /* ─── BOTTOM STATUS BAR ─── */
+    .status-bar {
+        height: 24px;
+        min-height: 24px;
+        background: var(--panel-bg);
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        font-size: 10px;
+        color: var(--text-dim);
+        gap: 16px;
+    }
+    .status-bar .status-item { display: flex; align-items: center; gap: 4px; }
+    .status-bar .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
 </style>
 
 <div id="studio-app">
-    <div class="sidebar">
-        <div class="tab-nav">
-            <button class="tab-btn active" onclick="switchTab(event, 'tab-create')">Build</button>
-            <button class="tab-btn" onclick="switchTab(event, 'tab-mods')">Mods</button>
-            <button class="tab-btn" onclick="switchTab(event, 'tab-io')">Export</button>
+    <!-- TOP TOOLBAR -->
+    <div class="top-toolbar">
+        <span class="toolbar-brand" onclick="location.href='/'">◆ PrintIt Studio</span>
+        <div class="toolbar-divider"></div>
+
+        <button class="tb-btn" onclick="undo()" title="Undo (Ctrl+Z)">↩ Undo</button>
+        <button class="tb-btn" onclick="redo()" title="Redo (Ctrl+Y)">↪ Redo</button>
+        <div class="toolbar-divider"></div>
+
+        <button class="tb-btn active" id="tb-translate" onclick="setMode('translate')" title="Move (G)">⊞ Move</button>
+        <button class="tb-btn" id="tb-rotate" onclick="setMode('rotate')" title="Rotate (R)">↻ Rotate</button>
+        <button class="tb-btn" id="tb-scale" onclick="setMode('scale')" title="Scale (S)">⤡ Scale</button>
+        <div class="toolbar-divider"></div>
+
+        <button class="tb-btn" id="tb-snap" onclick="toggleSnap()" title="Toggle Snap (X)">▦ Snap</button>
+        <button class="tb-btn" id="tb-wireframe-global" onclick="toggleGlobalWireframe()" title="Wireframe View">◫ Wire</button>
+        <div class="toolbar-divider"></div>
+
+        <button class="tb-btn" onclick="duplicateSelected()" title="Duplicate (Shift+D)">⧉ Clone</button>
+        <button class="tb-btn danger" onclick="delObj()" title="Delete (Del)">✕ Delete</button>
+
+        <div class="toolbar-spacer"></div>
+        <span class="toolbar-status" id="toolbar-status">Ready</span>
+        <button class="tb-btn" onclick="exportSTL()">↓ Export STL</button>
+        <button class="tb-btn" onclick="location.href='/'">← Exit</button>
+    </div>
+
+    <!-- MAIN AREA -->
+    <div class="main-area">
+        <!-- LEFT SIDEBAR -->
+        <div class="sidebar-left">
+            <div class="sidebar-tabs">
+                <button class="sidebar-tab active" onclick="switchLeftTab(this, 'tab-add')">Add</button>
+                <button class="sidebar-tab" onclick="switchLeftTab(this, 'tab-scene')">Scene</button>
+                <button class="sidebar-tab" onclick="switchLeftTab(this, 'tab-io')">File</button>
+            </div>
+            <div class="sidebar-body">
+                <!-- ADD TAB -->
+                <div id="tab-add" class="tab-panel">
+                    <span class="section-label">Import</span>
+                    <button class="btn-action primary" onclick="document.getElementById('stl-upload').click()">
+                        ＋ Import STL File
+                    </button>
+                    <button class="btn-action" onclick="document.getElementById('obj-upload').click()">
+                        ＋ Import OBJ File
+                    </button>
+                    <input type="file" id="stl-upload" hidden accept=".stl" onchange="importSTL(this)">
+                    <input type="file" id="obj-upload" hidden accept=".obj" onchange="importOBJ(this)">
+
+                    <span class="section-label">Primitives</span>
+                    <div class="shape-grid">
+                        <button class="btn-sq" onclick="addMesh('cube')" title="Cube">
+                            <span>■</span><span class="btn-sq-label">Cube</span>
+                        </button>
+                        <button class="btn-sq" onclick="addMesh('sphere')" title="Sphere">
+                            <span>●</span><span class="btn-sq-label">Sphere</span>
+                        </button>
+                        <button class="btn-sq" onclick="addMesh('cylinder')" title="Cylinder">
+                            <span>⬢</span><span class="btn-sq-label">Cyl</span>
+                        </button>
+                        <button class="btn-sq" onclick="addMesh('cone')" title="Cone">
+                            <span>▲</span><span class="btn-sq-label">Cone</span>
+                        </button>
+                        <button class="btn-sq" onclick="addMesh('torus')" title="Torus">
+                            <span>◎</span><span class="btn-sq-label">Torus</span>
+                        </button>
+                        <button class="btn-sq" onclick="addMesh('torusknot')" title="Torus Knot">
+                            <span>∞</span><span class="btn-sq-label">Knot</span>
+                        </button>
+                        <button class="btn-sq" onclick="addMesh('plane')" title="Plane">
+                            <span>▬</span><span class="btn-sq-label">Plane</span>
+                        </button>
+                        <button class="btn-sq" onclick="addMesh('icosahedron')" title="Icosahedron">
+                            <span>⬡</span><span class="btn-sq-label">Ico</span>
+                        </button>
+                    </div>
+
+                    <span class="section-label">Lights</span>
+                    <div class="shape-grid" style="grid-template-columns: repeat(3, 1fr);">
+                        <button class="btn-sq" onclick="addLight('point')" title="Point Light">
+                            <span>💡</span><span class="btn-sq-label">Point</span>
+                        </button>
+                        <button class="btn-sq" onclick="addLight('spot')" title="Spot Light">
+                            <span>🔦</span><span class="btn-sq-label">Spot</span>
+                        </button>
+                        <button class="btn-sq" onclick="addLight('directional')" title="Directional Light">
+                            <span>☀</span><span class="btn-sq-label">Sun</span>
+                        </button>
+                    </div>
+
+                    <span class="section-label">Quick Actions</span>
+                    <button class="btn-action" onclick="duplicateSelected()">⧉ Duplicate Selected <span class="shortcut">Shift+D</span></button>
+                    <button class="btn-action" onclick="groupSelected()">▢ Group Objects <span class="shortcut">Ctrl+G</span></button>
+                    <button class="btn-action" onclick="centerSelected()">◎ Center to Origin</button>
+                    <button class="btn-action" onclick="flattenToGrid()">▥ Drop to Grid</button>
+                </div>
+
+                <!-- SCENE TAB -->
+                <div id="tab-scene" class="tab-panel" style="display:none">
+                    <span class="section-label">Scene Outliner</span>
+                    <div id="outliner"></div>
+
+                    <span class="section-label">Scene Settings</span>
+                    <div class="inspector-card">
+                        <div class="mat-row">
+                            <label>Background</label>
+                            <input type="color" id="scene-bg" value="#0a0a0c" onchange="updateSceneBg()">
+                        </div>
+                        <div class="mat-row">
+                            <label>Grid</label>
+                            <input type="checkbox" id="scene-grid" checked onchange="toggleGrid()">
+                        </div>
+                        <div class="mat-row">
+                            <label>Ambient Light</label>
+                            <input type="range" id="ambient-intensity" min="0" max="2" step="0.05" value="0.7" oninput="updateAmbient()">
+                            <span class="val-display" id="ambient-val">0.70</span>
+                        </div>
+                        <div class="mat-row">
+                            <label>Shadows</label>
+                            <input type="checkbox" id="scene-shadows" onchange="toggleShadows()">
+                        </div>
+                    </div>
+
+                    <span class="section-label">Environment</span>
+                    <button class="btn-action" onclick="setEnv('studio')">🏠 Studio</button>
+                    <button class="btn-action" onclick="setEnv('dark')">🌑 Dark Void</button>
+                    <button class="btn-action" onclick="setEnv('blueprint')">📐 Blueprint</button>
+                </div>
+
+                <!-- FILE TAB -->
+                <div id="tab-io" class="tab-panel" style="display:none">
+                    <span class="section-label">Export</span>
+                    <button class="btn-action success" onclick="exportSTL()">↓ Export as STL</button>
+                    <button class="btn-action" onclick="exportJSON()">↓ Export Scene JSON</button>
+
+                    <span class="section-label">Import</span>
+                    <button class="btn-action primary" onclick="document.getElementById('stl-upload').click()">＋ Import STL</button>
+                    <button class="btn-action" onclick="document.getElementById('json-upload').click()">＋ Load Scene JSON</button>
+                    <input type="file" id="json-upload" hidden accept=".json" onchange="importJSON(this)">
+
+                    <span class="section-label">Validation</span>
+                    <button class="btn-action" onclick="recalcNormals()">⊿ Recalculate Normals</button>
+                    <button class="btn-action" onclick="checkManifold()">✓ Check Manifold</button>
+                    <button class="btn-action" onclick="autoCenter()">◎ Auto-Center All</button>
+                    <button class="btn-action" onclick="measureBounds()">📐 Measure Bounding Box</button>
+
+                    <span class="section-label">Danger Zone</span>
+                    <button class="btn-action danger" onclick="clearScene()">✕ Clear Entire Scene</button>
+
+                    <span class="section-label">Navigation</span>
+                    <button class="btn-action" onclick="location.href='/'">← Exit to Home</button>
+                </div>
+            </div>
         </div>
 
-        <div class="sidebar-scroll">
-            <div id="tab-create" class="tab-content">
-                <span class="group-label">Import</span>
-                <button class="btn-list" onclick="document.getElementById('stl-upload').click()" style="background: var(--accent); border:none; font-weight:bold;">+ Import STL</button>
-                <input type="file" id="stl-upload" hidden accept=".stl" onchange="importSTL(this)">
-
-                <span class="group-label">Primitives</span>
-                <div class="shape-grid">
-                    <button class="btn-sq" onclick="addMesh('cube')" title="Cube">■</button>
-                    <button class="btn-sq" onclick="addMesh('sphere')" title="Sphere">●</button>
-                    <button class="btn-sq" onclick="addMesh('cylinder')" title="Cylinder">⬢</button>
-                    <button class="btn-sq" onclick="addMesh('donut')" title="Donut">◎</button>
-                </div>
-
-                <span class="group-label">Tools</span>
-                <button class="btn-list" onclick="setMode('translate')"><b>G</b> Grab / Move</button>
-                <button class="btn-list" onclick="setMode('rotate')"><b>R</b> Rotate</button>
-                <button class="btn-list" onclick="setMode('scale')"><b>S</b> Scale</button>
-
-                <div class="inspector-box">
-                    <span class="group-label" style="margin-top:0; color:#888;">Inspector</span>
-                    <div class="prop-row"><span>X</span><input id="inspect-x" readonly></div>
-                    <div class="prop-row"><span>Y</span><input id="inspect-y" readonly></div>
-                    <div class="prop-row"><span>Z</span><input id="inspect-z" readonly></div>
-                </div>
+        <!-- VIEWPORT -->
+        <div id="viewport">
+            <div class="snap-indicator" id="snap-indicator">SNAP: 0.5</div>
+            <div class="hud-top-right">
+                <button class="view-btn" onclick="setCameraPreset('front')">Front</button>
+                <button class="view-btn" onclick="setCameraPreset('top')">Top</button>
+                <button class="view-btn" onclick="setCameraPreset('right')">Right</button>
+                <button class="view-btn" onclick="setCameraPreset('persp')">Persp</button>
+                <button class="view-btn" onclick="focusSelected()">Focus</button>
             </div>
-
-            <div id="tab-mods" class="tab-content" style="display:none">
-                <span class="group-label">Appearance</span>
-                <div class="prop-row"><span>Color</span><input type="color" id="color-p" value="#71717a" onchange="updateMat()"></div>
-
-                <span class="group-label">Modifiers</span>
-                <button class="btn-list" onclick="Swal.fire('Solidify applied', '', 'success')">Solidify</button>
-                <button class="btn-list" onclick="Swal.fire('Mirror active', '', 'success')">Mirror</button>
-                <button class="btn-list" onclick="Swal.fire('Subdivision applied', '', 'success')">Subdivision</button>
-
-                <button class="btn-list" onclick="delObj()" style="color:#ef4444; margin-top: 20px;">Delete Selected</button>
+            <div class="hud-bottom">
+                <div class="hud-pill" id="hud-mode">Mode: Translate</div>
+                <div class="hud-pill" id="hud-obj">No Selection</div>
+                <div class="hud-pill" id="hud-verts">Verts: 0</div>
             </div>
+        </div>
 
-            <div id="tab-io" class="tab-content" style="display:none">
-                <span class="group-label">Validation</span>
-                <button class="btn-list" onclick="Swal.fire('Normals Recalculated', '', 'info')">Fix Normals</button>
-                <button class="btn-list" onclick="Swal.fire('Mesh is Manifold', '', 'success')">Check Manifold</button>
+        <!-- RIGHT SIDEBAR (Properties) -->
+        <div class="sidebar-right">
+            <div class="right-header">Properties</div>
+            <div class="right-body">
+                <div id="no-selection-msg" class="outliner-empty">Select an object to view properties</div>
 
-                <span class="group-label">File</span>
-                <button class="btn-list" style="background:#059669; color:white; border:none;" onclick="exportSTL()">Export STL</button>
-                <button class="btn-list" onclick="location.href='/'">Exit Designer</button>
+                <div id="props-panel" style="display:none;">
+                    <!-- Object Name -->
+                    <div class="inspector-card">
+                        <div class="inspector-card-title">Object</div>
+                        <div class="prop-row">
+                            <span class="prop-label" style="width:auto; color:var(--text-muted)">Name</span>
+                            <input class="prop-input" id="obj-name" style="text-align:left" onchange="renameSelected(this.value)">
+                        </div>
+                    </div>
+
+                    <!-- Transform -->
+                    <div class="inspector-card">
+                        <div class="inspector-card-title">Position</div>
+                        <div class="prop-row">
+                            <span class="prop-label x">X</span>
+                            <input class="prop-input" id="pos-x" type="number" step="0.1" onchange="applyTransform()">
+                        </div>
+                        <div class="prop-row">
+                            <span class="prop-label y">Y</span>
+                            <input class="prop-input" id="pos-y" type="number" step="0.1" onchange="applyTransform()">
+                        </div>
+                        <div class="prop-row">
+                            <span class="prop-label z">Z</span>
+                            <input class="prop-input" id="pos-z" type="number" step="0.1" onchange="applyTransform()">
+                        </div>
+                    </div>
+
+                    <div class="inspector-card">
+                        <div class="inspector-card-title">Rotation (°)</div>
+                        <div class="prop-row">
+                            <span class="prop-label x">X</span>
+                            <input class="prop-input" id="rot-x" type="number" step="5" onchange="applyTransform()">
+                        </div>
+                        <div class="prop-row">
+                            <span class="prop-label y">Y</span>
+                            <input class="prop-input" id="rot-y" type="number" step="5" onchange="applyTransform()">
+                        </div>
+                        <div class="prop-row">
+                            <span class="prop-label z">Z</span>
+                            <input class="prop-input" id="rot-z" type="number" step="5" onchange="applyTransform()">
+                        </div>
+                    </div>
+
+                    <div class="inspector-card">
+                        <div class="inspector-card-title">Scale</div>
+                        <div class="prop-row">
+                            <span class="prop-label x">X</span>
+                            <input class="prop-input" id="scl-x" type="number" step="0.1" min="0.01" onchange="applyTransform()">
+                        </div>
+                        <div class="prop-row">
+                            <span class="prop-label y">Y</span>
+                            <input class="prop-input" id="scl-y" type="number" step="0.1" min="0.01" onchange="applyTransform()">
+                        </div>
+                        <div class="prop-row">
+                            <span class="prop-label z">Z</span>
+                            <input class="prop-input" id="scl-z" type="number" step="0.1" min="0.01" onchange="applyTransform()">
+                        </div>
+                        <div class="prop-row">
+                            <label style="font-size:10px; color:var(--text-muted)">Uniform</label>
+                            <input type="checkbox" id="uniform-scale" checked>
+                        </div>
+                    </div>
+
+                    <!-- Material -->
+                    <div class="inspector-card" id="material-panel">
+                        <div class="inspector-card-title">Material</div>
+                        <div class="mat-row">
+                            <label>Color</label>
+                            <input type="color" id="mat-color" value="#71717a" oninput="applyMaterial()">
+                        </div>
+                        <div class="mat-row">
+                            <label>Metalness</label>
+                            <input type="range" id="mat-metal" min="0" max="1" step="0.05" value="0" oninput="applyMaterial()">
+                            <span class="val-display" id="metal-val">0.00</span>
+                        </div>
+                        <div class="mat-row">
+                            <label>Roughness</label>
+                            <input type="range" id="mat-rough" min="0" max="1" step="0.05" value="0.7" oninput="applyMaterial()">
+                            <span class="val-display" id="rough-val">0.70</span>
+                        </div>
+                        <div class="mat-row">
+                            <label>Opacity</label>
+                            <input type="range" id="mat-opacity" min="0" max="1" step="0.05" value="1" oninput="applyMaterial()">
+                            <span class="val-display" id="opacity-val">1.00</span>
+                        </div>
+                        <div class="mat-row">
+                            <label>Wireframe</label>
+                            <input type="checkbox" id="mat-wireframe" onchange="applyMaterial()">
+                        </div>
+                        <div class="mat-row">
+                            <label>Flat Shading</label>
+                            <input type="checkbox" id="mat-flat" onchange="applyMaterial()">
+                        </div>
+                        <div class="mat-row">
+                            <label>Double Sided</label>
+                            <input type="checkbox" id="mat-doubleside" onchange="applyMaterial()">
+                        </div>
+                    </div>
+
+                    <!-- Geometry Info -->
+                    <div class="inspector-card">
+                        <div class="inspector-card-title">Geometry Info</div>
+                        <div class="mat-row"><label>Vertices</label><span class="val-display" id="geo-verts" style="width:auto">—</span></div>
+                        <div class="mat-row"><label>Faces</label><span class="val-display" id="geo-faces" style="width:auto">—</span></div>
+                        <div class="mat-row"><label>Type</label><span class="val-display" id="geo-type" style="width:auto">—</span></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="viewport">
-        <div class="hud">
-            <button class="hud-chip" onclick="location.href='/'" style="cursor:pointer">← Back</button>
-            <div class="hud-chip" id="status">Studio Active</div>
-        </div>
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+        <div class="status-item"><span class="dot"></span> Studio Active</div>
+        <div class="status-item" id="sb-objects">Objects: 0</div>
+        <div class="status-item" id="sb-verts">Total Verts: 0</div>
+        <div class="status-item" id="sb-fps">FPS: 0</div>
+        <div class="toolbar-spacer"></div>
+        <div class="status-item">G=Move R=Rotate S=Scale Del=Delete Shift+D=Clone F=Focus Ctrl+Z=Undo</div>
+    </div>
+
+    <!-- CONTEXT MENU -->
+    <div class="ctx-menu" id="ctx-menu">
+        <div class="ctx-item" onclick="duplicateSelected(); hideCtx()">⧉ Duplicate <span class="ctx-short">Shift+D</span></div>
+        <div class="ctx-item" onclick="delObj(); hideCtx()">✕ Delete <span class="ctx-short">Del</span></div>
+        <div class="ctx-sep"></div>
+        <div class="ctx-item" onclick="centerSelected(); hideCtx()">◎ Center to Origin</div>
+        <div class="ctx-item" onclick="flattenToGrid(); hideCtx()">▥ Drop to Grid</div>
+        <div class="ctx-sep"></div>
+        <div class="ctx-item" onclick="selectAll(); hideCtx()">▣ Select All <span class="ctx-short">A</span></div>
+        <div class="ctx-item" onclick="deselectAll(); hideCtx()">▢ Deselect <span class="ctx-short">Alt+A</span></div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        // --- LAYOUT CLEANUP ---
+    (function() {
+        'use strict';
+
+        // ─── LAYOUT CLEANUP ───
         document.addEventListener("DOMContentLoaded", () => {
             const header = document.querySelector('header');
             const footer = document.querySelector('footer');
             const mainContainer = document.querySelector('main > div');
-
-            if(header) header.style.display = 'none';
-            if(footer) footer.style.display = 'none';
-            if(mainContainer) {
+            if (header) header.style.display = 'none';
+            if (footer) footer.style.display = 'none';
+            if (mainContainer) {
                 mainContainer.style.padding = '0';
                 mainContainer.style.maxWidth = 'none';
                 mainContainer.style.margin = '0';
@@ -267,114 +803,110 @@
             document.documentElement.style.overflow = 'hidden';
         });
 
-        // --- THREE.JS LOGIC ---
-        let scene, camera, renderer, controls, gizmo, objects = [], selected = null;
-        const view = document.getElementById('viewport');
+        // ─── STATE ───
+        let scene, camera, renderer, orbitControls, gizmo;
+        let objects = [], selected = null;
+        let gridHelper, ambientLight, dirLight;
+        let snapEnabled = false, snapValue = 0.5;
+        let globalWireframe = false;
+        let undoStack = [], redoStack = [];
+        let fpsFrames = 0, fpsTime = performance.now(), currentFps = 0;
 
+        const view = document.getElementById('viewport');
+        const DEG = Math.PI / 180;
+        const RAD = 180 / Math.PI;
+
+        // ─── INIT ───
         init();
         animate();
 
         function init() {
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x0a0a0c);
-            camera = new THREE.PerspectiveCamera(45, view.clientWidth / view.clientHeight, 0.1, 1000);
-            camera.position.set(10, 10, 10);
 
-            renderer = new THREE.WebGLRenderer({ antialias: true });
+            camera = new THREE.PerspectiveCamera(45, view.clientWidth / view.clientHeight, 0.01, 2000);
+            camera.position.set(8, 6, 8);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
             renderer.setSize(view.clientWidth, view.clientHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = false;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
             view.appendChild(renderer.domElement);
 
-            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-            const light = new THREE.DirectionalLight(0xffffff, 0.5);
-            light.position.set(5, 10, 7);
-            scene.add(light);
-            scene.add(new THREE.GridHelper(20, 20, 0x222222, 0x111111));
+            // Lights
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
 
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            dirLight.position.set(5, 10, 7);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            dirLight.shadow.camera.near = 0.5;
+            dirLight.shadow.camera.far = 50;
+            dirLight.shadow.camera.left = -15;
+            dirLight.shadow.camera.right = 15;
+            dirLight.shadow.camera.top = 15;
+            dirLight.shadow.camera.bottom = -15;
+            scene.add(dirLight);
+
+            const fillLight = new THREE.DirectionalLight(0x8888ff, 0.15);
+            fillLight.position.set(-5, 3, -5);
+            scene.add(fillLight);
+
+            // Grid
+            gridHelper = new THREE.GridHelper(30, 30, 0x333333, 0x1a1a1a);
+            scene.add(gridHelper);
+
+            // Orbit controls
+            orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+            orbitControls.enableDamping = true;
+            orbitControls.dampingFactor = 0.08;
+            orbitControls.minDistance = 1;
+            orbitControls.maxDistance = 200;
+
+            // Transform gizmo
             gizmo = new THREE.TransformControls(camera, renderer.domElement);
-            gizmo.addEventListener('dragging-changed', (e) => controls.enabled = !e.value);
-            gizmo.addEventListener('change', updateInspect);
+            gizmo.setSize(0.8);
+            gizmo.addEventListener('dragging-changed', (e) => {
+                orbitControls.enabled = !e.value;
+                if (!e.value && selected) {
+                    saveUndoState();
+                    updateInspector();
+                }
+            });
+            gizmo.addEventListener('change', () => {
+                if (selected) updateInspector();
+            });
             scene.add(gizmo);
 
+            // Events
             window.addEventListener('resize', onResize);
             view.addEventListener('pointerdown', onPointerDown);
+            view.addEventListener('contextmenu', onContextMenu);
+            document.addEventListener('click', () => hideCtx());
+            document.addEventListener('keydown', onKeyDown);
         }
 
-        function switchTab(e, id) {
-            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).style.display = 'block';
-            e.currentTarget.classList.add('active');
-        }
+        // ─── ANIMATION LOOP ───
+        function animate() {
+            requestAnimationFrame(animate);
+            orbitControls.update();
+            renderer.render(scene, camera);
 
-        function addMesh(type) {
-            let geo;
-            if(type === 'cube') geo = new THREE.BoxGeometry(2,2,2);
-            else if(type === 'sphere') geo = new THREE.SphereGeometry(1.5, 32, 32);
-            else if(type === 'cylinder') geo = new THREE.CylinderGeometry(1, 1, 3, 32);
-            else if(type === 'donut') geo = new THREE.TorusGeometry(1.2, 0.4, 16, 100);
-
-            const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x71717a }));
-            mesh.position.y = 1;
-            mesh.name = type.toUpperCase();
-            scene.add(mesh);
-            objects.push(mesh);
-            select(mesh);
-        }
-
-        function importSTL(input) {
-            if (!input.files[0]) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const loader = new THREE.STLLoader();
-                const geometry = loader.parse(e.target.result);
-                const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0x71717a }));
-                mesh.name = "IMPORTED";
-                scene.add(mesh);
-                objects.push(mesh);
-                select(mesh);
-                Swal.fire('Imported STL', '', 'success');
-            };
-            reader.readAsArrayBuffer(input.files[0]);
-        }
-
-        function select(obj) {
-            selected = obj;
-            gizmo.attach(obj);
-            document.getElementById('status').innerText = "Active: " + obj.name;
-            updateInspect();
-        }
-
-        function updateInspect() {
-            if(!selected) return;
-            document.getElementById('inspect-x').value = selected.position.x.toFixed(2);
-            document.getElementById('inspect-y').value = selected.position.y.toFixed(2);
-            document.getElementById('inspect-z').value = selected.position.z.toFixed(2);
-        }
-
-        function updateMat() {
-            if(selected) selected.material.color.set(document.getElementById('color-p').value);
-        }
-
-        function delObj() {
-            if(!selected) return;
-            scene.remove(selected);
-            objects = objects.filter(o => o !== selected);
-            gizmo.detach();
-            selected = null;
-            document.getElementById('status').innerText = "Studio Active";
-        }
-
-        function setMode(m) { gizmo.setMode(m); }
-
-        function onPointerDown(e) {
-            const rect = view.getBoundingClientRect();
-            const mouse = new THREE.Vector2(((e.clientX - rect.left) / view.clientWidth) * 2 - 1, -((e.clientY - rect.top) / view.clientHeight) * 2 + 1);
-            const ray = new THREE.Raycaster();
-            ray.setFromCamera(mouse, camera);
-            const hits = ray.intersectObjects(objects);
-            if(hits.length > 0) select(hits[0].object);
+            // FPS counter
+            fpsFrames++;
+            const now = performance.now();
+            if (now - fpsTime >= 500) {
+                currentFps = Math.round(fpsFrames / ((now - fpsTime) / 1000));
+                document.getElementById('sb-fps').textContent = 'FPS: ' + currentFps;
+                fpsFrames = 0;
+                fpsTime = now;
+            }
         }
 
         function onResize() {
@@ -383,19 +915,896 @@
             renderer.setSize(view.clientWidth, view.clientHeight);
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
+        // ─── TAB SWITCHING ───
+        window.switchLeftTab = function(btn, id) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.sidebar-tab').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).style.display = 'block';
+            btn.classList.add('active');
+        };
+
+        // ─── ADD MESH ───
+        window.addMesh = function(type) {
+            let geo, name;
+            switch(type) {
+                case 'cube':
+                    geo = new THREE.BoxGeometry(2, 2, 2);
+                    name = 'Cube';
+                    break;
+                case 'sphere':
+                    geo = new THREE.SphereGeometry(1.2, 32, 32);
+                    name = 'Sphere';
+                    break;
+                case 'cylinder':
+                    geo = new THREE.CylinderGeometry(1, 1, 2.5, 32);
+                    name = 'Cylinder';
+                    break;
+                case 'cone':
+                    geo = new THREE.ConeGeometry(1, 2.5, 32);
+                    name = 'Cone';
+                    break;
+                case 'torus':
+                    geo = new THREE.TorusGeometry(1.2, 0.4, 16, 48);
+                    name = 'Torus';
+                    break;
+                case 'torusknot':
+                    geo = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
+                    name = 'TorusKnot';
+                    break;
+                case 'plane':
+                    geo = new THREE.PlaneGeometry(4, 4, 1, 1);
+                    name = 'Plane';
+                    break;
+                case 'icosahedron':
+                    geo = new THREE.IcosahedronGeometry(1.2, 0);
+                    name = 'Icosahedron';
+                    break;
+                default: return;
+            }
+
+            const mat = new THREE.MeshStandardMaterial({
+                color: 0x71717a,
+                roughness: 0.7,
+                metalness: 0
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.y = type === 'plane' ? 0 : 1.5;
+            if (type === 'plane') mesh.rotation.x = -Math.PI / 2;
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            mesh.name = name + '_' + objects.length;
+            mesh.userData.type = type;
+
+            scene.add(mesh);
+            objects.push(mesh);
+            saveUndoState();
+            selectObj(mesh);
+            updateSceneStats();
+            status('Added ' + name);
+        };
+
+        // ─── ADD LIGHT ───
+        window.addLight = function(type) {
+            let light, helper, name;
+            switch(type) {
+                case 'point':
+                    light = new THREE.PointLight(0xffffff, 1, 50);
+                    light.position.set(0, 4, 0);
+                    helper = new THREE.PointLightHelper(light, 0.3);
+                    name = 'PointLight';
+                    break;
+                case 'spot':
+                    light = new THREE.SpotLight(0xffffff, 1, 50, Math.PI * 0.2);
+                    light.position.set(0, 5, 0);
+                    helper = new THREE.SpotLightHelper(light);
+                    name = 'SpotLight';
+                    break;
+                case 'directional':
+                    light = new THREE.DirectionalLight(0xffffff, 0.5);
+                    light.position.set(3, 8, 3);
+                    helper = new THREE.DirectionalLightHelper(light, 1);
+                    name = 'DirLight';
+                    break;
+                default: return;
+            }
+            light.castShadow = true;
+            light.name = name + '_' + objects.length;
+            light.userData.type = 'light';
+            light.userData.lightType = type;
+            if (helper) {
+                light.userData.helper = helper;
+                scene.add(helper);
+            }
+            scene.add(light);
+            objects.push(light);
+            saveUndoState();
+            selectObj(light);
+            updateSceneStats();
+            status('Added ' + name);
+        };
+
+        // ─── IMPORT STL ───
+        window.importSTL = function(input) {
+            if (!input.files[0]) return;
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const loader = new THREE.STLLoader();
+                const geometry = loader.parse(e.target.result);
+                geometry.computeVertexNormals();
+                const mat = new THREE.MeshStandardMaterial({ color: 0x71717a, roughness: 0.7 });
+                const mesh = new THREE.Mesh(geometry, mat);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                mesh.name = file.name.replace('.stl', '');
+                mesh.userData.type = 'imported-stl';
+                scene.add(mesh);
+                objects.push(mesh);
+                saveUndoState();
+                selectObj(mesh);
+                updateSceneStats();
+                status('Imported: ' + file.name);
+            };
+            reader.readAsArrayBuffer(file);
+            input.value = '';
+        };
+
+        // ─── IMPORT OBJ ───
+        window.importOBJ = function(input) {
+            if (!input.files[0]) return;
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const loader = new THREE.OBJLoader();
+                const obj = loader.parse(e.target.result);
+                obj.traverse(function(child) {
+                    if (child.isMesh) {
+                        child.material = new THREE.MeshStandardMaterial({ color: 0x71717a, roughness: 0.7 });
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+                obj.name = file.name.replace('.obj', '');
+                obj.userData.type = 'imported-obj';
+                scene.add(obj);
+                objects.push(obj);
+                saveUndoState();
+                selectObj(obj);
+                updateSceneStats();
+                status('Imported: ' + file.name);
+            };
+            reader.readAsText(file);
+            input.value = '';
+        };
+
+        // ─── SELECTION ───
+        function selectObj(obj) {
+            selected = obj;
+            gizmo.attach(obj);
+            updateInspector();
+            updateOutliner();
+            document.getElementById('no-selection-msg').style.display = 'none';
+            document.getElementById('props-panel').style.display = 'block';
+            document.getElementById('hud-obj').textContent = obj.name;
+
+            // Show/hide material panel for lights
+            const matPanel = document.getElementById('material-panel');
+            if (obj.userData.type === 'light') {
+                matPanel.style.display = 'none';
+            } else {
+                matPanel.style.display = 'block';
+            }
+
+            status('Selected: ' + obj.name);
         }
 
-        function exportSTL() {
+        window.deselectAll = function() {
+            selected = null;
+            gizmo.detach();
+            document.getElementById('no-selection-msg').style.display = 'block';
+            document.getElementById('props-panel').style.display = 'none';
+            document.getElementById('hud-obj').textContent = 'No Selection';
+            updateOutliner();
+            status('Deselected');
+        };
+
+        window.selectAll = function() {
+            if (objects.length > 0) selectObj(objects[objects.length - 1]);
+        };
+
+        // ─── INSPECTOR ───
+        function updateInspector() {
+            if (!selected) return;
+
+            document.getElementById('obj-name').value = selected.name;
+
+            document.getElementById('pos-x').value = round(selected.position.x);
+            document.getElementById('pos-y').value = round(selected.position.y);
+            document.getElementById('pos-z').value = round(selected.position.z);
+
+            document.getElementById('rot-x').value = round(selected.rotation.x * RAD);
+            document.getElementById('rot-y').value = round(selected.rotation.y * RAD);
+            document.getElementById('rot-z').value = round(selected.rotation.z * RAD);
+
+            document.getElementById('scl-x').value = round(selected.scale.x);
+            document.getElementById('scl-y').value = round(selected.scale.y);
+            document.getElementById('scl-z').value = round(selected.scale.z);
+
+            // Material
+            if (selected.material) {
+                document.getElementById('mat-color').value = '#' + selected.material.color.getHexString();
+                document.getElementById('mat-metal').value = selected.material.metalness || 0;
+                document.getElementById('metal-val').textContent = (selected.material.metalness || 0).toFixed(2);
+                document.getElementById('mat-rough').value = selected.material.roughness || 0.7;
+                document.getElementById('rough-val').textContent = (selected.material.roughness || 0.7).toFixed(2);
+                document.getElementById('mat-opacity').value = selected.material.opacity || 1;
+                document.getElementById('opacity-val').textContent = (selected.material.opacity || 1).toFixed(2);
+                document.getElementById('mat-wireframe').checked = selected.material.wireframe || false;
+                document.getElementById('mat-flat').checked = selected.material.flatShading || false;
+                document.getElementById('mat-doubleside').checked = selected.material.side === THREE.DoubleSide;
+            }
+
+            // Geometry info
+            if (selected.geometry) {
+                const pos = selected.geometry.attributes.position;
+                const verts = pos ? pos.count : 0;
+                const idx = selected.geometry.index;
+                const faces = idx ? idx.count / 3 : verts / 3;
+                document.getElementById('geo-verts').textContent = verts.toLocaleString();
+                document.getElementById('geo-faces').textContent = Math.floor(faces).toLocaleString();
+                document.getElementById('geo-type').textContent = selected.userData.type || selected.geometry.type || '—';
+                document.getElementById('hud-verts').textContent = 'Verts: ' + verts.toLocaleString();
+            } else {
+                document.getElementById('geo-verts').textContent = '—';
+                document.getElementById('geo-faces').textContent = '—';
+                document.getElementById('geo-type').textContent = selected.userData.lightType || '—';
+                document.getElementById('hud-verts').textContent = 'Light';
+            }
+        }
+
+        window.applyTransform = function() {
+            if (!selected) return;
+            selected.position.set(
+                parseFloat(document.getElementById('pos-x').value) || 0,
+                parseFloat(document.getElementById('pos-y').value) || 0,
+                parseFloat(document.getElementById('pos-z').value) || 0
+            );
+            selected.rotation.set(
+                (parseFloat(document.getElementById('rot-x').value) || 0) * DEG,
+                (parseFloat(document.getElementById('rot-y').value) || 0) * DEG,
+                (parseFloat(document.getElementById('rot-z').value) || 0) * DEG
+            );
+
+            const uniform = document.getElementById('uniform-scale').checked;
+            const sx = parseFloat(document.getElementById('scl-x').value) || 1;
+            if (uniform) {
+                selected.scale.set(sx, sx, sx);
+                document.getElementById('scl-y').value = round(sx);
+                document.getElementById('scl-z').value = round(sx);
+            } else {
+                selected.scale.set(
+                    sx,
+                    parseFloat(document.getElementById('scl-y').value) || 1,
+                    parseFloat(document.getElementById('scl-z').value) || 1
+                );
+            }
+            saveUndoState();
+        };
+
+        window.applyMaterial = function() {
+            if (!selected || !selected.material) return;
+            selected.material.color.set(document.getElementById('mat-color').value);
+            selected.material.metalness = parseFloat(document.getElementById('mat-metal').value);
+            selected.material.roughness = parseFloat(document.getElementById('mat-rough').value);
+            selected.material.opacity = parseFloat(document.getElementById('mat-opacity').value);
+            selected.material.transparent = selected.material.opacity < 1;
+            selected.material.wireframe = document.getElementById('mat-wireframe').checked;
+            selected.material.flatShading = document.getElementById('mat-flat').checked;
+            selected.material.side = document.getElementById('mat-doubleside').checked ? THREE.DoubleSide : THREE.FrontSide;
+            selected.material.needsUpdate = true;
+
+            document.getElementById('metal-val').textContent = selected.material.metalness.toFixed(2);
+            document.getElementById('rough-val').textContent = selected.material.roughness.toFixed(2);
+            document.getElementById('opacity-val').textContent = selected.material.opacity.toFixed(2);
+        };
+
+        window.renameSelected = function(name) {
+            if (!selected) return;
+            selected.name = name;
+            updateOutliner();
+            status('Renamed to: ' + name);
+        };
+
+        // ─── OBJECT OPERATIONS ───
+        window.delObj = function() {
+            if (!selected) return;
+            saveUndoState();
+            if (selected.userData.helper) scene.remove(selected.userData.helper);
+            scene.remove(selected);
+            objects = objects.filter(o => o !== selected);
+            gizmo.detach();
+            selected = null;
+            document.getElementById('no-selection-msg').style.display = 'block';
+            document.getElementById('props-panel').style.display = 'none';
+            document.getElementById('hud-obj').textContent = 'No Selection';
+            updateOutliner();
+            updateSceneStats();
+            status('Deleted object');
+        };
+
+        window.duplicateSelected = function() {
+            if (!selected) return;
+            const clone = selected.clone();
+            if (selected.material) clone.material = selected.material.clone();
+            clone.position.x += 2;
+            clone.name = selected.name + '_copy';
+            scene.add(clone);
+            objects.push(clone);
+            saveUndoState();
+            selectObj(clone);
+            updateSceneStats();
+            status('Duplicated: ' + clone.name);
+        };
+
+        window.centerSelected = function() {
+            if (!selected) return;
+            saveUndoState();
+            selected.position.set(0, selected.position.y, 0);
+            updateInspector();
+            status('Centered to origin');
+        };
+
+        window.flattenToGrid = function() {
+            if (!selected) return;
+            saveUndoState();
+            if (selected.geometry) {
+                selected.geometry.computeBoundingBox();
+                const bb = selected.geometry.boundingBox;
+                const minY = bb.min.y * selected.scale.y;
+                selected.position.y = -minY;
+            } else {
+                selected.position.y = 0;
+            }
+            updateInspector();
+            status('Dropped to grid');
+        };
+
+        window.groupSelected = function() {
+            if (objects.length < 2) {
+                Swal.fire('Need at least 2 objects', 'Add more objects before grouping', 'info');
+                return;
+            }
+            const group = new THREE.Group();
+            group.name = 'Group_' + objects.length;
+            group.userData.type = 'group';
+
+            objects.forEach(obj => {
+                scene.remove(obj);
+                group.add(obj);
+            });
+
+            scene.add(group);
+            objects = [group];
+            saveUndoState();
+            selectObj(group);
+            updateSceneStats();
+            status('Grouped all objects');
+        };
+
+        // ─── TRANSFORM MODE ───
+        window.setMode = function(m) {
+            gizmo.setMode(m);
+            document.getElementById('hud-mode').textContent = 'Mode: ' + m.charAt(0).toUpperCase() + m.slice(1);
+
+            document.getElementById('tb-translate').classList.toggle('active', m === 'translate');
+            document.getElementById('tb-rotate').classList.toggle('active', m === 'rotate');
+            document.getElementById('tb-scale').classList.toggle('active', m === 'scale');
+
+            if (snapEnabled) {
+                if (m === 'translate') gizmo.setTranslationSnap(snapValue);
+                else if (m === 'rotate') gizmo.setRotationSnap(15 * DEG);
+                else if (m === 'scale') gizmo.setScaleSnap(0.25);
+            }
+        };
+
+        // ─── SNAP ───
+        window.toggleSnap = function() {
+            snapEnabled = !snapEnabled;
+            document.getElementById('tb-snap').classList.toggle('active', snapEnabled);
+            document.getElementById('snap-indicator').classList.toggle('visible', snapEnabled);
+            if (snapEnabled) {
+                gizmo.setTranslationSnap(snapValue);
+                gizmo.setRotationSnap(15 * DEG);
+                gizmo.setScaleSnap(0.25);
+            } else {
+                gizmo.setTranslationSnap(null);
+                gizmo.setRotationSnap(null);
+                gizmo.setScaleSnap(null);
+            }
+            status('Snap: ' + (snapEnabled ? 'ON' : 'OFF'));
+        };
+
+        // ─── GLOBAL WIREFRAME ───
+        window.toggleGlobalWireframe = function() {
+            globalWireframe = !globalWireframe;
+            document.getElementById('tb-wireframe-global').classList.toggle('active', globalWireframe);
+            objects.forEach(obj => {
+                if (obj.material) obj.material.wireframe = globalWireframe;
+            });
+            status('Wireframe: ' + (globalWireframe ? 'ON' : 'OFF'));
+        };
+
+        // ─── CAMERA PRESETS ───
+        window.setCameraPreset = function(view) {
+            const d = 12;
+            switch(view) {
+                case 'front':
+                    camera.position.set(0, 2, d);
+                    orbitControls.target.set(0, 2, 0);
+                    break;
+                case 'top':
+                    camera.position.set(0, d, 0.01);
+                    orbitControls.target.set(0, 0, 0);
+                    break;
+                case 'right':
+                    camera.position.set(d, 2, 0);
+                    orbitControls.target.set(0, 2, 0);
+                    break;
+                case 'persp':
+                    camera.position.set(8, 6, 8);
+                    orbitControls.target.set(0, 0, 0);
+                    break;
+            }
+            orbitControls.update();
+        };
+
+        window.focusSelected = function() {
+            if (!selected) return;
+            const pos = selected.position.clone();
+            orbitControls.target.copy(pos);
+            camera.position.set(pos.x + 5, pos.y + 4, pos.z + 5);
+            orbitControls.update();
+            status('Focused on ' + selected.name);
+        };
+
+        // ─── SCENE SETTINGS ───
+        window.updateSceneBg = function() {
+            scene.background = new THREE.Color(document.getElementById('scene-bg').value);
+        };
+
+        window.toggleGrid = function() {
+            gridHelper.visible = document.getElementById('scene-grid').checked;
+        };
+
+        window.updateAmbient = function() {
+            const v = parseFloat(document.getElementById('ambient-intensity').value);
+            ambientLight.intensity = v;
+            document.getElementById('ambient-val').textContent = v.toFixed(2);
+        };
+
+        window.toggleShadows = function() {
+            const on = document.getElementById('scene-shadows').checked;
+            renderer.shadowMap.enabled = on;
+            objects.forEach(o => {
+                if (o.isMesh) { o.castShadow = on; o.receiveShadow = on; }
+            });
+            dirLight.castShadow = on;
+            // Need to update all materials when toggling shadows
+            scene.traverse(obj => { if (obj.material) obj.material.needsUpdate = true; });
+            status('Shadows: ' + (on ? 'ON' : 'OFF'));
+        };
+
+        window.setEnv = function(env) {
+            switch(env) {
+                case 'studio':
+                    scene.background = new THREE.Color(0x0a0a0c);
+                    gridHelper.material.opacity = 1;
+                    document.getElementById('scene-bg').value = '#0a0a0c';
+                    break;
+                case 'dark':
+                    scene.background = new THREE.Color(0x000000);
+                    gridHelper.visible = false;
+                    document.getElementById('scene-grid').checked = false;
+                    document.getElementById('scene-bg').value = '#000000';
+                    break;
+                case 'blueprint':
+                    scene.background = new THREE.Color(0x1a2a4a);
+                    gridHelper.visible = true;
+                    document.getElementById('scene-grid').checked = true;
+                    document.getElementById('scene-bg').value = '#1a2a4a';
+                    break;
+            }
+            status('Environment: ' + env);
+        };
+
+        // ─── RAYCASTING / POINTER ───
+        function onPointerDown(e) {
+            if (e.button === 2) return; // right click handled by context menu
+            if (e.button !== 0) return;
+
+            const rect = view.getBoundingClientRect();
+            const mouse = new THREE.Vector2(
+                ((e.clientX - rect.left) / rect.width) * 2 - 1,
+                -((e.clientY - rect.top) / rect.height) * 2 + 1
+            );
+            const ray = new THREE.Raycaster();
+            ray.setFromCamera(mouse, camera);
+
+            // Check meshes and light helpers
+            const meshObjects = [];
+            objects.forEach(obj => {
+                if (obj.isMesh) meshObjects.push(obj);
+                else if (obj.isGroup) {
+                    obj.traverse(c => { if (c.isMesh) meshObjects.push(c); });
+                }
+                else if (obj.userData.helper) meshObjects.push(obj.userData.helper);
+            });
+
+            const hits = ray.intersectObjects(meshObjects, true);
+            if (hits.length > 0) {
+                let target = hits[0].object;
+                // Find the top-level object in our objects array
+                const found = objects.find(o => {
+                    if (o === target) return true;
+                    if (o.isGroup) {
+                        let match = false;
+                        o.traverse(c => { if (c === target) match = true; });
+                        return match;
+                    }
+                    if (o.userData.helper === target) return true;
+                    return false;
+                });
+                if (found) selectObj(found);
+            }
+        }
+
+        // ─── CONTEXT MENU ───
+        function onContextMenu(e) {
+            e.preventDefault();
+            const ctx = document.getElementById('ctx-menu');
+            ctx.style.left = e.clientX + 'px';
+            ctx.style.top = e.clientY + 'px';
+            ctx.style.display = 'block';
+        }
+
+        window.hideCtx = function() {
+            document.getElementById('ctx-menu').style.display = 'none';
+        };
+
+        // ─── KEYBOARD SHORTCUTS ───
+        function onKeyDown(e) {
+            // Don't intercept if typing in an input
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            const key = e.key.toLowerCase();
+
+            if (key === 'g') setMode('translate');
+            else if (key === 'r') setMode('rotate');
+            else if (key === 's' && !e.ctrlKey) setMode('scale');
+            else if (key === 'x' && !e.ctrlKey) toggleSnap();
+            else if (key === 'f') focusSelected();
+            else if (key === 'a' && e.altKey) { e.preventDefault(); deselectAll(); }
+            else if (key === 'a' && !e.ctrlKey && !e.altKey) { /* reserved */ }
+            else if (key === 'delete' || key === 'backspace') delObj();
+            else if (key === 'd' && e.shiftKey) { e.preventDefault(); duplicateSelected(); }
+            else if (key === 'z' && e.ctrlKey && !e.shiftKey) { e.preventDefault(); undo(); }
+            else if (key === 'y' && e.ctrlKey) { e.preventDefault(); redo(); }
+            else if (key === 'z' && e.ctrlKey && e.shiftKey) { e.preventDefault(); redo(); }
+            else if (key === 'g' && e.ctrlKey) { e.preventDefault(); groupSelected(); }
+            else if (key === '1') setCameraPreset('front');
+            else if (key === '3') setCameraPreset('right');
+            else if (key === '7') setCameraPreset('top');
+            else if (key === '5') setCameraPreset('persp');
+        }
+
+        // ─── UNDO / REDO ───
+        function saveUndoState() {
+            const state = objects.map(obj => ({
+                uuid: obj.uuid,
+                name: obj.name,
+                position: obj.position.clone(),
+                rotation: obj.rotation.clone(),
+                scale: obj.scale.clone(),
+                visible: obj.visible
+            }));
+            undoStack.push(state);
+            if (undoStack.length > 50) undoStack.shift();
+            redoStack = [];
+        }
+
+        window.undo = function() {
+            if (undoStack.length === 0) { status('Nothing to undo'); return; }
+            // Save current state to redo
+            const current = objects.map(obj => ({
+                uuid: obj.uuid,
+                name: obj.name,
+                position: obj.position.clone(),
+                rotation: obj.rotation.clone(),
+                scale: obj.scale.clone(),
+                visible: obj.visible
+            }));
+            redoStack.push(current);
+
+            const state = undoStack.pop();
+            state.forEach(s => {
+                const obj = objects.find(o => o.uuid === s.uuid);
+                if (obj) {
+                    obj.position.copy(s.position);
+                    obj.rotation.copy(s.rotation);
+                    obj.scale.copy(s.scale);
+                    obj.visible = s.visible;
+                    obj.name = s.name;
+                }
+            });
+            updateInspector();
+            updateOutliner();
+            status('Undo');
+        };
+
+        window.redo = function() {
+            if (redoStack.length === 0) { status('Nothing to redo'); return; }
+            const current = objects.map(obj => ({
+                uuid: obj.uuid,
+                name: obj.name,
+                position: obj.position.clone(),
+                rotation: obj.rotation.clone(),
+                scale: obj.scale.clone(),
+                visible: obj.visible
+            }));
+            undoStack.push(current);
+
+            const state = redoStack.pop();
+            state.forEach(s => {
+                const obj = objects.find(o => o.uuid === s.uuid);
+                if (obj) {
+                    obj.position.copy(s.position);
+                    obj.rotation.copy(s.rotation);
+                    obj.scale.copy(s.scale);
+                    obj.visible = s.visible;
+                    obj.name = s.name;
+                }
+            });
+            updateInspector();
+            updateOutliner();
+            status('Redo');
+        };
+
+        // ─── OUTLINER ───
+        function updateOutliner() {
+            const container = document.getElementById('outliner');
+            if (objects.length === 0) {
+                container.innerHTML = '<div class="outliner-empty">Scene is empty — add objects from the Add tab</div>';
+                return;
+            }
+            let html = '';
+            objects.forEach((obj, i) => {
+                const isActive = selected === obj;
+                const icon = obj.userData.type === 'light' ? '💡' :
+                             obj.userData.type === 'group' ? '📁' : '🔷';
+                html += `<div class="outliner-item ${isActive ? 'active' : ''}" onclick="selectByIndex(${i})">
+                    <span class="obj-icon">${icon}</span>
+                    <span class="obj-name">${obj.name}</span>
+                    <span class="obj-vis" onclick="event.stopPropagation(); toggleVis(${i})">${obj.visible ? '👁' : '🚫'}</span>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        window.selectByIndex = function(i) {
+            if (objects[i]) selectObj(objects[i]);
+        };
+
+        window.toggleVis = function(i) {
+            if (!objects[i]) return;
+            objects[i].visible = !objects[i].visible;
+            if (objects[i].userData.helper) objects[i].userData.helper.visible = objects[i].visible;
+            updateOutliner();
+        };
+
+        // ─── EXPORT ───
+        window.exportSTL = function() {
+            if (objects.length === 0) { Swal.fire('Nothing to export', 'Add objects first', 'info'); return; }
             const exporter = new THREE.STLExporter();
-            const res = exporter.parse(scene);
-            const blob = new Blob([res], { type: 'text/plain' });
+            const result = exporter.parse(scene, { binary: true });
+            const blob = new Blob([result], { type: 'application/octet-stream' });
+            download(blob, 'design.stl');
+            status('Exported STL');
+        };
+
+        window.exportJSON = function() {
+            const data = objects.map(obj => ({
+                name: obj.name,
+                type: obj.userData.type || 'unknown',
+                position: { x: obj.position.x, y: obj.position.y, z: obj.position.z },
+                rotation: { x: obj.rotation.x, y: obj.rotation.y, z: obj.rotation.z },
+                scale: { x: obj.scale.x, y: obj.scale.y, z: obj.scale.z },
+                material: obj.material ? {
+                    color: '#' + obj.material.color.getHexString(),
+                    metalness: obj.material.metalness,
+                    roughness: obj.material.roughness,
+                    opacity: obj.material.opacity,
+                    wireframe: obj.material.wireframe
+                } : null
+            }));
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            download(blob, 'scene.json');
+            status('Exported scene JSON');
+        };
+
+        window.importJSON = function(input) {
+            if (!input.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    data.forEach(item => {
+                        if (item.type && item.type !== 'light' && item.type !== 'group' && item.type !== 'unknown') {
+                            addMesh(item.type);
+                            const obj = objects[objects.length - 1];
+                            obj.name = item.name;
+                            obj.position.set(item.position.x, item.position.y, item.position.z);
+                            obj.rotation.set(item.rotation.x, item.rotation.y, item.rotation.z);
+                            obj.scale.set(item.scale.x, item.scale.y, item.scale.z);
+                            if (item.material && obj.material) {
+                                obj.material.color.set(item.material.color);
+                                obj.material.metalness = item.material.metalness || 0;
+                                obj.material.roughness = item.material.roughness || 0.7;
+                                obj.material.opacity = item.material.opacity || 1;
+                                obj.material.transparent = obj.material.opacity < 1;
+                                obj.material.wireframe = item.material.wireframe || false;
+                            }
+                        }
+                    });
+                    updateSceneStats();
+                    status('Loaded scene from JSON');
+                    Swal.fire('Scene Loaded', data.length + ' objects imported', 'success');
+                } catch(err) {
+                    Swal.fire('Error', 'Invalid JSON file', 'error');
+                }
+            };
+            reader.readAsText(input.files[0]);
+            input.value = '';
+        };
+
+        // ─── VALIDATION TOOLS ───
+        window.recalcNormals = function() {
+            if (!selected || !selected.geometry) {
+                Swal.fire('No mesh selected', 'Select a mesh first', 'info');
+                return;
+            }
+            selected.geometry.computeVertexNormals();
+            selected.material.needsUpdate = true;
+            Swal.fire('Normals Recalculated', 'Vertex normals have been recalculated', 'success');
+            status('Normals recalculated');
+        };
+
+        window.checkManifold = function() {
+            if (!selected || !selected.geometry) {
+                Swal.fire('No mesh selected', 'Select a mesh first', 'info');
+                return;
+            }
+            const geo = selected.geometry;
+            const pos = geo.attributes.position;
+            const idx = geo.index;
+            const vertCount = pos ? pos.count : 0;
+            const faceCount = idx ? idx.count / 3 : vertCount / 3;
+            const edges = faceCount * 3;
+            // Euler: V - E + F = 2 for manifold
+            const euler = vertCount - edges / 2 + faceCount;
+            const isManifold = Math.abs(euler - 2) < 5; // approximate check
+
+            Swal.fire({
+                title: isManifold ? 'Likely Manifold' : 'Possibly Non-Manifold',
+                html: `<div style="text-align:left;font-size:13px;">
+                    <p><b>Vertices:</b> ${vertCount.toLocaleString()}</p>
+                    <p><b>Faces:</b> ${Math.floor(faceCount).toLocaleString()}</p>
+                    <p><b>Euler characteristic:</b> ${euler}</p>
+                    <p style="color:#888;margin-top:8px;">Note: This is an approximate topological check.</p>
+                </div>`,
+                icon: isManifold ? 'success' : 'warning'
+            });
+        };
+
+        window.autoCenter = function() {
+            objects.forEach(obj => {
+                obj.position.x = 0;
+                obj.position.z = 0;
+            });
+            updateInspector();
+            status('All objects centered');
+        };
+
+        window.measureBounds = function() {
+            if (!selected || !selected.geometry) {
+                Swal.fire('No mesh selected', 'Select a mesh first', 'info');
+                return;
+            }
+            selected.geometry.computeBoundingBox();
+            const bb = selected.geometry.boundingBox;
+            const size = new THREE.Vector3();
+            bb.getSize(size);
+            size.multiply(selected.scale);
+
+            Swal.fire({
+                title: 'Bounding Box: ' + selected.name,
+                html: `<div style="text-align:left;font-size:13px;font-family:monospace;">
+                    <p><b>Width  (X):</b> ${size.x.toFixed(3)} units</p>
+                    <p><b>Height (Y):</b> ${size.y.toFixed(3)} units</p>
+                    <p><b>Depth  (Z):</b> ${size.z.toFixed(3)} units</p>
+                    <hr style="border-color:#333">
+                    <p><b>Min:</b> (${bb.min.x.toFixed(2)}, ${bb.min.y.toFixed(2)}, ${bb.min.z.toFixed(2)})</p>
+                    <p><b>Max:</b> (${bb.max.x.toFixed(2)}, ${bb.max.y.toFixed(2)}, ${bb.max.z.toFixed(2)})</p>
+                </div>`,
+                icon: 'info'
+            });
+        };
+
+        window.clearScene = function() {
+            Swal.fire({
+                title: 'Clear entire scene?',
+                text: 'This cannot be undone!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Clear All'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    objects.forEach(obj => {
+                        if (obj.userData.helper) scene.remove(obj.userData.helper);
+                        scene.remove(obj);
+                    });
+                    objects = [];
+                    selected = null;
+                    gizmo.detach();
+                    undoStack = [];
+                    redoStack = [];
+                    document.getElementById('no-selection-msg').style.display = 'block';
+                    document.getElementById('props-panel').style.display = 'none';
+                    document.getElementById('hud-obj').textContent = 'No Selection';
+                    updateOutliner();
+                    updateSceneStats();
+                    status('Scene cleared');
+                }
+            });
+        };
+
+        // ─── SCENE STATS ───
+        function updateSceneStats() {
+            let totalVerts = 0;
+            objects.forEach(obj => {
+                if (obj.geometry && obj.geometry.attributes.position) {
+                    totalVerts += obj.geometry.attributes.position.count;
+                }
+                if (obj.isGroup) {
+                    obj.traverse(c => {
+                        if (c.geometry && c.geometry.attributes.position)
+                            totalVerts += c.geometry.attributes.position.count;
+                    });
+                }
+            });
+            document.getElementById('sb-objects').textContent = 'Objects: ' + objects.length;
+            document.getElementById('sb-verts').textContent = 'Total Verts: ' + totalVerts.toLocaleString();
+        }
+
+        // ─── HELPERS ───
+        function round(v) { return Math.round(v * 100) / 100; }
+
+        function download(blob, filename) {
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'design.stl';
+            a.download = filename;
             a.click();
+            URL.revokeObjectURL(a.href);
         }
+
+        function status(msg) {
+            document.getElementById('toolbar-status').textContent = msg;
+        }
+
+        // Initial update
+        updateOutliner();
+        updateSceneStats();
+
+    })();
     </script>
 }
