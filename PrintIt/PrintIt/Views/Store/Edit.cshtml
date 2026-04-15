@@ -1,5 +1,6 @@
 ﻿@model PrintIt.ViewModels.PrintsViewModel
 @using PrintIt.Enums
+@using System.IO
 
 @{
     ViewData["Title"] = "Редактиране на артикул";
@@ -53,7 +54,7 @@
         <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Редактиране</h1>
-                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Променете детайлите на вашия 3D модел.</p>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Променете детайлите и медийните файлове на вашия артикул.</p>
             </div>
 
             @* Toolbar: JSON Tools *@
@@ -74,7 +75,7 @@
             <form id="mainForm" asp-controller="Store" asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="divide-y divide-slate-100 dark:divide-slate-800">
 
                 <input type="hidden" asp-for="Id" />
-                <input type="hidden" asp-for="FilePath" />
+                <input type="hidden" asp-for="MediaFolderPath" />
 
                 <div asp-validation-summary="ModelOnly" class="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm"></div>
 
@@ -82,12 +83,12 @@
                 <div class="p-8 space-y-6">
                     <div>
                         <label asp-for="Name" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Име на продукта</label>
-                        <input asp-for="Name" id="Name" placeholder="Въведете име..." class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white border focus:ring-2 focus:ring-blue-500 transition-all" />
+                        <input asp-for="Name" id="Name" placeholder="Въведете име..." class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white border focus:ring-2 focus:ring-blue-500 transition-all outline-none" />
                     </div>
 
                     <div>
                         <label asp-for="Description" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Описание</label>
-                        <textarea asp-for="Description" id="Description" rows="4" placeholder="Опишете вашия модел..." class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white border focus:ring-2 focus:ring-blue-500 transition-all"></textarea>
+                        <textarea asp-for="Description" id="Description" rows="4" placeholder="Опишете вашия модел..." class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white border focus:ring-2 focus:ring-blue-500 transition-all outline-none"></textarea>
                     </div>
                 </div>
 
@@ -96,27 +97,27 @@
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div>
                             <label asp-for="PrintType" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Категория</label>
-                            <select asp-for="PrintType" id="PrintType" asp-items="Html.GetEnumSelectList<PrintType>()" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white border"></select>
+                            <select asp-for="PrintType" id="PrintType" asp-items="Html.GetEnumSelectList<PrintType>()" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white border outline-none"></select>
                         </div>
                         <div>
                             <label asp-for="MaterialType" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Материал</label>
-                            <select asp-for="MaterialType" id="MaterialType" asp-items="Html.GetEnumSelectList<MaterialType>()" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white border"></select>
+                            <select asp-for="MaterialType" id="MaterialType" asp-items="Html.GetEnumSelectList<MaterialType>()" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white border outline-none"></select>
                         </div>
                         <div>
                             <label asp-for="Price" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Цена (EUR)</label>
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600">€</span>
-                                <input asp-for="Price" id="Price" type="number" step="0.01" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 pl-10 pr-4 py-3 text-slate-900 dark:text-white border" />
+                                <input asp-for="Price" id="Price" type="number" step="0.01" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 pl-10 pr-4 py-3 text-slate-900 dark:text-white border outline-none" />
                             </div>
                         </div>
                         <div>
                             <label asp-for="Weight" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Тегло (Грамове)</label>
-                            <input asp-for="Weight" id="Weight" type="number" step="0.1" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white border" />
+                            <input asp-for="Weight" id="Weight" type="number" step="0.1" class="block w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-slate-900 dark:text-white border outline-none" />
                         </div>
                     </div>
                 </div>
 
-                @* Section: Colors & Image *@
+                @* Section: Colors & Media *@
                 <div class="p-8 space-y-8">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Налични цветове</label>
@@ -134,30 +135,56 @@
                         </div>
                     </div>
 
+                    @* Section: Product Images - Combined with Upload *@
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Снимка на продукта</label>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Снимки на продукта</label>
 
-                        @if (!string.IsNullOrEmpty(Model.FilePath))
-                        {
-                            <div class="mb-4 flex items-center space-x-4 p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
-                                <img src="@Model.FilePath" class="h-20 w-20 object-cover rounded-lg shadow-sm" alt="Текуща снимка" />
-                                <div class="text-xs">
-                                    <p class="font-bold text-slate-700 dark:text-slate-200">Текущо изображение</p>
-                                    <p class="text-slate-500">Оставете празно, за да го запазите</p>
-                                </div>
-                            </div>
-                        }
-
-                        <div class="mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-xl hover:border-blue-400 bg-white dark:bg-slate-900/50 transition-colors">
+                        @* Upload Area *@
+                        <div class="mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-xl hover:border-blue-400 bg-white dark:bg-slate-900/50 transition-colors cursor-pointer"
+                             ondrop="handleImageDrop(event)" ondragover="event.preventDefault()" ondragleave="this.classList.remove('border-blue-400')">
                             <div class="space-y-2 text-center">
-                                <i class="bi bi-cloud-arrow-up text-4xl text-slate-300 dark:text-slate-600"></i>
+                                <i class="bi bi-images text-4xl text-slate-300 dark:text-slate-600"></i>
                                 <div class="flex text-sm text-slate-600 dark:text-slate-400 items-center gap-2 justify-center">
-                                    <button type="button" onclick="document.getElementById('file-upload').click()" class="font-bold text-blue-600 dark:text-blue-400">Качете нов файл</button>
-                                    <input id="file-upload" asp-for="File" type="file" class="hidden" accept="image/*" />
-                                    <p id="file-name" class="text-slate-400">или го пуснете тук</p>
+                                    <button type="button" onclick="document.getElementById('images-upload').click()" class="font-bold text-blue-600 dark:text-blue-400">Изберете файлове</button>
+                                    <input id="images-upload" name="Images" type="file" class="hidden" accept="image/*" multiple />
+                                    <p id="images-name" class="text-slate-400">или ги пуснете тук</p>
                                 </div>
+                                <p class="text-xs text-slate-400 uppercase tracking-widest font-bold">PNG, JPG до 10MB всеки</p>
                             </div>
                         </div>
+
+                        @* All Images Grid (Existing + New) *@
+                        <div id="all-images-preview" class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
+                    </div>
+
+                    @* Section: Existing 3D Models *@
+                    @{
+                        var allModels = Model.ExistingModels ?? new List<string>();
+                    }
+                    @if (allModels.Any())
+                    {
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Текущи 3D Модели</label>
+                            <div id="existing-models-preview" class="space-y-2"></div>
+                        </div>
+                    }
+
+                    @* Section: Add 3D Models *@
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Добави нови 3D Модел файлове</label>
+                        <div class="mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-xl hover:border-blue-400 bg-white dark:bg-slate-900/50 transition-colors cursor-pointer"
+                             ondrop="handleModelDrop(event)" ondragover="event.preventDefault()" ondragleave="this.classList.remove('border-blue-400')">
+                            <div class="space-y-2 text-center">
+                                <i class="bi bi-cube text-4xl text-slate-300 dark:text-slate-600"></i>
+                                <div class="flex text-sm text-slate-600 dark:text-slate-400 items-center gap-2 justify-center">
+                                    <button type="button" onclick="document.getElementById('model-upload').click()" class="font-bold text-blue-600 dark:text-blue-400">Изберете файлове</button>
+                                    <input id="model-upload" name="ModelFiles" type="file" class="hidden" accept=".stl,.obj,.step" multiple />
+                                    <p id="model-name" class="text-slate-400">или ги пуснете тук</p>
+                                </div>
+                                <p class="text-xs text-slate-400 uppercase tracking-widest font-bold">STL, OBJ, STEP до 50MB всеки</p>
+                            </div>
+                        </div>
+                        <div id="model-preview" class="mt-4 space-y-2"></div>
                     </div>
                 </div>
 
@@ -196,6 +223,15 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+        // Global file storage
+        let selectedImages = [];
+        let selectedModels = [];
+        let removedImagePaths = [];
+        let removedModelPaths = [];
+        let draggedImageIndex = null;
+        let existingImages = @Html.Raw(Json.Serialize(Model.ExistingImages ?? new List<string>()));
+        let existingModels = @Html.Raw(Json.Serialize(Model.ExistingModels ?? new List<string>()));
+
         // SweetAlert2 Toast Setup
         const Toast = Swal.mixin({
             toast: true,
@@ -216,16 +252,344 @@
             if(show) {
                 document.getElementById('json-input').value = '';
                 document.getElementById('json-error').classList.add('hidden');
+                document.getElementById('json-input').classList.remove('border-red-500');
             }
         }
 
-        document.getElementById('file-upload').addEventListener('change', function () {
-            const fileNameEl = document.getElementById('file-name');
-            if (this.files && this.files.length > 0) {
-                fileNameEl.innerText = "Избран: " + this.files[0].name;
-                fileNameEl.classList.add('text-blue-600', 'dark:text-blue-400', 'font-bold');
-            }
+        // ===== IMAGE HANDLING WITH DRAG-AND-DROP REORDERING =====
+        document.getElementById('images-upload').addEventListener('change', function () {
+            handleImageFiles(this.files);
+            this.value = '';
         });
+
+        function handleImageDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('border-blue-400');
+            const files = event.dataTransfer.files;
+            handleImageFiles(files);
+        }
+
+        function handleImageFiles(files) {
+            const validFiles = [];
+
+            for (let file of files) {
+                if (!file.type.startsWith('image/')) {
+                    Toast.fire({
+                        icon: 'error',
+                        title: `${file.name}: Невалиден формат! Приемат се само снимки`
+                    });
+                    continue;
+                }
+
+                if (file.size > 10 * 1024 * 1024) {
+                    Toast.fire({
+                        icon: 'error',
+                        title: `${file.name}: Файлът е твърде голям! Максимум 10MB`
+                    });
+                    continue;
+                }
+
+                validFiles.push(file);
+            }
+
+            selectedImages = [...selectedImages, ...validFiles];
+            updateAllImagesPreview();
+            updateImageCount();
+        }
+
+        function updateImageCount() {
+            const imagesNameEl = document.getElementById('images-name');
+            const totalImages = existingImages.length + selectedImages.length;
+
+            if (totalImages === 0) {
+                imagesNameEl.innerText = 'или ги пуснете тук';
+                imagesNameEl.classList.remove('text-blue-600', 'font-bold');
+            } else {
+                imagesNameEl.innerText = `Всички: ${totalImages} снимки (${existingImages.length} стари, ${selectedImages.length} нови)`;
+                imagesNameEl.classList.add('text-blue-600', 'font-bold');
+            }
+        }
+
+        function updateAllImagesPreview() {
+            const preview = document.getElementById('all-images-preview');
+            preview.innerHTML = '';
+            let draggedExistingIndex = null;
+
+            // Display existing images first
+            existingImages.forEach((imagePath, index) => {
+                const img = new Image();
+                img.onload = function() {
+                    const div = document.createElement('div');
+                    div.className = 'relative group rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 aspect-square cursor-move transition-all hover:border-blue-400';
+                    div.draggable = true;
+                    div.dataset.type = 'existing';
+                    div.dataset.path = imagePath;
+                    div.dataset.index = index;
+                    div.innerHTML = `
+                        <img src="${imagePath}" alt="Продуктна снимка" class="w-full h-full object-cover" />
+                        <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button type="button" onclick="removeExistingImage('${imagePath}')" class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors" title="Премахни">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                        <div class="absolute top-2 left-2 bg-slate-900/70 text-white px-2 py-1 rounded text-xs font-bold">
+                            ${index + 1}
+                        </div>
+                    `;
+
+                    // Drag events for existing images
+                    div.addEventListener('dragstart', (e) => {
+                        draggedExistingIndex = index;
+                        e.dataTransfer.effectAllowed = 'move';
+                        div.classList.add('opacity-50');
+                    });
+
+                    div.addEventListener('dragend', () => {
+                        div.classList.remove('opacity-50');
+                    });
+
+                    div.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        if (draggedExistingIndex !== null && draggedExistingIndex !== index) {
+                            const draggedPath = existingImages[draggedExistingIndex];
+                            existingImages.splice(draggedExistingIndex, 1);
+                            existingImages.splice(index, 0, draggedPath);
+                            draggedExistingIndex = index;
+                            updateAllImagesPreview();
+                        }
+                    });
+
+                    preview.appendChild(div);
+                };
+                img.src = imagePath;
+            });
+
+            // Display new images
+            selectedImages.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const div = document.createElement('div');
+                    div.className = 'relative group rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 aspect-square cursor-move transition-all hover:border-blue-400';
+                    div.draggable = true;
+                    div.dataset.type = 'new';
+                    div.dataset.index = index;
+                    div.innerHTML = `
+                        <img src="${e.target.result}" alt="${file.name}" class="w-full h-full object-cover" />
+                        <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button type="button" onclick="removeNewImage(${index})" class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors" title="Премахни">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                        <div class="absolute top-2 left-2 bg-slate-900/70 text-white px-2 py-1 rounded text-xs font-bold">
+                            ${existingImages.length + index + 1}
+                        </div>
+                    `;
+
+                    // Drag events for new images
+                    div.addEventListener('dragstart', (e) => {
+                        draggedImageIndex = index;
+                        e.dataTransfer.effectAllowed = 'move';
+                        div.classList.add('opacity-50');
+                    });
+
+                    div.addEventListener('dragend', () => {
+                        div.classList.remove('opacity-50');
+                    });
+
+                    div.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        if (draggedImageIndex !== null && draggedImageIndex !== index) {
+                            const draggedFile = selectedImages[draggedImageIndex];
+                            selectedImages.splice(draggedImageIndex, 1);
+                            selectedImages.splice(index, 0, draggedFile);
+                            draggedImageIndex = index;
+                            updateAllImagesPreview();
+                        }
+                    });
+
+                    preview.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function removeNewImage(index) {
+            selectedImages.splice(index, 1);
+            updateAllImagesPreview();
+            updateImageCount();
+        }
+
+        function removeExistingImage(imagePath) {
+            Swal.fire({
+                title: 'Премахни снимка?',
+                text: 'Сигурни ли сте?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Да, премахни',
+                background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#fff',
+                color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    removedImagePaths.push(imagePath);
+                    existingImages = existingImages.filter(img => img !== imagePath);
+                    updateAllImagesPreview();
+                    updateImageCount();
+                    Toast.fire({
+                        icon: 'success',
+                        title: 'Снимката е отбелязана за премахване'
+                    });
+                }
+            });
+        }
+
+        // ===== MODEL HANDLING - MULTIPLE FILES SUPPORT =====
+        document.getElementById('model-upload').addEventListener('change', function () {
+            handleModelFiles(this.files);
+            this.value = '';
+        });
+
+        function handleModelDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('border-blue-400');
+            const files = event.dataTransfer.files;
+            handleModelFiles(files);
+        }
+
+        function handleModelFiles(files) {
+            const validExtensions = ['stl', 'obj', 'step'];
+            const newModels = [];
+
+            for (let file of files) {
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+
+                if (!validExtensions.includes(fileExtension)) {
+                    Toast.fire({
+                        icon: 'error',
+                        title: `${file.name}: Невалиден формат! Приемат се: STL, OBJ, STEP`
+                    });
+                    continue;
+                }
+
+                if (file.size > 50 * 1024 * 1024) {
+                    Toast.fire({
+                        icon: 'error',
+                        title: `${file.name}: Файлът е твърде голям! Максимум 50MB`
+                    });
+                    continue;
+                }
+
+                newModels.push(file);
+            }
+
+            selectedModels = [...selectedModels, ...newModels];
+            updateModelPreview();
+            updateModelCount();
+        }
+
+        function updateModelCount() {
+            const modelNameEl = document.getElementById('model-name');
+            const totalModels = existingModels.length + selectedModels.length;
+            
+            if (totalModels === 0) {
+                modelNameEl.innerText = 'или ги пуснете тук';
+                modelNameEl.classList.remove('text-blue-600', 'font-bold');
+            } else {
+                modelNameEl.innerText = `Всички: ${totalModels} модела (${existingModels.length} стари, ${selectedModels.length} нови)`;
+                modelNameEl.classList.add('text-blue-600', 'font-bold');
+            }
+        }
+
+        function updateAllModelsPreview() {
+            const preview = document.getElementById('existing-models-preview');
+            if (!preview) return;
+
+            preview.innerHTML = '';
+
+            // Display existing models
+            existingModels.forEach((modelPath) => {
+                const div = document.createElement('div');
+                div.className = 'p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-between hover:border-blue-400 transition-colors';
+                div.dataset.type = 'existing';
+                div.dataset.path = modelPath;
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 flex-1">
+                        <i class="bi bi-cube text-2xl text-blue-600"></i>
+                        <div>
+                            <p class="font-bold text-slate-900 dark:text-white">${modelPath.split('/').pop()}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Качен 3D модел</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="removeExistingModel('${modelPath}')" class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                `;
+                preview.appendChild(div);
+            });
+        }
+
+        function updateModelPreview() {
+            const preview = document.getElementById('model-preview');
+            preview.innerHTML = '';
+
+            if (selectedModels.length === 0) {
+                document.getElementById('model-name').innerText = 'или ги пуснете тук';
+                document.getElementById('model-name').classList.remove('text-blue-600', 'font-bold');
+                return;
+            }
+
+            selectedModels.forEach((file, index) => {
+                const div = document.createElement('div');
+                div.className = 'p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-between hover:border-blue-400 transition-colors';
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 flex-1">
+                        <i class="bi bi-cube text-2xl text-blue-600"></i>
+                        <div>
+                            <p class="font-bold text-slate-900 dark:text-white">${file.name}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="removeModel(${index})" class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                `;
+                preview.appendChild(div);
+            });
+        }
+
+        function removeModel(index) {
+            selectedModels.splice(index, 1);
+            updateModelPreview();
+            updateModelCount();
+        }
+
+        function removeExistingModel(modelPath) {
+            Swal.fire({
+                title: 'Премахни 3D модела?',
+                text: 'Сигурни ли сте?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Да, премахни',
+                background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#fff',
+                color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    removedModelPaths.push(modelPath);
+                    existingModels = existingModels.filter(m => m !== modelPath);
+                    updateAllModelsPreview();
+                    updateModelCount();
+                    Toast.fire({
+                        icon: 'success',
+                        title: 'Моделът е отбелязан за премахване'
+                    });
+                }
+            });
+        }
 
         function getFormDataAsObject() {
             const colors = Array.from(document.querySelectorAll('.color-checkbox:checked')).map(cb => cb.value);
@@ -237,7 +601,9 @@
                 MaterialType: parseInt(document.getElementById('MaterialType').value),
                 Price: parseFloat(document.getElementById('Price').value) || 0,
                 Weight: parseFloat(document.getElementById('Weight').value) || 0,
-                PrintColors: colors
+                PrintColors: colors,
+                TotalImages: existingImages.length + selectedImages.length,
+                TotalModels: existingModels.length + selectedModels.length
             };
         }
 
@@ -300,5 +666,76 @@
                 document.getElementById('json-input').classList.add('border-red-500');
             }
         }
+
+        // Form submission
+        document.getElementById('mainForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            // Clear existing file inputs to prevent duplicates
+            formData.delete('Images');
+            formData.delete('ModelFiles');
+
+            // Add new images in order
+            selectedImages.forEach((file) => {
+                formData.append('Images', file);
+            });
+
+            // Add new models
+            selectedModels.forEach((file) => {
+                formData.append('ModelFiles', file);
+            });
+
+            // Add removed image paths
+            removedImagePaths.forEach((path) => {
+                formData.append('RemovedImagePaths', path);
+            });
+
+            // Add removed model paths
+            removedModelPaths.forEach((path) => {
+                formData.append('RemovedModelPaths', path);
+            });
+
+            // Add reordered image paths (existing images only)
+            existingImages.forEach((path) => {
+                formData.append('ReorderedImagePaths', path);
+            });
+
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    Toast.fire({
+                        icon: 'success',
+                        title: 'Артикулът е актуализиран!'
+                    });
+                    setTimeout(() => {
+                        window.location.href = '@Url.Action("Articles", "Store")';
+                    }, 1500);
+                } else {
+                    Toast.fire({
+                        icon: 'error',
+                        title: 'Грешка при актуализиране!'
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Toast.fire({
+                    icon: 'error',
+                    title: 'Грешка при изпращане!'
+                });
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateImageCount();
+            updateAllImagesPreview();
+            updateAllModelsPreview();
+            updateModelCount();
+        });
     </script>
 }

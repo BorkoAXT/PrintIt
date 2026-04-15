@@ -67,21 +67,23 @@ namespace PrintIt.ViewModels
         public List<PrintColor> PrintColors { get; set; } = new();
 
         /// <summary>
-        /// Gets or sets a value indicating whether the product is available in the store.
+        /// Gets or sets the media folder path containing all print images and 3D files.
         /// </summary>
-        [Display(Name = "Наличен в магазина")]
-        public bool IsAvailable { get; set; } = true;
+        public string? MediaFolderPath { get; set; }
 
         /// <summary>
-        /// Gets or sets the stored file path or file name of the product image.
+        /// Gets or sets the list of existing image paths for editing.
         /// </summary>
-        public string? FilePath { get; set; }
+        public List<string>? ExistingImages { get; set; }
 
         /// <summary>
-        /// Gets or sets the uploaded image file for the product.
+        /// Gets or sets the existing 3D model file path.
         /// </summary>
-        [Required(ErrorMessage = "Моля, качете снимка на продукта.")]
-        [Display(Name = "Снимка на продукта")]
-        public IFormFile File { get; set; } = default!;
+        public string? Existing3DModel { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of existing 3D model files.
+        /// </summary>
+        public List<string>? ExistingModels { get; set; }
     }
 }
