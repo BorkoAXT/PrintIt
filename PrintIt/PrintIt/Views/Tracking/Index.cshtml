@@ -1,0 +1,76 @@
+@model List<PrintIt.Models.Order>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Моите поръчки";
+}
+
+<div class="max-w-4xl mx-auto">
+    <div class="mb-10">
+        <h1 class="text-3xl font-black text-brand-dark dark:text-white tracking-tight">
+            <i class="bi bi-box-seam text-brand-primary mr-2"></i> Моите поръчки
+        </h1>
+        <p class="text-slate-500 dark:text-slate-400 mt-2">Проследете статуса на вашите поръчки.</p>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-20 text-slate-400 dark:text-slate-500">
+            <i class="bi bi-inbox text-6xl mb-4 block"></i>
+            <p class="text-lg font-semibold">Нямате поръчки все още.</p>
+            <a asp-controller="Store" asp-action="Articles"
+               class="mt-6 inline-block bg-brand-primary text-white px-6 py-3 rounded-xl font-bold hover:scale-105 transition-transform shadow-lg shadow-brand-primary/30">
+                Разгледайте магазина
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="space-y-4">
+            @foreach (var order in Model)
+            {
+                var (badgeColor, icon) = order.Status switch
+                {
+                    "Delivered"  => ("bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",  "bi-check-circle-fill"),
+                    "Shipped"    => ("bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",     "bi-truck"),
+                    "Printing"   => ("bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400", "bi-printer-fill"),
+                    "Processing" => ("bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400", "bi-gear-fill"),
+                    _            => ("bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400",  "bi-hourglass-split"),
+                };
+
+                var statusLabel = order.Status switch
+                {
+                    "Delivered"  => "Доставена",
+                    "Shipped"    => "Изпратена",
+                    "Printing"   => "Печата се",
+                    "Processing" => "Обработва се",
+                    _            => "Изчаква",
+                };
+
+                <a asp-action="Order" asp-route-id="@order.Id"
+                   class="flex items-center justify-between gap-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-brand-primary/40 dark:hover:border-brand-primary/40 transition-all group">
+                    <div class="flex items-center gap-4 min-w-0">
+                        <div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+                            <i class="bi bi-receipt text-xl text-brand-primary"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="font-bold text-slate-800 dark:text-white text-sm">Поръчка #@order.Id</p>
+                            <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                                @order.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy, HH:mm")
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 flex-shrink-0">
+                        <span class="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full @badgeColor">
+                            <i class="bi @icon"></i> @statusLabel
+                        </span>
+                        <span class="font-black text-slate-800 dark:text-white">
+                            €@order.Amount.ToString("F2")
+                        </span>
+                        <i class="bi bi-chevron-right text-slate-300 dark:text-slate-600 group-hover:text-brand-primary transition-colors"></i>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</div>

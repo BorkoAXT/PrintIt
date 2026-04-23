@@ -70,4 +70,31 @@ public class OrderService : IOrderService
             _cache.Remove(key);
         }
     }
+
+    public async Task<List<Order>> GetOrdersByEmailAsync(string email)
+    {
+        return await _context.Orders
+            .Where(o => o.CustomerEmail == email)
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync();
+    }
+
+    public async Task<Order?> GetOrderByIdAsync(int id)
+    {
+        return await _context.Orders.FindAsync(id);
+    }
+
+    public async Task<bool> OrderExistsForPaymentAsync(string paymentIntentId)
+    {
+        return await _context.Orders.AnyAsync(o => o.PaymentProvider == paymentIntentId);
+    }
+
+    public async Task MarkOrderPaidAsync(int orderId, string? paymentIntentId)
+    {
+        var order = await _context.Orders.FindAsync(orderId);
+        if (order == null) return;
+        order.PaidAt = DateTime.UtcNow;
+        order.PaymentProvider = paymentIntentId;
+        await _context.SaveChangesAsync();
+    }
 }

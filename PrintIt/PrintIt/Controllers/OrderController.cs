@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using PrintIt.Models;
 using PrintIt.Services;
 using System.Security.Claims;
 
@@ -7,12 +9,14 @@ public class OrderController : Controller
     private readonly ILogger<OrderController> _logger;
     private readonly IOrderService _orderService;
     private readonly IPaymentService _paymentService;
+    private readonly UserManager<User> _userManager;
 
-    public OrderController(ILogger<OrderController> logger, IOrderService orderService, IPaymentService paymentService)
+    public OrderController(ILogger<OrderController> logger, IOrderService orderService, IPaymentService paymentService, UserManager<User> userManager)
     {
         _logger = logger;
         _orderService = orderService;
         _paymentService = paymentService;
+        _userManager = userManager;
     }
 
     [HttpGet]
@@ -102,13 +106,32 @@ public class OrderController : Controller
 
         try
         {
-            _logger.LogInformation("Payment success confirmed for User {UserId}. Clearing cart.", userId);
-            await _orderService.ClearCartAsync(userId);
+            string? paymentIntentId = Request.Query["payment_intent"].FirstOrDefault();
+
+            bool alreadyRecorded = paymentIntentId != null && await _orderService.OrderExistsForPaymentAsync(paymentIntentId);
+
+            if (!alreadyRecorded)
+            {
+                var items = await _orderService.GetCartItemsAsync(userId);
+                if (items.Any())
+                {
+                    var user = await _userManager.GetUserAsync(User);
+                    string email = user?.Email ?? User.FindFirstValue(ClaimTypes.Email) ?? "";
+
+                    var created = await _orderService.CreateOrderAsync(userId, email, items);
+                    await _orderService.MarkOrderPaidAsync(created.Id, paymentIntentId);
+
+                    ViewBag.OrderId = created.Id;
+                    _logger.LogInformation("Order {OrderId} created for User {UserId} after payment.", created.Id, userId);
+                }
+            }
+
             return View();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error clearing cart after successful payment for User {UserId}", userId);
+            _logger.LogError(ex, "Error processing success page for User {UserId}", userId);
+            await _orderService.ClearCartAsync(userId);
             return View();
         }
     }
