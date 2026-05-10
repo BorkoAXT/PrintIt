@@ -34,6 +34,7 @@ namespace Services.Services
         public async Task AddToCartAsync(Guid userId, Guid printId, List<PrintColor> selectedColors)
         {
             var cart = await _cartRepository.All()
+                .AsTracking()
                 .Include(c => c.Items)
                 .FirstOrDefaultAsync(c => c.UserId == userId);
 
@@ -83,6 +84,7 @@ namespace Services.Services
         public async Task RemoveFromCartAsync(Guid userId, Guid cartItemId)
         {
             var cartItem = await _cartItemRepository.All()
+                .AsTracking()
                 .FirstOrDefaultAsync(ci =>
                     ci.Id == cartItemId &&
                     ci.ShopCart!.UserId == userId);
@@ -97,6 +99,7 @@ namespace Services.Services
         public async Task<bool> UpdateQuantityAsync(Guid userId, Guid cartItemId, int quantity)
         {
             var cartItem = await _cartItemRepository.All()
+                .AsTracking()
                 .Include(i => i.ShopCart)
                 .FirstOrDefaultAsync(i =>
                     i.Id == cartItemId &&

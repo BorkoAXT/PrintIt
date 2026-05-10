@@ -65,13 +65,14 @@ namespace Services.Services
 
         public async Task ClearCartAsync(Guid userId)
         {
-            var cart = await _cartRepository.All()
-                .Include(c => c.Items)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+            var items = await _cartItemRepository.All()
+                .AsTracking()
+                .Where(ci => ci.ShopCart!.UserId == userId)
+                .ToListAsync();
 
-            if (cart != null && cart.Items.Any())
+            if (items.Any())
             {
-                await _cartItemRepository.DeleteBulkAsync(cart.Items.ToList());
+                await _cartItemRepository.DeleteBulkAsync(items);
                 _cache.Remove($"cart-count-{userId}");
             }
         }

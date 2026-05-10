@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Data.Repositories
 {
@@ -6,11 +7,18 @@ namespace Data.Repositories
     {
         private readonly ApplicationDbContext _context;
         private readonly DbSet<T> _set;
+        private readonly IProperty[] _keyProperties;
 
         public Repository(ApplicationDbContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _set = _context.Set<T>();
+
+            var entityType = _context.Model.FindEntityType(typeof(T))
+                ?? throw new InvalidOperationException($"Entity type '{typeof(T).Name}' is not part of the model.");
+
+            _keyProperties = entityType.FindPrimaryKey()?.Properties.ToArray()
+                ?? throw new InvalidOperationException($"Entity type '{typeof(T).Name}' does not have a primary key.");
         }
 
         public virtual IQueryable<T> All()
@@ -50,14 +58,16 @@ namespace Data.Repositories
 
         public virtual async Task<T> DeleteAsync(T entity)
         {
-            var entry = _context.Entry(entity);
+            var tracked = _set.Local.FirstOrDefault(existing => HasSameKey(existing, entity));
 
-            if (entry.State == EntityState.Detached)
+            if (tracked != null)
             {
-                _set.Attach(entity);
+                _set.Remove(tracked);
+                await _context.SaveChangesAsync();
+                return tracked;
             }
 
-            _set.Remove(entity);
+            _context.Entry(entity).State = EntityState.Deleted;
             await _context.SaveChangesAsync();
 
             return entity;
@@ -65,9 +75,21 @@ namespace Data.Repositories
 
         public virtual async Task<List<T>> DeleteBulkAsync(List<T> entities)
         {
-            _set.RemoveRange(entities);
-            await _context.SaveChangesAsync();
+            foreach (var entity in entities)
+            {
+                var tracked = _set.Local.FirstOrDefault(existing => HasSameKey(existing, entity));
 
+                if (tracked != null)
+                {
+                    _set.Remove(tracked);
+                }
+                else
+                {
+                    _context.Entry(entity).State = EntityState.Deleted;
+                }
+            }
+
+            await _context.SaveChangesAsync();
             return entities;
         }
 
@@ -79,6 +101,12 @@ namespace Data.Repositories
         public void Dispose()
         {
             _context.Dispose();
+        }
+
+        private bool HasSameKey(T left, T right)
+        {
+            return _keyProperties.All(p =>
+                Equals(p.PropertyInfo?.GetValue(left), p.PropertyInfo?.GetValue(right)));
         }
     }
 }

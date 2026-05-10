@@ -32,6 +32,7 @@ namespace Services.Services
         public async Task<bool> ToggleAsync(Guid userId, Guid printId)
         {
             var wishlistItem = await _wishlistRepository.All()
+                .AsTracking()
                 .FirstOrDefaultAsync(w => w.UserId == userId && w.PrintId == printId);
 
             if (wishlistItem != null)
@@ -55,7 +56,14 @@ namespace Services.Services
 
         public async Task RemoveAsync(UserWishlistItem item)
         {
-            await _wishlistRepository.DeleteAsync(item);
+            var trackedItem = await _wishlistRepository.All()
+                .AsTracking()
+                .FirstOrDefaultAsync(w => w.UserId == item.UserId && w.PrintId == item.PrintId);
+
+            if (trackedItem != null)
+            {
+                await _wishlistRepository.DeleteAsync(trackedItem);
+            }
         }
 
         public async Task<List<UserWishlistItem>> GetWishlistForUserAsync(Guid userId)
