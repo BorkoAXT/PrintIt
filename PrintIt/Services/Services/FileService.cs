@@ -1,8 +1,10 @@
-﻿using Microsoft.Extensions.Caching.Memory;
-using PrintIt.Enums;
+﻿using Common.Enums;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
 using Services.Interfaces;
 
-namespace PrintIt.Services
+namespace Services.Services
 {
     public class FileService : IFileService
     {

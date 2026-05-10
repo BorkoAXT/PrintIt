@@ -1,4 +1,4 @@
-﻿using PrintIt.Models;
+﻿using Common.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
 
 

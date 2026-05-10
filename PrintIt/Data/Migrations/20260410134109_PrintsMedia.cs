@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace PrintIt.Data.Migrations
+namespace Data.Migrations
 {
     /// <inheritdoc />
     public partial class PrintsMedia : Migration

@@ -1,6 +1,6 @@
-﻿using PrintIt.Enums;
-using PrintIt.Models;
-using PrintIt.ViewModels;
+﻿using Common.Enums;
+using Entities.Models;
+using Entities.ViewModels;
 
 namespace Services.Interfaces
 {

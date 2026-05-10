@@ -1,7 +1,8 @@
-﻿using Services.Interfaces;
+﻿using Microsoft.Extensions.Configuration;
+using Services.Interfaces;
 using Stripe;
 
-namespace PrintIt.Services
+namespace Services.Services
 {
     public class PaymentService : IPaymentService
     {

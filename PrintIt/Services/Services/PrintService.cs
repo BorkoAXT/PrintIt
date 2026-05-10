@@ -1,12 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Common.Enums;
+using Data;
+using Entities.Models;
+using Entities.ViewModels;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using PrintIt.Data;
-using PrintIt.Enums;
-using PrintIt.Models;
-using PrintIt.ViewModels;
 using Services.Interfaces;
 
-namespace PrintIt.Services
+namespace Services.Services
 {
     public class PrintService : IPrintService
     {

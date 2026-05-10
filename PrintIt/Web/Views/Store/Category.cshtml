@@ -1,0 +1,42 @@
+﻿@using Entities.Models
+@model List<Print>
+@{
+    var categoryName = ViewData["CategoryName"] as string ?? "Артикули";
+    ViewData["Title"] = categoryName;
+}
+
+<div class="max-w-7xl mx-auto px-4 pt-4 pb-20 transition-colors duration-500">
+    @* Header - Added Dark Mode Support *@
+    <div class="mb-12 -mt-2 border-b border-slate-100 dark:border-slate-800 pb-8">
+        <h1 class="text-5xl font-black text-brand-dark dark:text-white tracking-tight">@categoryName</h1>
+        <p class="text-slate-500 dark:text-slate-400 mt-2 text-lg">Всички налични модели в категорията.</p>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        @* Empty State - Dark Mode Optimized *@
+        <div class="flex flex-col items-center justify-center py-12 bg-slate-50 dark:bg-slate-900/40 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 text-center transition-all">
+            <div class="w-16 h-16 bg-white dark:bg-slate-800 shadow-sm rounded-full flex items-center justify-center mb-4 transition-colors">
+                <i class="bi bi-box-seam text-slate-300 dark:text-slate-600 text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-bold text-slate-600 dark:text-slate-400">В момента няма налични @categoryName.ToLower()</h2>
+            <p class="text-slate-400 dark:text-slate-500 mt-1 text-sm max-w-xs mx-auto">
+                Работим по нови модели. Моля, проверете по-късно.
+            </p>
+            <a asp-controller="Store" asp-action="Articles"
+               class="mt-6 px-6 py-2 bg-brand-primary text-white font-bold rounded-xl hover:bg-brand-dark dark:hover:bg-blue-600 transition-all text-sm shadow-lg shadow-brand-primary/20 dark:shadow-none">
+                Към всички артикули
+            </a>
+        </div>
+    }
+    else
+    {
+        @* Product Grid *@
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
+            @foreach (var item in Model)
+            {
+                <partial name="_ProductCard" model="item" />
+            }
+        </div>
+    }
+</div>

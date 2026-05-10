@@ -1,5 +1,5 @@
-﻿using PrintIt.Enums;
-using PrintIt.Models;
+﻿using Common.Enums;
+using Entities.Models;
 
 namespace Services.Interfaces
 {

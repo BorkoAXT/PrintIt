@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace PrintIt.Data.Migrations
+namespace Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20260228152729_FixedColumnError")]

@@ -1,4 +1,4 @@
-﻿using PrintIt.Models;
+﻿using Entities.Models;
 
 namespace Services.Interfaces
 {

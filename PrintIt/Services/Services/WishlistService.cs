@@ -1,10 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Data;
+using Entities.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using PrintIt.Data;
-using PrintIt.Models;
 using Services.Interfaces;
 
-namespace PrintIt.Services
+namespace Services.Services
 {
     public class WishlistService : IWishlistService
     {

@@ -1,4 +1,6 @@
-﻿namespace Entities.Models
+﻿using Common.Enums;
+
+namespace Entities.Models
 {
     /// <summary>
     /// Represents the printable item in the store.

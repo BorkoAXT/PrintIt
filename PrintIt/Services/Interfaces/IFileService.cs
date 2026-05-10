@@ -1,4 +1,5 @@
-﻿using PrintIt.Enums;
+﻿using Common.Enums;
+using Microsoft.AspNetCore.Http;
 
 namespace Services.Interfaces
 {

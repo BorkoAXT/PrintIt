@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace PrintIt.Services.Identity
+namespace Services.Services.Identity
 {
     public class BulgarianIdentityErrorDescriber : IdentityErrorDescriber
     {

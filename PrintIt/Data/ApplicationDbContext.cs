@@ -77,8 +77,6 @@ namespace Data
                 .Property(p => p.Price)
                 .HasPrecision(18, 4);
 
-            // Replace the PrintColors property configuration in OnModelCreating with the following:
-
             builder.Entity<Print>()
                .Property(p => p.PrintColors)
                .HasConversion(

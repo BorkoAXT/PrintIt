@@ -1,9 +1,8 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace PrintIt.Data.Migrations
+namespace Data.Migrations
 {
     /// <inheritdoc />
     public partial class FixedColumnError : Migration
