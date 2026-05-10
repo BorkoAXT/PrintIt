@@ -2,11 +2,11 @@
 using Microsoft.AspNetCore.Mvc;
 using PrintIt.Enums;
 using PrintIt.Models;
-using PrintIt.Services;
 using PrintIt.ViewModels;
+using Services.Interfaces;
 using System.Security.Claims;
 
-namespace PrintIt.Controllers
+namespace Web.Controllers
 {
     public class StoreController : Controller
     {

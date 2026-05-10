@@ -1,6 +1,6 @@
 ﻿using PrintIt.Enums;
 
-namespace PrintIt.Services
+namespace Services.Interfaces
 {
     public interface IFileService
     {

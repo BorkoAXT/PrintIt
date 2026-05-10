@@ -6,7 +6,7 @@ using PrintIt.Enums;
 using PrintIt.Models;
 using System.Text.Json;
 
-namespace PrintIt.Data
+namespace Data
 {
     public class ApplicationDbContext
         : IdentityDbContext<User, IdentityRole<Guid>, Guid>

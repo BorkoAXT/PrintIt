@@ -1,7 +1,7 @@
 ﻿using PrintIt.Enums;
 using PrintIt.Models;
 
-namespace PrintIt.Services
+namespace Services.Interfaces
 {
     public interface ICartService
     {

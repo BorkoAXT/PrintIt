@@ -14,4 +14,4 @@ global using PrintIt.Services;   // So IOrderService/ICartService are always vis
 global using PrintIt.Models;     // For ShopCart, CartItem, etc.
 
 // The "Program" Fix
-global using WebProgram = PrintIt.Program;
+global using WebProgram = Web.Program;

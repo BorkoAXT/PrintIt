@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Services.Interfaces;
 using System.Security.Claims;
-using PrintIt.Services;
 
-namespace PrintIt.Components
+namespace Web.Components
 {
     public class CartCountViewComponent : ViewComponent
     {

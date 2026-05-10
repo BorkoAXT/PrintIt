@@ -1,67 +1,70 @@
 using Microsoft.AspNetCore.Mvc;
 using PrintIt.Models;
-using PrintIt.Services;
 using PrintIt.ViewModels;
+using Services.Interfaces;
 using System.Diagnostics;
 using System.Security.Claims;
 
-public class HomeController : Controller
+namespace Web.Controllers
 {
-    private readonly ILogger<HomeController> _logger;
-    private readonly IWishlistService _wishlistService;
-
-    public HomeController(ILogger<HomeController> logger, IWishlistService wishlistService)
+    public class HomeController : Controller
     {
-        _logger = logger;
-        _wishlistService = wishlistService;
-    }
+        private readonly ILogger<HomeController> _logger;
+        private readonly IWishlistService _wishlistService;
 
-    public async Task<IActionResult> Index()
-    {
-        List<UserWishlistItem> wishlistPrints = new();
-
-        try
+        public HomeController(ILogger<HomeController> logger, IWishlistService wishlistService)
         {
-            if (TryGetUserId(out Guid userId))
-            {
-                _logger.LogInformation("Loading landing page for User: {UserId}", userId);
-                wishlistPrints = await _wishlistService.GetWishlistForUserAsync(userId);
-            }
-            else
-            {
-                _logger.LogDebug("Loading landing page for anonymous guest.");
-            }
-
-            return View(wishlistPrints);
+            _logger = logger;
+            _wishlistService = wishlistService;
         }
-        catch (Exception ex)
+
+        public async Task<IActionResult> Index()
         {
-            _logger.LogError(ex, "An error occurred while loading the Index page.");
-            return RedirectToAction(nameof(Error));
+            List<UserWishlistItem> wishlistPrints = new();
+
+            try
+            {
+                if (TryGetUserId(out Guid userId))
+                {
+                    _logger.LogInformation("Loading landing page for User: {UserId}", userId);
+                    wishlistPrints = await _wishlistService.GetWishlistForUserAsync(userId);
+                }
+                else
+                {
+                    _logger.LogDebug("Loading landing page for anonymous guest.");
+                }
+
+                return View(wishlistPrints);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while loading the Index page.");
+                return RedirectToAction(nameof(Error));
+            }
         }
-    }
 
-    public IActionResult Privacy()
-    {
-        return View();
-    }
-
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
-    {
-        var requestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
-
-        _logger.LogWarning("Error page triggered. Request ID: {RequestId}", requestId);
-
-        return View(new ErrorViewModel
+        public IActionResult Privacy()
         {
-            RequestId = requestId
-        });
-    }
+            return View();
+        }
 
-    private bool TryGetUserId(out Guid userId)
-    {
-        string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return Guid.TryParse(userIdString, out userId);
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            var requestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+
+            _logger.LogWarning("Error page triggered. Request ID: {RequestId}", requestId);
+
+            return View(new ErrorViewModel
+            {
+                RequestId = requestId
+            });
+        }
+
+        private bool TryGetUserId(out Guid userId)
+        {
+            string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return Guid.TryParse(userIdString, out userId);
+        }
     }
 }

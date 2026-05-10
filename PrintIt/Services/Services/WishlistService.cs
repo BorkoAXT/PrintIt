@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Caching.Memory;
 using PrintIt.Data;
 using PrintIt.Models;
+using Services.Interfaces;
 
 namespace PrintIt.Services
 {

@@ -1,10 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.DependencyInjection;
-using PrintIt.Enums;
-using PrintIt.Models;
+﻿using PrintIt.Enums;
 
-namespace PrintIt.Tests.Integration;
+namespace Tests;
 
 public class CartIntegrationTests : IClassFixture<PrintItFactory>
 {

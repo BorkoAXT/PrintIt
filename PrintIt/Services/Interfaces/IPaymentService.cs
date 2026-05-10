@@ -1,6 +1,6 @@
 ﻿using Stripe;
 
-namespace PrintIt.Services
+namespace Services.Interfaces
 {
     public interface IPaymentService
     {

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Caching.Memory;
 using PrintIt.Data;
 using PrintIt.Enums;
 using PrintIt.Models;
-using PrintIt.Services;
+using Services.Interfaces;
 
 public class CartService : ICartService
 {

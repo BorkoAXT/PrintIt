@@ -1,11 +1,8 @@
+using Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using PrintIt.Data;
-using PrintIt.Models;
-using PrintIt.Services;
-using PrintIt.Services.Identity;
 
-namespace PrintIt
+namespace Web
 {
     public class Program
     {

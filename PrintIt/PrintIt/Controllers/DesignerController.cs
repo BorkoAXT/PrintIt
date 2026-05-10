@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
-namespace PrintIt.Controllers
+namespace Web.Controllers
 {
     public class DesignerController : Controller
     {

@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PrintIt\PrintIt.csproj" />
+    <ProjectReference Include="..\PrintIt\Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>

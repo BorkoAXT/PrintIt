@@ -2,7 +2,7 @@
 using PrintIt.Models;
 using PrintIt.ViewModels;
 
-namespace PrintIt.Services
+namespace Services.Interfaces
 {
     public interface IPrintService
     {

@@ -4,6 +4,7 @@ using PrintIt.Data;
 using PrintIt.Enums;
 using PrintIt.Models;
 using PrintIt.ViewModels;
+using Services.Interfaces;
 
 namespace PrintIt.Services
 {
