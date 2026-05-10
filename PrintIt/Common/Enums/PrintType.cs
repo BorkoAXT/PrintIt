@@ -1,4 +1,4 @@
-﻿namespace PrintIt.Enums
+﻿namespace Common.Enums
 {
     /// <summary>
     /// Represents the type of item being printed.

@@ -1,4 +1,4 @@
-﻿namespace PrintIt.Enums
+﻿namespace Common.Enums
 {
     /// <summary>
     /// Represents the supported material types used for 3D printing and manufacturing.

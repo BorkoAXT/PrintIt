@@ -1,4 +1,4 @@
-﻿namespace PrintIt.Models
+﻿namespace Entities.Models
 {
     /// <summary>
     /// Represents the official shopping cart used in the store.

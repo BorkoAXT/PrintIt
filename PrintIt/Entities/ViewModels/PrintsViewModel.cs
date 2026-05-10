@@ -1,7 +1,7 @@
-﻿using PrintIt.Enums;
+﻿using Common.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace PrintIt.ViewModels
+namespace Entities.ViewModels
 {
     /// <summary>
     /// View model used for creating and editing printable products.

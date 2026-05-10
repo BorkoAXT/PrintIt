@@ -1,7 +1,7 @@
-﻿using PrintIt.Enums;
-using PrintIt.Models;
+﻿using Common.Enums;
+using Entities.Models;
 
-namespace PrintIt.ViewModels
+namespace Entities.ViewModels
 {
     public class StoreSearchViewModel
     {

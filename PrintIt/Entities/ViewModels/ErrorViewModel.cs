@@ -1,4 +1,4 @@
-namespace PrintIt.ViewModels
+namespace Entities.ViewModels
 {
     /// <summary>
     /// View model used for error handling.

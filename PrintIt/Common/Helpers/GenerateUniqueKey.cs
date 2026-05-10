@@ -1,6 +1,7 @@
-﻿using PrintIt.Enums;
+﻿using Common.Enums;
+using System.Text;
 
-namespace PrintIt.Helpers
+namespace Common.Helpers
 {
     public static class GenerateUniqueKey
     {
@@ -11,7 +12,7 @@ namespace PrintIt.Helpers
             var combined = $"{printId}-{colorString}";
 
             using var md5 = System.Security.Cryptography.MD5.Create();
-            var hash = md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(combined));
+            var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(combined));
             return new Guid(hash);
         }
     }

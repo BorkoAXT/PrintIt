@@ -1,4 +1,5 @@
-﻿using PrintIt.Enums;
+﻿using Common.Enums;
+using PrintIt.Enums;
 
 namespace Tests;
 

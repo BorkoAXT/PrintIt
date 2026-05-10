@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace PrintIt.Helpers
+namespace Common.Helpers
 {
     /// <summary>
     /// Provides helper methods for converting enum-related identifiers into readable text.

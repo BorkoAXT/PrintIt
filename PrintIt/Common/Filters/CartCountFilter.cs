@@ -1,43 +1,43 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
-using PrintIt.Services;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 
-public class CartCountFilter : IAsyncActionFilter
+namespace Common.Filters
 {
-    private readonly ICartService _cartService;
-
-    public CartCountFilter(ICartService cartService)
+    public class CartCountFilter : IAsyncActionFilter
     {
-        _cartService = cartService;
-    }
+        private readonly ICartService _cartService;
 
-    public async Task OnActionExecutionAsync(
-        ActionExecutingContext context,
-        ActionExecutionDelegate next)
-    {
-        var controller = context.Controller as Controller;
-
-        if (controller != null)
+        public CartCountFilter(ICartService cartService)
         {
-            int count = 0;
-
-            var user = context.HttpContext.User;
-
-            if (user.Identity?.IsAuthenticated == true)
-            {
-                string? userIdString =
-                    user.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                if (Guid.TryParse(userIdString, out Guid userId))
-                {
-                    count = await _cartService.GetCartCountAsync(userId);
-                }
-            }
-
-            controller.ViewData["CartCount"] = count;
+            _cartService = cartService;
         }
 
-        await next();
+        public async Task OnActionExecutionAsync(
+            ActionExecutingContext context,
+            ActionExecutionDelegate next)
+        {
+            var controller = context.Controller as Controller;
+
+            if (controller != null)
+            {
+                int count = 0;
+
+                var user = context.HttpContext.User;
+
+                if (user.Identity?.IsAuthenticated == true)
+                {
+                    string? userIdString =
+                        user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                    if (Guid.TryParse(userIdString, out Guid userId))
+                    {
+                        count = await _cartService.GetCartCountAsync(userId);
+                    }
+                }
+
+                controller.ViewData["CartCount"] = count;
+            }
+
+            await next();
+        }
     }
 }

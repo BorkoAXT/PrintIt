@@ -1,4 +1,4 @@
-﻿namespace PrintIt.Enums
+﻿namespace Common.Enums
 {
     /// <summary>
     /// Represents the supported payment types for transactions.

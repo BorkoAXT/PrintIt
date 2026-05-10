@@ -1,4 +1,4 @@
-﻿namespace PrintIt.Models
+﻿namespace Entities.Models
 {
     /// <summary>
     /// Root configuration object for all payment-related settings.

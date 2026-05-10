@@ -1,7 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using PrintIt.Enums;
+﻿using PrintIt.Models;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PrintIt.Models
+
+namespace Entities.Models
 {
     /// <summary>
     /// Represents an item in a shopping cart.
@@ -53,7 +54,7 @@ namespace PrintIt.Models
                 : "";
         }
 
-        public String UniqueKey { get; set; } = string.Empty;
+        public string UniqueKey { get; set; } = string.Empty;
 
         public CartItem(Guid shopCartId, Guid printId)
         {

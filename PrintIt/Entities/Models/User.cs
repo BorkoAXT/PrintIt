@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace PrintIt.Models
+namespace Entities.Models
 {
     /// <summary>
     /// Represents an application user.

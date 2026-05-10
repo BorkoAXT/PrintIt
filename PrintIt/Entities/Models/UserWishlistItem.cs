@@ -1,4 +1,4 @@
-﻿namespace PrintIt.Models
+﻿namespace Entities.Models
 {
     public class UserWishlistItem
     {

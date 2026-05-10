@@ -1,4 +1,4 @@
-﻿namespace PrintIt.Models
+﻿namespace Entities.Models
 {
     /// <summary>
     /// Configuration options for integration with ePay.bg

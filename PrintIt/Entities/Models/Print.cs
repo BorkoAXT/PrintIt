@@ -1,6 +1,4 @@
-﻿using PrintIt.Enums;
-
-namespace PrintIt.Models
+﻿namespace Entities.Models
 {
     /// <summary>
     /// Represents the printable item in the store.

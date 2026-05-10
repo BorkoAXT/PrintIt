@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Common.Enums;
+using Entities.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using PrintIt.Enums;
-using PrintIt.Models;
 
 namespace PrintIt.Tests.Integration;
 

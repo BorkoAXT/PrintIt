@@ -1,6 +1,6 @@
-﻿using PrintIt.Models;
+﻿using Entities.Models;
 
-namespace PrintIt.ViewModels
+namespace Entities.ViewModels
 {
     public class StoreIndexViewModel
     {
