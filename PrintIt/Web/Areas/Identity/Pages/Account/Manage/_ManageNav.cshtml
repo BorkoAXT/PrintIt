@@ -1,0 +1,57 @@
+﻿@using Entities.Models
+@using Web.Areas.Identity.Pages.Account.Manage
+@inject SignInManager<User> SignInManager
+@{
+    var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
+
+    // Updated helper for Dark Mode compatibility
+    string GetNavLinkClass(string page)
+    {
+        // Active: Blue tint background with bright text
+        var activeClass = "bg-brand-primary/10 dark:bg-brand-primary/20 text-brand-primary dark:text-blue-400 font-bold shadow-sm";
+
+        // Inactive: Subtle transition between slate and white/brand-primary
+        var inactiveClass = "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-brand-dark dark:hover:text-white";
+
+        var baseClass = "flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 group";
+
+        var currentClass = ManageNavPages.PageNavClass(ViewContext, page) == "active" ? activeClass : inactiveClass;
+        return $"{baseClass} {currentClass}";
+    }
+}
+
+<ul class="flex flex-col gap-2 list-none p-0 m-0">
+    <li class="nav-item">
+        <a class="@GetNavLinkClass(ManageNavPages.Index)" id="profile" asp-page="./Index">
+            <i class="bi bi-person-circle text-xl transition-transform group-hover:scale-110"></i>
+            <span>Профил</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="@GetNavLinkClass(ManageNavPages.Email)" id="email" asp-page="./Email">
+            <i class="bi bi-envelope-at text-xl transition-transform group-hover:scale-110"></i>
+            <span>Имейл</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="@GetNavLinkClass(ManageNavPages.ChangePassword)" id="change-password" asp-page="./ChangePassword">
+            <i class="bi bi-shield-lock text-xl transition-transform group-hover:scale-110"></i>
+            <span>Парола</span>
+        </a>
+    </li>
+    @if (hasExternalLogins)
+    {
+        <li id="external-logins" class="nav-item">
+            <a id="external-login" class="@GetNavLinkClass(ManageNavPages.ExternalLogins)" asp-page="./ExternalLogins">
+                <i class="bi bi-box-arrow-in-right text-xl transition-transform group-hover:scale-110"></i>
+                <span>Външни входове</span>
+            </a>
+        </li>
+    }
+    <li class="nav-item">
+        <a class="@GetNavLinkClass(ManageNavPages.PersonalData)" id="personal-data" asp-page="./PersonalData">
+            <i class="bi bi-database-lock text-xl transition-transform group-hover:scale-110"></i>
+            <span>Лични данни</span>
+        </a>
+    </li>
+</ul>

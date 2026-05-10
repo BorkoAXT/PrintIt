@@ -1,0 +1,70 @@
+﻿@page
+@using Web.Areas.Identity.Pages.Account.Manage
+@model IndexModel
+@{
+    ViewData["Title"] = "Профил";
+    ViewData["ActivePage"] = ManageNavPages.Index;
+}
+
+<div class="space-y-8 transition-colors duration-500">
+    @* Заглавна секция *@
+    <div class="flex items-center gap-5 border-b border-slate-100 dark:border-slate-800 pb-6">
+        <div class="p-3 bg-brand-primary/10 dark:bg-brand-primary/20 rounded-2xl">
+            <i class="bi bi-person-bounding-box text-brand-primary dark:text-blue-400 text-2xl"></i>
+        </div>
+        <div>
+            <h2 class="text-2xl font-black text-brand-dark dark:text-white">Публична информация</h2>
+            <p class="text-slate-500 dark:text-slate-400 text-base">Това са основните данни за вашия акаунт.</p>
+        </div>
+    </div>
+
+    <partial name="_StatusMessage" for="StatusMessage" />
+
+    <form id="profile-form" method="post" class="max-w-xl space-y-7">
+        @* Validation Summary *@
+        <div asp-validation-summary="ModelOnly"
+             class="p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm border border-red-100 dark:border-red-900/30"
+             role="alert">
+        </div>
+
+        @* Потребителско име *@
+        <div class="space-y-2">
+            <label asp-for="Input.Username" class="block text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Потребителско име</label>
+            <div class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <i class="bi bi-person text-slate-400 group-focus-within:text-brand-primary transition-colors"></i>
+                </div>
+                <input asp-for="Input.Username"
+                       class="block w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-brand-dark dark:text-white rounded-2xl focus:ring-4 focus:ring-brand-primary/10 dark:focus:ring-brand-primary/5 focus:border-brand-primary transition-all sm:text-sm shadow-sm"
+                       placeholder="Потребителско име" />
+            </div>
+            <span asp-validation-for="Input.Username" class="text-xs font-medium text-red-500 dark:text-red-400 ml-1"></span>
+        </div>
+
+        @* Телефонен номер *@
+        <div class="space-y-2">
+            <label asp-for="Input.PhoneNumber" class="block text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Телефонен номер</label>
+            <div class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <i class="bi bi-telephone text-slate-400 group-focus-within:text-brand-primary transition-colors"></i>
+                </div>
+                <input asp-for="Input.PhoneNumber"
+                       class="block w-full pl-11 pr-4 py-4 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-brand-dark dark:text-white rounded-2xl focus:ring-4 focus:ring-brand-primary/10 dark:focus:ring-brand-primary/5 focus:border-brand-primary transition-all sm:text-sm shadow-sm"
+                       placeholder="Въведете телефон" />
+            </div>
+            <span asp-validation-for="Input.PhoneNumber" class="text-xs font-medium text-red-500 dark:text-red-400 ml-1"></span>
+        </div>
+
+        @* Бутон за запис *@
+        <div class="pt-4">
+            <button id="update-profile-button" type="submit"
+                    class="w-full sm:w-auto px-12 py-4 bg-brand-primary hover:bg-brand-dark dark:hover:bg-blue-500 text-white font-black rounded-2xl shadow-lg hover:shadow-brand-primary/30 hover:-translate-y-0.5 transition-all duration-300 active:scale-[0.98]">
+                Запази промените
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

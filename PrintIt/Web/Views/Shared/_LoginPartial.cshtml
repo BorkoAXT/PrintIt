@@ -1,0 +1,57 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using System.Security.Claims
+@using Entities.Models
+
+<ul class="flex flex-col md:flex-row items-center gap-2 md:gap-4 list-none">
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        var displayName =
+        User.FindFirstValue("name")
+        ?? User.FindFirstValue(ClaimTypes.Name)
+        ?? User.FindFirstValue("given_name")
+        ?? User.Identity?.Name
+        ?? "User";
+
+        <li class="nav-item">
+            @* Added dark:bg-slate-800 and dark:text-slate-200 *@
+            <a class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-brand-primary dark:hover:text-brand-primary transition-colors bg-slate-100 dark:bg-slate-800 rounded-full border border-transparent dark:border-slate-700"
+               asp-area="Identity"
+               asp-page="/Account/Manage/Index"
+               title="Manage Profile">
+                <i class="bi bi-person-circle text-lg text-brand-primary"></i>
+                <span>@displayName</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <form class="inline"
+                  asp-area="Identity"
+                  asp-page="/Account/Logout"
+                  asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                @* Added dark:text-slate-400 hover:text-red-500 *@
+                <button type="submit"
+                        class="px-4 py-2 text-sm font-bold tracking-wide uppercase text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                    Изход
+                </button>
+            </form>
+        </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            @* Added dark:text-slate-300 *@
+            <a class="px-4 py-2 text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:text-brand-primary dark:hover:text-white transition-colors"
+               asp-area="Identity" asp-page="/Account/Login">
+                Вход
+            </a>
+        </li>
+
+        <li class="nav-item">
+            @* Changed bg-brand-dark to dark:bg-brand-primary so it stands out on black *@
+            <a class="px-5 py-2.5 text-sm font-bold uppercase tracking-wider text-white bg-brand-dark dark:bg-brand-primary hover:bg-brand-primary dark:hover:bg-blue-500 rounded-lg transition-all shadow-sm hover:shadow-md"
+               asp-area="Identity" asp-page="/Account/Register">
+                Регистрация
+            </a>
+        </li>
+    }
+</ul>

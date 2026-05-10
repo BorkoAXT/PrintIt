@@ -1,0 +1,287 @@
+﻿@using Common.Enums
+@using System.Linq;
+@using System.Globalization
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Identity
+@model Entities.Models.ShopCart
+@inject Services.Interfaces.IFileService FileService
+@{
+    ViewData["Title"] = "Shopping Cart";
+    Layout = "_Layout";
+
+    var cartItems = Model.Items;
+    decimal subtotal = cartItems.Sum(item => (item.Print?.Price ?? 0) * (item.Quantity > 0 ? item.Quantity : 1));
+    decimal shippingLimit = 50.00m;
+    decimal shipping = (subtotal >= shippingLimit || subtotal == 0) ? 0 : 5.00m;
+    decimal total = subtotal + shipping;
+}
+
+@Html.AntiForgeryToken()
+
+<div class="max-w-7xl mx-auto px-4 py-12 transition-colors duration-500">
+    @if (cartItems.Any())
+    {
+        <div class="flex items-center gap-4 mb-10">
+            <div class="h-12 w-12 bg-blue-600 dark:bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <i class="bi bi-cart-fill text-white text-2xl"></i>
+            </div>
+            <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Твоята количка</h1>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            @* List of Products *@
+            <div class="lg:col-span-2 space-y-6">
+                @foreach (var item in cartItems)
+                {
+                    int displayQty = item.Quantity > 0 ? item.Quantity : 1;
+                    decimal unitPrice = item.Print?.Price ?? 0;
+                    var uniqueId = item.Id;
+
+                    // Get the first image from the media folder or use placeholder
+                    string imageUrl = "/images/placeholder.jpg";
+                    if (!string.IsNullOrEmpty(item.Print?.MediaFolderPath))
+                    {
+                        var images = FileService.GetPrintImages(item.Print.MediaFolderPath);
+                        imageUrl = images.FirstOrDefault() ?? "/images/placeholder.jpg";
+                    }
+
+                    <div class="group bg-white dark:bg-slate-900/50 rounded-3xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-center gap-6">
+
+                        @* Image Section *@
+                        <div class="h-32 w-32 shrink-0 overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                            <img src="@imageUrl"
+                                 alt="@item.Print?.Name"
+                                 class="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        </div>
+
+                        <div class="flex-grow text-center sm:text-left">
+                            <h3 class="text-xl font-bold text-slate-900 dark:text-white">@item.Print?.Name</h3>
+
+                            @* COLOR BADGES *@
+                            @if (item.Colours != null && item.Colours.Any())
+                            {
+                                <div class="flex flex-wrap gap-2 mt-1 mb-2 justify-center sm:justify-start">
+                                    @foreach (var color in item.Colours)
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-black uppercase text-slate-500 dark:text-slate-400">
+                                            <span class="h-2 w-2 rounded-full @GetColorClass(color)"></span>
+                                            @color.ToString()
+                                        </span>
+                                    }
+                                </div>
+                            }
+
+                            <p class="text-slate-400 dark:text-slate-500 text-sm mb-2 uppercase font-bold tracking-tighter">
+                                <i class="bi bi-cpu"></i> 3D Print • @item.Print?.MaterialType
+                            </p>
+
+                            <div class="flex items-center justify-center sm:justify-start gap-4">
+                                <span class="text-lg font-black text-blue-600 dark:text-blue-400 item-total-price"
+                                      data-unit-price="@unitPrice.ToString("0.00", CultureInfo.InvariantCulture)"
+                                      id="price-@uniqueId">
+                                    €@((unitPrice * displayQty).ToString("0.00"))
+                                </span>
+                                <span class="text-slate-300 dark:text-slate-700">|</span>
+                                <span class="text-slate-500 dark:text-slate-400 font-medium">
+                                    Общо: <span id="qty-display-@uniqueId">@displayQty</span> бр.
+                                </span>
+                            </div>
+                        </div>
+
+                        @* Quantity Controls & Trash *@
+                        <div class="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 p-2 rounded-2xl border border-slate-100 dark:border-slate-700">
+                            <div class="flex items-center bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-600 overflow-hidden">
+                                <button type="button" onclick="changeQty('@uniqueId', -1)"
+                                        class="px-3 py-1 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 transition-colors">
+                                    <i class="bi bi-dash-lg"></i>
+                                </button>
+                                <input type="number" id="qty-@uniqueId"
+                                       class="w-10 text-center font-bold text-slate-900 dark:text-white bg-transparent border-none focus:ring-0 text-sm"
+                                       value="@displayQty" readonly />
+                                <button type="button" onclick="changeQty('@uniqueId', 1)"
+                                        class="px-3 py-1 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 transition-colors">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
+
+                            <form asp-controller="Cart" asp-action="RemoveFromCart" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@uniqueId" />
+                                <button type="submit" class="p-3 text-slate-400 hover:text-white hover:bg-red-500 rounded-xl transition-all shadow-sm active:scale-90">
+                                    <i class="bi bi-trash3-fill text-xl"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @* Sidebar Summary *@
+            <div class="lg:col-span-1">
+                <div class="bg-slate-900 dark:bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl sticky top-8 border border-white/5">
+                    <h2 class="text-2xl font-bold mb-8 flex items-center gap-2">
+                        <i class="bi bi-receipt"></i> Резюме
+                    </h2>
+                    <div class="space-y-4 mb-8">
+                        <div class="flex justify-between text-slate-400 font-medium">
+                            <span>Междинна сума:</span>
+                            <span id="subtotal">€@subtotal.ToString("0.00")</span>
+                        </div>
+                        <div class="flex justify-between text-slate-400 font-medium">
+                            <span>Доставка:</span>
+                            <span id="shipping">@((shipping == 0 && subtotal > 0) ? "Безплатна" : "€" + shipping.ToString("0.00"))</span>
+                        </div>
+                        <div class="pt-4 border-t border-white/10 flex justify-between items-end">
+                            <span class="text-lg">Общо:</span>
+                            <span id="grand-total" class="text-3xl font-black text-blue-400">€@total.ToString("0.00")</span>
+                        </div>
+                    </div>
+
+                    @* Free Shipping Promo *@
+                    <div id="free-shipping-promo" class="@(subtotal >= shippingLimit ? "hidden" : "") mb-6 p-4 bg-white/5 rounded-2xl border border-white/10">
+                        <p class="text-xs text-center text-slate-300">
+                            Добави още <b id="remaining-for-free" class="text-blue-400">€@((shippingLimit - subtotal).ToString("0.00"))</b> за безплатна доставка!
+                        </p>
+                    </div>
+
+                    <a asp-controller="Order" asp-action="Checkout"
+                       class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl font-bold text-lg shadow-lg shadow-blue-600/20 transition-all active:scale-95 flex items-center justify-center gap-3">
+                        Завърши поръчката
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        @* EMPTY CART *@
+        <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+            <div class="relative mb-8">
+                <div class="absolute inset-0 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+                <div class="relative h-40 w-40 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center shadow-2xl border border-slate-50 dark:border-slate-800">
+                    <i class="bi bi-cart-x text-slate-200 dark:text-slate-700 text-7xl animate-bounce" style="animation-duration: 3s;"></i>
+                </div>
+            </div>
+
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white mb-3">Количката ти е празна</h2>
+            <p class="text-slate-500 dark:text-slate-400 mb-10 max-w-md mx-auto leading-relaxed">
+                Изглежда още не си избрал нищо от нашите уникални 3D принтирани модели.
+            </p>
+
+            <a asp-controller="Store" asp-action="Articles"
+               class="group relative inline-flex items-center gap-3 bg-slate-900 dark:bg-blue-600 text-white px-10 py-5 rounded-2xl font-bold transition-all hover:bg-blue-600 dark:hover:bg-blue-500 hover:scale-105 active:scale-95 shadow-xl shadow-slate-900/20 dark:shadow-blue-900/40">
+                <i class="bi bi-arrow-left text-xl group-hover:-translate-x-1 transition-transform"></i>
+                Към магазина
+            </a>
+        </div>
+    }
+</div>
+
+@functions {
+    string GetColorClass(PrintColor color) => color switch
+    {
+        PrintColor.Red => "bg-red-500",
+        PrintColor.Blue => "bg-blue-600",
+        PrintColor.Green => "bg-emerald-500",
+        PrintColor.Yellow => "bg-yellow-400",
+        PrintColor.Black => "bg-slate-950",
+        PrintColor.White => "bg-white border-slate-200 dark:border-slate-600",
+        PrintColor.Gray => "bg-slate-400",
+        PrintColor.Orange => "bg-orange-500",
+        PrintColor.Purple => "bg-purple-600",
+        PrintColor.Pink => "bg-pink-400",
+        PrintColor.Brown => "bg-amber-800",
+        PrintColor.Cyan => "bg-cyan-400",
+        PrintColor.Magenta => "bg-fuchsia-600",
+        PrintColor.Lime => "bg-lime-400",
+        _ => "bg-slate-200"
+    };
+}
+
+@section Scripts {
+    <script>
+        const updateTimeouts = {};
+
+        async function changeQty(uniqueId, delta) {
+            const qtyInput = document.getElementById(`qty-${uniqueId}`);
+            const qtyDisplay = document.getElementById(`qty-display-${uniqueId}`);
+            const priceElement = document.getElementById(`price-${uniqueId}`);
+
+            let currentQty = parseInt(qtyInput.value);
+            let newQty = currentQty + delta;
+
+            if (newQty < 1) return;
+
+            // Update UI Locally
+            qtyInput.value = newQty;
+            qtyDisplay.innerText = newQty;
+
+            const unitPrice = parseFloat(priceElement.getAttribute('data-unit-price'));
+            const newItemTotal = unitPrice * newQty;
+            priceElement.innerText = `€${newItemTotal.toFixed(2)}`;
+
+            updateSidebarTotals();
+
+            // Sync with Server (Debounced)
+            clearTimeout(updateTimeouts[uniqueId]);
+            updateTimeouts[uniqueId] = setTimeout(() => {
+                syncQtyWithServer(uniqueId, newQty);
+            }, 500);
+        }
+
+        function updateSidebarTotals() {
+            let newSubtotal = 0;
+            document.querySelectorAll('.item-total-price').forEach(el => {
+                newSubtotal += parseFloat(el.innerText.replace('€', ''));
+            });
+
+            const shippingLimit = 50.00;
+            const shippingCost = (newSubtotal >= shippingLimit || newSubtotal === 0) ? 0 : 5.00;
+            const total = newSubtotal + shippingCost;
+
+            document.getElementById('subtotal').innerText = `€${newSubtotal.toFixed(2)}`;
+            document.getElementById('shipping').innerText = shippingCost === 0 ? "Безплатна" : `€${shippingCost.toFixed(2)}`;
+            document.getElementById('grand-total').innerText = `€${total.toFixed(2)}`;
+
+            const promo = document.getElementById('free-shipping-promo');
+            const remainingEl = document.getElementById('remaining-for-free');
+
+            if (newSubtotal >= shippingLimit) {
+                promo.classList.add('hidden');
+            } else {
+                promo.classList.remove('hidden');
+                remainingEl.innerText = `€${(shippingLimit - newSubtotal).toFixed(2)}`;
+            }
+        }
+
+        async function syncQtyWithServer(id, quantity) {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            try {
+                await fetch('/Cart/UpdateQuantity', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': token
+                    },
+                    body: new URLSearchParams({ 'id': id, 'quantity': quantity })
+                });
+            } catch (error) {
+                console.error("Update error:", error);
+            }
+        }
+    </script>
+}
+
+<style>
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .hidden {
+        display: none !important;
+    }
+</style>
