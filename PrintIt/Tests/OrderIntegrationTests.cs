@@ -1,7 +1,6 @@
 ﻿using Common.Enums;
 using Services.Interfaces;
-using Tests;
-namespace PrintIt.Tests.Integration;
+namespace Tests;
 
 public class OrderIntegrationTests : IClassFixture<PrintItFactory>
 {
