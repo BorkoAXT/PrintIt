@@ -1,5 +1,5 @@
 ﻿using Common.Enums;
-using Data;
+using Data.Repositories;
 using Entities.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -9,36 +9,38 @@ namespace Services.Services
 {
     public class CartService : ICartService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IRepository<ShopCart> _cartRepository;
+        private readonly IRepository<CartItem> _cartItemRepository;
         private readonly IMemoryCache _cache;
 
-        public CartService(ApplicationDbContext context, IMemoryCache cache)
+        public CartService(
+            IRepository<ShopCart> cartRepository,
+            IRepository<CartItem> cartItemRepository,
+            IMemoryCache cache)
         {
-            _context = context;
+            _cartRepository = cartRepository;
+            _cartItemRepository = cartItemRepository;
             _cache = cache;
         }
 
         public async Task<List<CartItem>> GetUserCartAsync(Guid userId)
         {
-            return await _context.ShopCarts
-                .Include(c => c.Items)
-                .ThenInclude(i => i.Print)
-                .Where(c => c.UserId == userId)
-                .SelectMany(c => c.Items)
+            return await _cartItemRepository.All()
+                .Where(i => i.ShopCart!.UserId == userId)
+                .Include(i => i.Print)
                 .ToListAsync();
         }
 
         public async Task AddToCartAsync(Guid userId, Guid printId, List<PrintColor> selectedColors)
         {
-            var cart = await _context.ShopCarts
+            var cart = await _cartRepository.All()
+                .AsTracking()
                 .Include(c => c.Items)
                 .FirstOrDefaultAsync(c => c.UserId == userId);
 
             if (cart == null)
             {
-                cart = new ShopCart(userId);
-                _context.ShopCarts.Add(cart);
-                await _context.SaveChangesAsync();
+                cart = await _cartRepository.AddAsync(new ShopCart(userId));
             }
 
             var incomingColors = selectedColors?.OrderBy(c => c).ToList() ?? new List<PrintColor>();
@@ -46,13 +48,12 @@ namespace Services.Services
 
             var existingItem = cart.Items.FirstOrDefault(i =>
                 i.PrintId == printId &&
-                i.ColorString == colorString
-            );
+                i.ColorString == colorString);
 
             if (existingItem != null)
             {
                 existingItem.Quantity++;
-                _context.Entry(existingItem).State = EntityState.Modified;
+                await _cartItemRepository.UpdateAsync(existingItem);
             }
             else
             {
@@ -61,55 +62,56 @@ namespace Services.Services
                     Quantity = 1,
                     Colours = incomingColors
                 };
-                _context.CartItems.Add(newItem);
-            }
 
-            await _context.SaveChangesAsync();
+                await _cartItemRepository.AddAsync(newItem);
+            }
 
             InvalidateCache(userId);
         }
 
         public async Task<List<CartItem>> GetItemsByPrintIdAsync(Guid printId)
         {
-            return await _context.CartItems
+            return await _cartItemRepository.All()
                 .Where(ci => ci.PrintId == printId)
                 .ToListAsync();
         }
 
         public async Task RemoveCartItemAsync(CartItem item)
         {
-            _context.CartItems.Remove(item);
-            await _context.SaveChangesAsync();
+            await _cartItemRepository.DeleteAsync(item);
         }
 
         public async Task RemoveFromCartAsync(Guid userId, Guid cartItemId)
         {
-            var cartItem = await _context.CartItems
+            var cartItem = await _cartItemRepository.All()
+                .AsTracking()
                 .FirstOrDefaultAsync(ci =>
                     ci.Id == cartItemId &&
-                    ci.ShopCart.UserId == userId);
+                    ci.ShopCart!.UserId == userId);
 
             if (cartItem != null)
             {
-                _context.CartItems.Remove(cartItem);
-                await _context.SaveChangesAsync();
+                await _cartItemRepository.DeleteAsync(cartItem);
                 InvalidateCache(userId);
             }
         }
 
         public async Task<bool> UpdateQuantityAsync(Guid userId, Guid cartItemId, int quantity)
         {
-            var cartItem = await _context.CartItems
+            var cartItem = await _cartItemRepository.All()
+                .AsTracking()
                 .Include(i => i.ShopCart)
                 .FirstOrDefaultAsync(i =>
                     i.Id == cartItemId &&
-                    i.ShopCart.UserId == userId);
+                    i.ShopCart!.UserId == userId);
 
             if (cartItem == null || quantity <= 0)
+            {
                 return false;
+            }
 
             cartItem.Quantity = quantity;
-            await _context.SaveChangesAsync();
+            await _cartItemRepository.UpdateAsync(cartItem);
 
             InvalidateCache(userId);
             return true;
@@ -119,28 +121,33 @@ namespace Services.Services
         {
             string key = $"cart-count-{userId}";
 
-            return await _cache.GetOrCreateAsync(key, async entry =>
+            int? result = await _cache.GetOrCreateAsync<int?>(key, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2);
 
-                return await _context.CartItems
-                    .Where(i => i.ShopCart.UserId == userId)
+                return await _cartItemRepository.All()
+                    .Where(i => i.ShopCart!.UserId == userId)
                     .SumAsync(i => i.Quantity);
             });
+
+            return result ?? 0;
         }
+
         public async Task RemoveAllByPrintIdAsync(Guid printId)
         {
-            var affectedUserIds = await _context.CartItems
+            var affectedUserIds = await _cartItemRepository.All()
                 .Where(ci => ci.PrintId == printId)
-                .Select(ci => ci.ShopCart.UserId)
+                .Select(ci => ci.ShopCart!.UserId)
                 .Distinct()
                 .ToListAsync();
 
-            var items = await _context.CartItems.Where(ci => ci.PrintId == printId).ToListAsync();
+            var items = await _cartItemRepository.All()
+                .Where(ci => ci.PrintId == printId)
+                .ToListAsync();
+
             if (items.Any())
             {
-                _context.CartItems.RemoveRange(items);
-                await _context.SaveChangesAsync();
+                await _cartItemRepository.DeleteBulkAsync(items);
 
                 foreach (var userId in affectedUserIds)
                 {
@@ -154,6 +161,5 @@ namespace Services.Services
         {
             _cache.Remove($"cart-count-{userId}");
         }
-
     }
 }

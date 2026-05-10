@@ -1,20 +1,29 @@
-﻿using Data;
+﻿using Data.Repositories;
 using Entities.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-
 using Services.Interfaces;
 
 namespace Services.Services
 {
     public class OrderService : IOrderService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IRepository<Order> _orderRepository;
+        private readonly IRepository<ShopCart> _cartRepository;
+        private readonly IRepository<CartItem> _cartItemRepository;
         private readonly ICartService _cartService;
         private readonly IMemoryCache _cache;
-        public OrderService(ApplicationDbContext context, ICartService cartService, IMemoryCache cache)
+
+        public OrderService(
+            IRepository<Order> orderRepository,
+            IRepository<ShopCart> cartRepository,
+            IRepository<CartItem> cartItemRepository,
+            ICartService cartService,
+            IMemoryCache cache)
         {
-            _context = context;
+            _orderRepository = orderRepository;
+            _cartRepository = cartRepository;
+            _cartItemRepository = cartItemRepository;
             _cartService = cartService;
             _cache = cache;
         }
@@ -46,31 +55,25 @@ namespace Services.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
+            await _orderRepository.AddAsync(order);
+            await _cartItemRepository.DeleteBulkAsync(items);
 
-            _context.CartItems.RemoveRange(items);
-            await _context.SaveChangesAsync();
-
-            string cacheKey = $"cart-count-{userId}";
-            _cache.Remove(cacheKey);
+            _cache.Remove($"cart-count-{userId}");
 
             return order;
         }
 
         public async Task ClearCartAsync(Guid userId)
         {
-            var cart = await _context.ShopCarts
-                .Include(c => c.Items)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+            var items = await _cartItemRepository.All()
+                .AsTracking()
+                .Where(ci => ci.ShopCart!.UserId == userId)
+                .ToListAsync();
 
-            if (cart != null && cart.Items.Any())
+            if (items.Any())
             {
-                _context.CartItems.RemoveRange(cart.Items);
-                await _context.SaveChangesAsync();
-
-                string key = $"cart-count-{userId}";
-                _cache.Remove(key);
+                await _cartItemRepository.DeleteBulkAsync(items);
+                _cache.Remove($"cart-count-{userId}");
             }
         }
     }

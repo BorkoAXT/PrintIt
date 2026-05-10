@@ -1,4 +1,4 @@
-﻿using Data;
+﻿using Data.Repositories;
 using Entities.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -8,13 +8,18 @@ namespace Services.Services
 {
     public class WishlistService : IWishlistService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IRepository<UserWishlistItem> _wishlistRepository;
+        private readonly IRepository<CartItem> _cartItemRepository;
         private readonly IMemoryCache _cache;
         private readonly TimeSpan _userCacheDuration = TimeSpan.FromSeconds(60);
 
-        public WishlistService(ApplicationDbContext context, IMemoryCache cache)
+        public WishlistService(
+            IRepository<UserWishlistItem> wishlistRepository,
+            IRepository<CartItem> cartItemRepository,
+            IMemoryCache cache)
         {
-            _context = context;
+            _wishlistRepository = wishlistRepository;
+            _cartItemRepository = cartItemRepository;
             _cache = cache;
         }
 
@@ -26,63 +31,69 @@ namespace Services.Services
 
         public async Task<bool> ToggleAsync(Guid userId, Guid printId)
         {
-            var wishlistItem = await _context.UserWishlistItems
+            var wishlistItem = await _wishlistRepository.All()
+                .AsTracking()
                 .FirstOrDefaultAsync(w => w.UserId == userId && w.PrintId == printId);
 
             if (wishlistItem != null)
             {
-                _context.UserWishlistItems.Remove(wishlistItem);
-                await _context.SaveChangesAsync();
+                await _wishlistRepository.DeleteAsync(wishlistItem);
                 ClearCache(userId);
                 return false;
             }
-            else
-            {
-                _context.UserWishlistItems.Add(new UserWishlistItem(userId, printId));
-                await _context.SaveChangesAsync();
-                ClearCache(userId);
-                return true;
-            }
+
+            await _wishlistRepository.AddAsync(new UserWishlistItem(userId, printId));
+            ClearCache(userId);
+            return true;
         }
 
         public async Task<List<UserWishlistItem>> GetItemsByPrintIdAsync(Guid printId)
         {
-            return await _context.UserWishlistItems
+            return await _wishlistRepository.All()
                 .Where(w => w.PrintId == printId)
                 .ToListAsync();
         }
 
         public async Task RemoveAsync(UserWishlistItem item)
         {
-            _context.UserWishlistItems.Remove(item);
-            await _context.SaveChangesAsync();
+            var trackedItem = await _wishlistRepository.All()
+                .AsTracking()
+                .FirstOrDefaultAsync(w => w.UserId == item.UserId && w.PrintId == item.PrintId);
+
+            if (trackedItem != null)
+            {
+                await _wishlistRepository.DeleteAsync(trackedItem);
+            }
         }
+
         public async Task<List<UserWishlistItem>> GetWishlistForUserAsync(Guid userId)
         {
             return await _cache.GetOrCreateAsync($"Wishlist:{userId}", async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = _userCacheDuration;
 
-                return await _context.UserWishlistItems
+                return await _wishlistRepository.All()
                     .Where(w => w.UserId == userId)
-                    .Include(w => w.Print)   // ✅ THIS FIXES EVERYTHING
+                    .Include(w => w.Print)
                     .ToListAsync();
-            });
+            }) ?? new List<UserWishlistItem>();
         }
 
         public async Task RemoveAllByPrintIdAsync(Guid printId)
         {
-            var affectedUserIds = await _context.CartItems
+            var affectedUserIds = await _cartItemRepository.All()
                 .Where(ci => ci.PrintId == printId)
-                .Select(ci => ci.ShopCart.UserId)
+                .Select(ci => ci.ShopCart!.UserId)
                 .Distinct()
                 .ToListAsync();
 
-            var items = await _context.CartItems.Where(ci => ci.PrintId == printId).ToListAsync();
+            var items = await _cartItemRepository.All()
+                .Where(ci => ci.PrintId == printId)
+                .ToListAsync();
+
             if (items.Any())
             {
-                _context.CartItems.RemoveRange(items);
-                await _context.SaveChangesAsync();
+                await _cartItemRepository.DeleteBulkAsync(items);
 
                 foreach (var userId in affectedUserIds)
                 {

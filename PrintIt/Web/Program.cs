@@ -1,4 +1,5 @@
 using Data;
+using Data.Repositories;
 using Entities.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -50,7 +51,6 @@ namespace Web
             var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
             var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 
-            // IMPORTANT: configure auth ONCE, then optionally add Google.
             var authBuilder = builder.Services.AddAuthentication();
 
             if (!string.IsNullOrWhiteSpace(googleClientId) &&
@@ -79,7 +79,7 @@ namespace Web
             {
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.HttpOnly = true;
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // better for production
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.LoginPath = "/Identity/Account/Login";
                 options.AccessDeniedPath = "/Identity/Account/AccessDenied";
             });
@@ -93,8 +93,10 @@ namespace Web
             });
 
             // =========================
-            // Services (DI)
+            // Repositories + Services (DI)
             // =========================
+            builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
             builder.Services.AddScoped<IPrintService, PrintService>();
             builder.Services.AddScoped<IWishlistService, WishlistService>();
             builder.Services.AddScoped<IFileService, FileService>();
@@ -186,8 +188,6 @@ namespace Web
                 catch (Exception ex)
                 {
                     app.Logger.LogError(ex, "Database migration/seed failed during startup.");
-
-                    // if (!app.Environment.IsDevelopment()) throw;
                 }
             }
 
