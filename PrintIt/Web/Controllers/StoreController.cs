@@ -103,7 +103,6 @@ namespace Web.Controllers
                 return View(model);
             }
 
-            // Validate at least one image is provided
             if (Images == null || Images.Count == 0)
             {
                 ModelState.AddModelError("Images", "Моля, добавете поне една снимка.");
@@ -111,21 +110,23 @@ namespace Web.Controllers
                 return View(model);
             }
 
+            Print? print = null;
+
             try
             {
-                // Create a new print with temporary media folder path
-                var print = new Print(
+                print = new Print(
                     model.Name, model.Description, model.MaterialType, model.Weight,
                     model.Price, null, model.PrintType, model.PrintColors
                 );
 
-                // Create the media folder for this print
                 string mediaFolderPath = _fileService.CreatePrintMediaFolder(print.Id, model.PrintType);
                 print.MediaFolderPath = mediaFolderPath;
 
-                _logger.LogInformation("Created media folder for Print {PrintId}: {MediaFolderPath}", print.Id, mediaFolderPath);
+                // IMPORTANT: save parent first so FK in PrintMedia is valid
+                await _printService.AddAsync(print);
 
-                // Upload all images in order
+                _logger.LogInformation("Created print {PrintId} with media token {MediaFolderPath}", print.Id, mediaFolderPath);
+
                 int imageCount = 0;
                 foreach (var imageFile in Images)
                 {
@@ -145,11 +146,11 @@ namespace Web.Controllers
 
                 if (imageCount == 0)
                 {
+                    await _printService.DeleteAsync(print);
                     ModelState.AddModelError("Images", "Не беше възможно да качите дори една снимка. Моля проверете файловете.");
                     return View(model);
                 }
 
-                // Upload all 3D models if provided
                 int modelCount = 0;
                 if (ModelFiles != null && ModelFiles.Count > 0)
                 {
@@ -176,7 +177,6 @@ namespace Web.Controllers
                     }
                 }
 
-                await _printService.AddAsync(print);
                 _logger.LogInformation("Admin created new product: {PrintName} ({PrintId}) with {ImageCount} images and {ModelCount} 3D models", print.Name, print.Id, imageCount, modelCount);
 
                 return RedirectToAction(nameof(Articles));
@@ -184,6 +184,19 @@ namespace Web.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to create new 3D print: {PrintName}", model.Name);
+
+                if (print != null)
+                {
+                    try
+                    {
+                        await _printService.DeleteAsync(print);
+                    }
+                    catch (Exception cleanupEx)
+                    {
+                        _logger.LogWarning(cleanupEx, "Cleanup failed for Print {PrintId}", print.Id);
+                    }
+                }
+
                 ModelState.AddModelError(string.Empty, "Възникна грешка при публикуване на артикула. Моля попълнете формата отново.");
                 return View(model);
             }

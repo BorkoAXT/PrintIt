@@ -20,8 +20,8 @@ namespace Data
         public DbSet<ShopCart> ShopCarts { get; set; } = null!;
         public DbSet<CartItem> CartItems { get; set; } = null!;
         public DbSet<UserWishlistItem> UserWishlistItems { get; set; } = null!;
-
         public DbSet<Order> Orders { get; set; } = null!;
+        public DbSet<PrintMedia> PrintMedia { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -89,10 +89,27 @@ namespace Data
                        c => c.ToList()
                    )
                );
+
             builder.Entity<Print>()
                 .Property(p => p.AddedOn)
                 .HasColumnType("datetime2")
                 .HasDefaultValueSql("GETUTCDATE()");
+
+            builder.Entity<PrintMedia>(entity =>
+            {
+                entity.HasKey(pm => pm.Id);
+
+                entity.HasOne(pm => pm.Print)
+                    .WithMany()
+                    .HasForeignKey(pm => pm.PrintId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(pm => new { pm.PrintId, pm.MediaType, pm.SequenceNumber });
+            });
+
+            builder.Entity<Order>()
+                .Property(o => o.Amount)
+                .HasPrecision(18, 4);
         }
     }
 }

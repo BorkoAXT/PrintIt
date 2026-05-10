@@ -1,6 +1,8 @@
 ﻿using Common.Enums;
-using Microsoft.AspNetCore.Hosting;
+using Data;
+using Entities.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Services.Interfaces;
 
@@ -8,45 +10,28 @@ namespace Services.Services
 {
     public class FileService : IFileService
     {
-        private readonly IWebHostEnvironment _env;
+        private static readonly string[] _imageExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+        private static readonly string[] _modelExtensions = { ".stl", ".obj", ".step", ".stp" };
+
+        private readonly ApplicationDbContext _db;
         private readonly IMemoryCache _cache;
 
-        public FileService(IWebHostEnvironment env, IMemoryCache cache)
+        public FileService(ApplicationDbContext db, IMemoryCache cache)
         {
-            _env = env;
+            _db = db;
             _cache = cache;
         }
 
         /// <summary>
-        /// Uploads an image to the print's media folder.
+        /// Uploads an image to the legacy images folder (deprecated - disabled).
         /// </summary>
-        public async Task<string> UploadImageAsync(IFormFile file, PrintType type)
+        public Task<string> UploadImageAsync(IFormFile file, PrintType type)
         {
-            string folder = type switch
-            {
-                PrintType.Figure => "Figures",
-                PrintType.FidgetToy => "FidgetToys",
-                PrintType.Accessory => "Accessories",
-                _ => "Misc"
-            };
-
-            string uploads = Path.Combine(_env.WebRootPath, "images", folder);
-            if (!Directory.Exists(uploads))
-            {
-                Directory.CreateDirectory(uploads);
-            }
-
-            string fileName = Guid.NewGuid() + "_" + file.FileName;
-            string fullPath = Path.Combine(uploads, fileName);
-
-            using var stream = new FileStream(fullPath, FileMode.Create);
-            await file.CopyToAsync(stream);
-
-            return $"/images/{folder}/{fileName}";
+            throw new NotSupportedException("Legacy UploadImageAsync is disabled. Use UploadPrintImageAsync.");
         }
 
         /// <summary>
-        /// Creates a media folder for a print and returns its path.
+        /// Creates a virtual media path token for a print.
         /// </summary>
         public string CreatePrintMediaFolder(Guid printId, PrintType type)
         {
@@ -58,111 +43,127 @@ namespace Services.Services
                 _ => "Misc"
             };
 
-            string mediaPath = Path.Combine(_env.WebRootPath, "media", folder, printId.ToString());
-            if (!Directory.Exists(mediaPath))
-            {
-                Directory.CreateDirectory(mediaPath);
-            }
-
             return $"/media/{folder}/{printId}";
         }
 
         /// <summary>
-        /// Uploads an image to a print's media folder with sequence ordering.
+        /// Uploads an image to database storage with sequence ordering.
         /// </summary>
         public async Task<string> UploadPrintImageAsync(IFormFile file, string mediaFolderPath, int sequenceNumber)
         {
-            string fullPath = Path.Combine(_env.WebRootPath, mediaFolderPath.TrimStart('/'));
-            if (!Directory.Exists(fullPath))
+            if (file == null || file.Length == 0)
             {
-                Directory.CreateDirectory(fullPath);
+                throw new InvalidOperationException("Empty image file.");
             }
 
-            // Prefix with sequence number to maintain order (e.g., "001_guid_filename.jpg")
-            string guid = Guid.NewGuid().ToString();
-            string fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            string fileName = $"{sequenceNumber:D3}_{guid}{fileExtension}";
-            string filePath = Path.Combine(fullPath, fileName);
+            Guid printId = ParsePrintId(mediaFolderPath)
+                ?? throw new InvalidOperationException("Invalid media folder path.");
 
-            using var stream = new FileStream(filePath, FileMode.Create);
-            await file.CopyToAsync(stream);
+            string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!_imageExtensions.Contains(extension))
+            {
+                throw new InvalidOperationException($"Image type {extension} is not supported. Allowed: {string.Join(", ", _imageExtensions)}");
+            }
 
-            return $"{mediaFolderPath}/{fileName}";
+            var media = new PrintMedia
+            {
+                PrintId = printId,
+                OriginalFileName = string.IsNullOrWhiteSpace(file.FileName) ? $"image{extension}" : file.FileName,
+                ContentType = string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType,
+                Extension = extension,
+                MediaType = MediaType.Image,
+                SequenceNumber = sequenceNumber,
+                Data = await ReadBytesAsync(file),
+                CreatedOnUtc = DateTime.UtcNow
+            };
+
+            _db.PrintMedia.Add(media);
+            await _db.SaveChangesAsync();
+
+            return BuildMediaUrl(media);
         }
 
         /// <summary>
-        /// Uploads a 3D model file to a print's media folder.
+        /// Uploads a 3D model file to database storage.
         /// </summary>
         public async Task<string> Upload3DModelAsync(IFormFile file, string mediaFolderPath)
         {
-            // Validate file extension (e.g., .stl, .obj, .step)
-            string[] allowedExtensions = { ".stl", ".obj", ".step" };
-            string fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
-
-            if (!allowedExtensions.Contains(fileExtension))
+            if (file == null || file.Length == 0)
             {
-                throw new InvalidOperationException($"File type {fileExtension} is not supported. Allowed: {string.Join(", ", allowedExtensions)}");
+                throw new InvalidOperationException("Empty 3D model file.");
             }
 
-            string fullPath = Path.Combine(_env.WebRootPath, mediaFolderPath.TrimStart('/'));
-            if (!Directory.Exists(fullPath))
+            Guid printId = ParsePrintId(mediaFolderPath)
+                ?? throw new InvalidOperationException("Invalid media folder path.");
+
+            string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+            if (!_modelExtensions.Contains(extension))
             {
-                Directory.CreateDirectory(fullPath);
+                throw new InvalidOperationException($"File type {extension} is not supported. Allowed: {string.Join(", ", _modelExtensions)}");
             }
 
-            string fileName = Guid.NewGuid() + "_model" + fileExtension;
-            string filePath = Path.Combine(fullPath, fileName);
+            var media = new PrintMedia
+            {
+                PrintId = printId,
+                OriginalFileName = string.IsNullOrWhiteSpace(file.FileName) ? $"model{extension}" : file.FileName,
+                ContentType = string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType,
+                Extension = extension,
+                MediaType = MediaType.Model3D,
+                SequenceNumber = 0,
+                Data = await ReadBytesAsync(file),
+                CreatedOnUtc = DateTime.UtcNow
+            };
 
-            using var stream = new FileStream(filePath, FileMode.Create);
-            await file.CopyToAsync(stream);
+            _db.PrintMedia.Add(media);
+            await _db.SaveChangesAsync();
 
-            return $"{mediaFolderPath}/{fileName}";
+            return BuildMediaUrl(media);
         }
 
         /// <summary>
-        /// Gets all image files in a print's media folder, ordered by sequence number.
+        /// Gets all image files for a print, ordered by sequence number.
         /// </summary>
         public List<string> GetPrintImages(string mediaFolderPath)
         {
-            string[] imageExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
-            string fullPath = Path.Combine(_env.WebRootPath, mediaFolderPath.TrimStart('/'));
-
-            if (!Directory.Exists(fullPath))
+            Guid? printId = ParsePrintId(mediaFolderPath);
+            if (!printId.HasValue)
             {
                 return new();
             }
 
-            return Directory
-                .GetFiles(fullPath)
-                .Where(f => imageExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-                .OrderBy(f => Path.GetFileName(f))  // Sort by filename (sequence number prefix)
-                .Select(f => $"{mediaFolderPath}/{Path.GetFileName(f)}")
+            return _db.PrintMedia
+                .AsNoTracking()
+                .Where(pm => pm.PrintId == printId.Value && pm.MediaType == MediaType.Image)
+                .OrderBy(pm => pm.SequenceNumber)
+                .ThenBy(pm => pm.CreatedOnUtc)
+                .ToList()
+                .Select(BuildMediaUrl)
                 .ToList();
         }
 
         /// <summary>
-        /// Gets all 3D model files in a print's media folder.
+        /// Gets all 3D model files for a print.
         /// </summary>
         public List<string> GetPrint3DModels(string mediaFolderPath)
         {
-            string[] modelExtensions = { ".stl", ".obj", ".step" };
-            string fullPath = Path.Combine(_env.WebRootPath, mediaFolderPath.TrimStart('/'));
-
-            if (!Directory.Exists(fullPath))
+            Guid? printId = ParsePrintId(mediaFolderPath);
+            if (!printId.HasValue)
             {
                 return new();
             }
 
-            return Directory
-                .GetFiles(fullPath)
-                .Where(f => modelExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-                .OrderBy(f => Path.GetFileName(f))
-                .Select(f => $"{mediaFolderPath}/{Path.GetFileName(f)}")
+            return _db.PrintMedia
+                .AsNoTracking()
+                .Where(pm => pm.PrintId == printId.Value && pm.MediaType == MediaType.Model3D)
+                .OrderBy(pm => pm.CreatedOnUtc)
+                .ToList()
+                .Select(BuildMediaUrl)
                 .ToList();
         }
 
         /// <summary>
-        /// Gets the first 3D model file in a print's media folder (if exists).
+        /// Gets the first 3D model file (if exists).
         /// </summary>
         public string? GetPrint3DModel(string mediaFolderPath)
         {
@@ -171,115 +172,188 @@ namespace Services.Services
         }
 
         /// <summary>
-        /// Deletes an image file from the server and removes it from cache.
+        /// Deletes a single media file from database storage.
         /// </summary>
-        /// <param name="filePath">The relative path of the image file to delete.</param>
-        /// <returns>A task representing the asynchronous operation.</returns>
-        public async Task DeleteImageAsync(string filePath)
+        public async Task DeleteImageAsync(string? filePath)
         {
-            if (string.IsNullOrEmpty(filePath) || filePath.Contains("placeholder"))
+            if (string.IsNullOrWhiteSpace(filePath) || filePath.Contains("placeholder"))
             {
                 return;
             }
 
-            string fullPath = Path.Combine(_env.WebRootPath, filePath.TrimStart('/'));
-            if (File.Exists(fullPath))
+            Guid? mediaId = ParseMediaId(filePath);
+            if (!mediaId.HasValue)
             {
-                File.Delete(fullPath);
+                return;
+            }
+
+            var media = await _db.PrintMedia.FirstOrDefaultAsync(pm => pm.Id == mediaId.Value);
+            if (media != null)
+            {
+                _db.PrintMedia.Remove(media);
+                await _db.SaveChangesAsync();
             }
 
             _cache.Remove(filePath);
-            await Task.CompletedTask;
         }
 
         /// <summary>
-        /// Deletes an entire print's media folder and all its contents.
+        /// Deletes all media files for a print.
         /// </summary>
         public async Task DeletePrintMediaAsync(string mediaFolderPath)
         {
-            if (string.IsNullOrEmpty(mediaFolderPath))
+            Guid? printId = ParsePrintId(mediaFolderPath);
+            if (!printId.HasValue)
             {
                 return;
             }
 
-            string fullPath = Path.Combine(_env.WebRootPath, mediaFolderPath.TrimStart('/'));
-            if (Directory.Exists(fullPath))
+            var mediaItems = await _db.PrintMedia
+                .Where(pm => pm.PrintId == printId.Value)
+                .ToListAsync();
+
+            if (mediaItems.Count > 0)
             {
-                Directory.Delete(fullPath, recursive: true);
-                _cache.Remove(mediaFolderPath);
+                _db.PrintMedia.RemoveRange(mediaItems);
+                await _db.SaveChangesAsync();
             }
 
-            await Task.CompletedTask;
+            _cache.Remove(mediaFolderPath);
         }
 
         /// <summary>
-        /// Recalculates sequence numbers for images after deletion.
+        /// Recalculates image sequence numbers after deletion.
         /// </summary>
         public async Task RecalculateImageSequenceAsync(string mediaFolderPath)
         {
-            string[] imageExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
-            string fullPath = Path.Combine(_env.WebRootPath, mediaFolderPath.TrimStart('/'));
-
-            if (!Directory.Exists(fullPath))
+            Guid? printId = ParsePrintId(mediaFolderPath);
+            if (!printId.HasValue)
             {
                 return;
             }
 
-            var imageFiles = Directory
-                .GetFiles(fullPath)
-                .Where(f => imageExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-                .OrderBy(f => Path.GetFileName(f))
-                .ToList();
+            var images = await _db.PrintMedia
+                .Where(pm => pm.PrintId == printId.Value && pm.MediaType == MediaType.Image)
+                .OrderBy(pm => pm.SequenceNumber)
+                .ThenBy(pm => pm.CreatedOnUtc)
+                .ToListAsync();
 
-            // Rename files with new sequence numbers
-            int newSequence = 1;
-            foreach (var filePath in imageFiles)
+            int sequence = 1;
+            foreach (var image in images)
             {
-                string fileName = Path.GetFileName(filePath);
-                string extension = Path.GetExtension(fileName);
-                string guid = Guid.NewGuid().ToString();
-                string newFileName = $"{newSequence:D3}_{guid}{extension}";
-                string newFilePath = Path.Combine(fullPath, newFileName);
-
-                File.Move(filePath, newFilePath, overwrite: false);
-                newSequence++;
+                image.SequenceNumber = sequence++;
             }
 
-            await Task.CompletedTask;
+            await _db.SaveChangesAsync();
         }
 
         /// <summary>
-        /// Reorders images based on provided file paths.
+        /// Reorders images based on provided media URLs.
         /// </summary>
         public async Task ReorderImagesAsync(string mediaFolderPath, string[] orderedPaths)
         {
-            string fullPath = Path.Combine(_env.WebRootPath, mediaFolderPath.TrimStart('/'));
-
-            if (!Directory.Exists(fullPath))
+            Guid? printId = ParsePrintId(mediaFolderPath);
+            if (!printId.HasValue)
             {
                 return;
             }
 
-            int newSequence = 1;
-            foreach (var imagePath in orderedPaths)
+            var images = await _db.PrintMedia
+                .Where(pm => pm.PrintId == printId.Value && pm.MediaType == MediaType.Image)
+                .ToListAsync();
+
+            if (images.Count == 0)
             {
-                // Extract just the filename from the path
-                string fileName = Path.GetFileName(imagePath);
-                string filePath = Path.Combine(fullPath, fileName);
+                return;
+            }
 
-                if (File.Exists(filePath))
+            var orderedIds = orderedPaths
+                .Select(ParseMediaId)
+                .Where(id => id.HasValue)
+                .Select(id => id!.Value)
+                .Distinct()
+                .ToList();
+
+            int sequence = 1;
+
+            foreach (var id in orderedIds)
+            {
+                var media = images.FirstOrDefault(i => i.Id == id);
+                if (media != null)
                 {
-                    string extension = Path.GetExtension(fileName);
-                    string guid = Guid.NewGuid().ToString();
-                    string newFileName = $"{newSequence:D3}_{guid}{extension}";
-                    string newFilePath = Path.Combine(fullPath, newFileName);
-
-                    File.Move(filePath, newFilePath, overwrite: false);
-                    newSequence++;
+                    media.SequenceNumber = sequence++;
                 }
             }
 
-            await Task.CompletedTask;
+            foreach (var media in images.Where(i => !orderedIds.Contains(i.Id)).OrderBy(i => i.SequenceNumber).ThenBy(i => i.CreatedOnUtc))
+            {
+                media.SequenceNumber = sequence++;
+            }
+
+            await _db.SaveChangesAsync();
+        }
+
+        private static Guid? ParsePrintId(string mediaFolderPath)
+        {
+            if (string.IsNullOrWhiteSpace(mediaFolderPath))
+            {
+                return null;
+            }
+
+            string[] parts = mediaFolderPath
+                .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            if (parts.Length == 0)
+            {
+                return null;
+            }
+
+            return Guid.TryParse(parts[^1], out Guid printId) ? printId : null;
+        }
+
+        private static Guid? ParseMediaId(string mediaPath)
+        {
+            if (string.IsNullOrWhiteSpace(mediaPath))
+            {
+                return null;
+            }
+
+            string[] parts = mediaPath
+                .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            for (int i = parts.Length - 1; i >= 0; i--)
+            {
+                string part = parts[i];
+
+                if (Guid.TryParse(part, out Guid id))
+                {
+                    return id;
+                }
+
+                int dotIndex = part.IndexOf('.');
+                if (dotIndex > 0 && Guid.TryParse(part[..dotIndex], out id))
+                {
+                    return id;
+                }
+            }
+
+            return null;
+        }
+
+        private static async Task<byte[]> ReadBytesAsync(IFormFile file)
+        {
+            await using var memoryStream = new MemoryStream();
+            await file.CopyToAsync(memoryStream);
+            return memoryStream.ToArray();
+        }
+
+        private static string BuildMediaUrl(PrintMedia media)
+        {
+            string fileName = string.IsNullOrWhiteSpace(media.OriginalFileName)
+                ? $"file{media.Extension}"
+                : media.OriginalFileName;
+
+            return $"/media/{media.Id}/{Uri.EscapeDataString(fileName)}";
         }
     }
 }
