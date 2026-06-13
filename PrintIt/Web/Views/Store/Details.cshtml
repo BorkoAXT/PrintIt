@@ -9,14 +9,8 @@
     bool isFav = ViewBag.IsFavorite ?? false;
     var tokens = Antiforgery.GetAndStoreTokens(Context);
 
-    var images = new List<string>();
-    var models3D = new List<string>();
-
-    if (!string.IsNullOrEmpty(Model.MediaFolderPath))
-    {
-        images = FileService.GetPrintImages(Model.MediaFolderPath);
-        models3D = FileService.GetPrint3DModels(Model.MediaFolderPath);
-    }
+    var images = FileService.GetPrintImages(Model.Id);
+    var models3D = FileService.GetPrint3DModels(Model.Id);
 }
 
 <input type="hidden" id="af-token" value="@tokens.RequestToken" />
@@ -382,12 +376,44 @@
 
         async function getRemoteFileSize(path) {
             try {
-                const response = await fetch(path, { method: 'HEAD' });
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(path, { 
+                    method: 'HEAD',
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                
                 const len = response.headers.get('content-length');
                 return len ? parseInt(len, 10) : null;
-            } catch {
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    console.warn('HEAD request timeout for:', path);
+                }
                 return null;
             }
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes) return 'Unknown';
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let size = bytes;
+            let unitIndex = 0;
+            while (size >= 1024 && unitIndex < units.length - 1) {
+                size /= 1024;
+                unitIndex++;
+            }
+            return `${size.toFixed(2)} ${units[unitIndex]}`;
+        }
+
+        function withTimeout(promise, timeoutMs = 30000) {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('TIMEOUT')), timeoutMs)
+                )
+            ]);
         }
 
         function showModelLoading(show) {
@@ -593,44 +619,60 @@
             renderOnce();
         }
 
-        async function loadStlModel(path) {
+        async function loadStlModel(path, timeout = 30000) {
             const loader = new STLLoader();
-            const geometry = await loader.loadAsync(path);
+            
+            try {
+                const geometry = await withTimeout(loader.loadAsync(path), timeout);
 
-            if (!geometry || !geometry.attributes || !geometry.attributes.position) {
-                throw new Error('INVALID_STL');
+                if (!geometry || !geometry.attributes || !geometry.attributes.position) {
+                    throw new Error('INVALID_STL');
+                }
+
+                const vertexCount = geometry.attributes.position.count || 0;
+                const maxVertices = 3_000_000;
+
+                if (vertexCount > maxVertices) {
+                    geometry.dispose?.();
+                    throw new Error('MODEL_TOO_COMPLEX');
+                }
+
+                geometry.computeVertexNormals();
+                geometry.computeBoundingBox();
+                geometry.center();
+
+                const mesh = new THREE.Mesh(geometry, createDefaultMeshMaterial());
+                mesh.rotation.x = -Math.PI / 2;
+
+                return mesh;
+            } catch (err) {
+                if (err.message === 'TIMEOUT') {
+                    throw new Error('LOAD_TIMEOUT');
+                }
+                throw err;
             }
-
-            const vertexCount = geometry.attributes.position.count || 0;
-            const maxVertices = 3_000_000;
-
-            if (vertexCount > maxVertices) {
-                geometry.dispose?.();
-                throw new Error('MODEL_TOO_COMPLEX');
-            }
-
-            geometry.computeVertexNormals();
-            geometry.computeBoundingBox();
-            geometry.center();
-
-            const mesh = new THREE.Mesh(geometry, createDefaultMeshMaterial());
-            mesh.rotation.x = -Math.PI / 2;
-
-            return mesh;
         }
 
-        async function loadObjModel(path) {
+        async function loadObjModel(path, timeout = 30000) {
             const loader = new OBJLoader();
-            const object = await loader.loadAsync(path);
+            
+            try {
+                const object = await withTimeout(loader.loadAsync(path), timeout);
 
-            applyMaterialToObject(object, () => createDefaultMeshMaterial());
+                applyMaterialToObject(object, () => createDefaultMeshMaterial());
 
-            const box = new THREE.Box3().setFromObject(object);
-            const center = box.getCenter(new THREE.Vector3());
-            object.position.sub(center);
-            object.rotation.x = -Math.PI / 2;
+                const box = new THREE.Box3().setFromObject(object);
+                const center = box.getCenter(new THREE.Vector3());
+                object.position.sub(center);
+                object.rotation.x = -Math.PI / 2;
 
-            return object;
+                return object;
+            } catch (err) {
+                if (err.message === 'TIMEOUT') {
+                    throw new Error('LOAD_TIMEOUT');
+                }
+                throw err;
+            }
         }
 
         async function load3DModel(modelIndex) {
@@ -643,25 +685,37 @@
             const extension = getModelExtension(path);
 
             try {
+                // Get file size to determine timeout
                 const fileSize = await getRemoteFileSize(path);
-                const maxPreviewSize = 80 * 1024 * 1024;
+                const fileSizeStr = formatFileSize(fileSize);
+                console.log(`Loading 3D model: ${fileSizeStr}`);
+
+                const maxPreviewSize = 100 * 1024 * 1024; // 100 MB
 
                 if (fileSize && fileSize > maxPreviewSize) {
                     disposeCurrentModel();
-                    showModelError('Този 3D модел е прекалено голям за браузърен преглед. Моля използвайте по-лек STL/OBJ файл.');
+                    showModelError(`Този 3D модел е прекалено голям (${fileSizeStr}) за браузърен преглед. Максимум: 100 MB. Моля използвайте по-лек STL/OBJ файл.`);
                     return;
                 }
 
+                // Adjust timeout based on file size - larger files get more time
+                const baseTimeout = 30000; // 30 seconds base
+                const timeout = fileSize ? Math.max(baseTimeout, (fileSize / (1024 * 1024)) * 5000) : baseTimeout;
+
                 let loadedObject = null;
 
-                if (extension === '.stl') {
-                    loadedObject = await loadStlModel(path);
-                } else if (extension === '.obj') {
-                    loadedObject = await loadObjModel(path);
-                } else if (extension === '.step' || extension === '.stp') {
-                    throw new Error('STEP_UNSUPPORTED');
-                } else {
-                    throw new Error('UNSUPPORTED_FORMAT');
+                try {
+                    if (extension === '.stl') {
+                        loadedObject = await loadStlModel(path, timeout);
+                    } else if (extension === '.obj') {
+                        loadedObject = await loadObjModel(path, timeout);
+                    } else if (extension === '.step' || extension === '.stp') {
+                        throw new Error('STEP_UNSUPPORTED');
+                    } else {
+                        throw new Error('UNSUPPORTED_FORMAT');
+                    }
+                } catch (loaderErr) {
+                    throw loaderErr;
                 }
 
                 disposeCurrentModel();
@@ -671,13 +725,16 @@
                 fitCameraToObject(currentModel3D);
                 updateModelSelectorUI();
                 renderOnce();
+                
             } catch (err) {
                 console.error('Error loading 3D model:', err);
                 disposeCurrentModel();
 
                 const message = String(err?.message || err || '');
 
-                if (message === 'STEP_UNSUPPORTED') {
+                if (message === 'LOAD_TIMEOUT') {
+                    showModelError('Зареждането на 3D модела отне твърде много време (повече от минута). Проверете интернет връзката или опитайте с по-лек файл.');
+                } else if (message === 'STEP_UNSUPPORTED') {
                     showModelError('Този 3D файл е STEP и не може да се визуализира директно в браузъра. Конвертирайте го до STL или OBJ за уеб преглед.');
                 } else if (message === 'UNSUPPORTED_FORMAT') {
                     showModelError('Форматът на този 3D файл не се поддържа за преглед в браузъра.');

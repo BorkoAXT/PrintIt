@@ -43,11 +43,6 @@ namespace Entities.Models
         public decimal Price { get; set; }
 
         /// <summary>
-        /// Gets or sets the folder path containing all print images and 3D files.
-        /// </summary>
-        public string? MediaFolderPath { get; set; }
-
-        /// <summary>
         /// Gets or sets the type of the print.
         /// </summary>
         public PrintType PrintType { get; set; }
@@ -71,7 +66,6 @@ namespace Entities.Models
             MaterialType materialType,
             double weight,
             decimal price,
-            string? mediaFolderPath,
             PrintType printType,
             List<PrintColor> colors)
         {
@@ -82,7 +76,6 @@ namespace Entities.Models
             MaterialType = materialType;
             Weight = weight;
             Price = price;
-            MediaFolderPath = mediaFolderPath;
             PrintType = printType;
             PrintColors = colors ?? new() { PrintColor.None };
         }

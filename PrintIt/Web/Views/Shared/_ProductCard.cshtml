@@ -11,13 +11,10 @@
     @* Image with hover effect - Updated bg and border for dark mode *@
     <div class="aspect-square w-full overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all group-hover:shadow-xl group-hover:shadow-brand-primary/10 group-hover:-translate-y-1">
         @{
-            // Get the first image from the media folder or use placeholder
+            // Get the first image or use placeholder
             string imagePath = "/images/placeholder-figure.jpg";
-            if (!string.IsNullOrEmpty(Model.MediaFolderPath))
-            {
-                var images = FileService.GetPrintImages(Model.MediaFolderPath);
-                imagePath = images.FirstOrDefault() ?? "/images/placeholder-figure.jpg";
-            }
+            var images = FileService.GetPrintImages(Model.Id);
+            imagePath = images.FirstOrDefault() ?? "/images/placeholder-figure.jpg";
         }
         <img src="@imagePath" alt="@Model.Name" class="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-110" />
 

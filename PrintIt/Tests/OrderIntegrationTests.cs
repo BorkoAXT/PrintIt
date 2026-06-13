@@ -20,7 +20,6 @@ public class OrderIntegrationTests : IClassFixture<PrintItFactory>
             MaterialType.PLA,
             100,
             10,
-            "test.stl",
             PrintType.Accessory,
             new List<PrintColor> { PrintColor.Red, PrintColor.Blue }
         );

@@ -67,11 +67,6 @@ namespace Entities.ViewModels
         public List<PrintColor> PrintColors { get; set; } = new();
 
         /// <summary>
-        /// Gets or sets the media folder path containing all print images and 3D files.
-        /// </summary>
-        public string? MediaFolderPath { get; set; }
-
-        /// <summary>
         /// Gets or sets the list of existing image paths for editing.
         /// </summary>
         public List<string>? ExistingImages { get; set; }

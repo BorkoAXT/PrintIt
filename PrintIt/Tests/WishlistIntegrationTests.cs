@@ -28,7 +28,7 @@ public class WishlistServiceTests : IClassFixture<PrintItFactory>
             MaterialType.PLA,
             100,
             5,
-            "file.stl",
+
             PrintType.Accessory,
             new List<PrintColor> { PrintColor.Red, PrintColor.Blue }
         );
@@ -46,7 +46,7 @@ public class WishlistServiceTests : IClassFixture<PrintItFactory>
         var userId = Guid.NewGuid();
         var print = new Print(
             "TestPrint", "Desc", MaterialType.PLA, 100, 5,
-            "file.stl", PrintType.Accessory, new List<PrintColor> { PrintColor.Red });
+            PrintType.Accessory, new List<PrintColor> { PrintColor.Red });
 
         // ✅ Add the parent entities first
         db.Users.Add(new User { Id = userId, Email = $"user{userId}@example.com" });

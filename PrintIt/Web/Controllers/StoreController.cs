@@ -116,16 +116,13 @@ namespace Web.Controllers
             {
                 print = new Print(
                     model.Name, model.Description, model.MaterialType, model.Weight,
-                    model.Price, null, model.PrintType, model.PrintColors
+                    model.Price, model.PrintType, model.PrintColors
                 );
-
-                string mediaFolderPath = _fileService.CreatePrintMediaFolder(print.Id, model.PrintType);
-                print.MediaFolderPath = mediaFolderPath;
 
                 // IMPORTANT: save parent first so FK in PrintMedia is valid
                 await _printService.AddAsync(print);
 
-                _logger.LogInformation("Created print {PrintId} with media token {MediaFolderPath}", print.Id, mediaFolderPath);
+                _logger.LogInformation("Created print {PrintId}", print.Id);
 
                 int imageCount = 0;
                 foreach (var imageFile in Images)
@@ -134,7 +131,7 @@ namespace Web.Controllers
                     {
                         try
                         {
-                            string imagePath = await _fileService.UploadPrintImageAsync(imageFile, mediaFolderPath, imageCount + 1);
+                            string imagePath = await _fileService.UploadPrintImageAsync(imageFile, print.Id, imageCount + 1);
                             _logger.LogInformation("Admin uploaded image {ImageCount} for Print {PrintId}: {ImagePath}", ++imageCount, print.Id, imagePath);
                         }
                         catch (Exception ex)
@@ -160,7 +157,7 @@ namespace Web.Controllers
                         {
                             try
                             {
-                                string modelPath = await _fileService.Upload3DModelAsync(modelFile, mediaFolderPath);
+                                string modelPath = await _fileService.Upload3DModelAsync(modelFile, print.Id);
                                 _logger.LogInformation("Admin uploaded 3D model {ModelCount} for Print {PrintId}: {ModelPath}", ++modelCount, print.Id, modelPath);
                             }
                             catch (InvalidOperationException ex)
@@ -248,18 +245,14 @@ namespace Web.Controllers
                 Weight = print.Weight,
                 MaterialType = print.MaterialType,
                 PrintType = print.PrintType,
-                PrintColors = print.PrintColors ?? new List<PrintColor>(),
-                MediaFolderPath = print.MediaFolderPath
+                PrintColors = print.PrintColors ?? new List<PrintColor>()
             };
 
             // Load existing images and 3D models
-            if (!string.IsNullOrEmpty(print.MediaFolderPath))
-            {
-                viewModel.ExistingImages = _fileService.GetPrintImages(print.MediaFolderPath);
-                viewModel.Existing3DModel = _fileService.GetPrint3DModel(print.MediaFolderPath);
-                // Load ALL 3D models
-                viewModel.ExistingModels = _fileService.GetPrint3DModels(print.MediaFolderPath);
-            }
+            viewModel.ExistingImages = _fileService.GetPrintImages(print.Id);
+            viewModel.Existing3DModel = _fileService.GetPrint3DModel(print.Id);
+            // Load ALL 3D models
+            viewModel.ExistingModels = _fileService.GetPrint3DModels(print.Id);
 
             return View("~/Views/Store/Edit.cshtml", viewModel);
         }
@@ -288,34 +281,27 @@ namespace Web.Controllers
                 existing.PrintType = model.PrintType;
                 existing.PrintColors = model.PrintColors;
 
-                // Ensure media folder exists
-                if (string.IsNullOrEmpty(existing.MediaFolderPath))
-                {
-                    existing.MediaFolderPath = _fileService.CreatePrintMediaFolder(existing.Id, model.PrintType);
-                    _logger.LogInformation("Created missing media folder for Print {PrintId}", existing.Id);
-                }
-
                 // Remove images if requested
                 if (RemovedImagePaths != null && RemovedImagePaths.Length > 0)
                 {
                     foreach (var imagePath in RemovedImagePaths)
                     {
-                        if (!string.IsNullOrEmpty(imagePath))
+                        if (!string.IsNullOrEmpty(imagePath) && Guid.TryParse(imagePath, out Guid mediaId))
                         {
                             try
                             {
-                                await _fileService.DeleteImageAsync(imagePath);
-                                _logger.LogInformation("Admin removed image from Print {PrintId}: {ImagePath}", model.Id, imagePath);
+                                await _fileService.DeleteImageAsync(mediaId);
+                                _logger.LogInformation("Admin removed image from Print {PrintId}: {MediaId}", model.Id, mediaId);
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogWarning(ex, "Failed to delete image {ImagePath} for Print {PrintId}", imagePath, model.Id);
+                                _logger.LogWarning(ex, "Failed to delete image {MediaId} for Print {PrintId}", mediaId, model.Id);
                             }
                         }
                     }
 
                     // Recalculate sequence numbers after deletion
-                    await _fileService.RecalculateImageSequenceAsync(existing.MediaFolderPath);
+                    await _fileService.RecalculateImageSequenceAsync(existing.Id);
                     _logger.LogInformation("Recalculated image sequence numbers for Print {PrintId}", model.Id);
                 }
 
@@ -324,16 +310,16 @@ namespace Web.Controllers
                 {
                     foreach (var modelPath in RemovedModelPaths)
                     {
-                        if (!string.IsNullOrEmpty(modelPath))
+                        if (!string.IsNullOrEmpty(modelPath) && Guid.TryParse(modelPath, out Guid mediaId))
                         {
                             try
                             {
-                                await _fileService.DeleteImageAsync(modelPath);
-                                _logger.LogInformation("Admin removed 3D model from Print {PrintId}: {ModelPath}", model.Id, modelPath);
+                                await _fileService.DeleteImageAsync(mediaId);
+                                _logger.LogInformation("Admin removed 3D model from Print {PrintId}: {MediaId}", model.Id, mediaId);
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogWarning(ex, "Failed to delete 3D model {ModelPath} for Print {PrintId}", modelPath, model.Id);
+                                _logger.LogWarning(ex, "Failed to delete 3D model {MediaId} for Print {PrintId}", mediaId, model.Id);
                             }
                         }
                     }
@@ -342,14 +328,22 @@ namespace Web.Controllers
                 // Handle image reordering if provided
                 if (ReorderedImagePaths != null && ReorderedImagePaths.Length > 0)
                 {
-                    await _fileService.ReorderImagesAsync(existing.MediaFolderPath, ReorderedImagePaths);
-                    _logger.LogInformation("Reordered images for Print {PrintId}", model.Id);
+                    var orderedIds = ReorderedImagePaths
+                        .Where(p => Guid.TryParse(p, out _))
+                        .Select(p => Guid.Parse(p))
+                        .ToArray();
+
+                    if (orderedIds.Length > 0)
+                    {
+                        await _fileService.ReorderImagesAsync(existing.Id, orderedIds);
+                        _logger.LogInformation("Reordered images for Print {PrintId}", model.Id);
+                    }
                 }
 
                 // Upload new images if provided
                 if (Images != null && Images.Count > 0)
                 {
-                    var existingImages = _fileService.GetPrintImages(existing.MediaFolderPath);
+                    var existingImages = _fileService.GetPrintImages(existing.Id);
                     int nextSequenceNumber = existingImages.Count + 1;
                     int uploadedCount = 0;
 
@@ -359,7 +353,7 @@ namespace Web.Controllers
                         {
                             try
                             {
-                                await _fileService.UploadPrintImageAsync(imageFile, existing.MediaFolderPath, nextSequenceNumber);
+                                await _fileService.UploadPrintImageAsync(imageFile, existing.Id, nextSequenceNumber);
                                 uploadedCount++;
                                 nextSequenceNumber++;
                                 _logger.LogDebug("Added new image to Print {PrintId}", model.Id);
@@ -387,7 +381,7 @@ namespace Web.Controllers
                         {
                             try
                             {
-                                string modelPath = await _fileService.Upload3DModelAsync(modelFile, existing.MediaFolderPath);
+                                string modelPath = await _fileService.Upload3DModelAsync(modelFile, existing.Id);
                                 _logger.LogInformation("Admin uploaded 3D model for Print {PrintId}: {ModelPath}", model.Id, modelPath);
                                 modelCount++;
                             }
@@ -433,12 +427,9 @@ namespace Web.Controllers
                 await _cartService.RemoveAllByPrintIdAsync(id);
                 await _wishlistService.RemoveAllByPrintIdAsync(id);
 
-                // Delete entire media folder and its contents
-                if (!string.IsNullOrEmpty(print.MediaFolderPath))
-                {
-                    await _fileService.DeletePrintMediaAsync(print.MediaFolderPath);
-                    _logger.LogInformation("Deleted media folder for Print {PrintId}: {MediaFolderPath}", id, print.MediaFolderPath);
-                }
+                // Delete all media files for this print
+                await _fileService.DeletePrintMediaAsync(id);
+                _logger.LogInformation("Deleted all media for Print {PrintId}", id);
 
                 await _printService.DeleteAsync(print);
                 _printService.ClearCache();

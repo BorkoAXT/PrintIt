@@ -11,53 +11,48 @@ namespace Services.Interfaces
         Task<string> UploadImageAsync(IFormFile file, PrintType type);
 
         /// <summary>
-        /// Creates a media folder for a print and returns its path.
+        /// Uploads an image to a print with sequence ordering. Stored in database.
         /// </summary>
-        string CreatePrintMediaFolder(Guid printId, PrintType type);
+        Task<string> UploadPrintImageAsync(IFormFile file, Guid printId, int sequenceNumber);
 
         /// <summary>
-        /// Uploads an image to a print's media folder with sequence ordering.
+        /// Uploads a 3D model file to a print. Stored in database.
         /// </summary>
-        Task<string> UploadPrintImageAsync(IFormFile file, string mediaFolderPath, int sequenceNumber);
+        Task<string> Upload3DModelAsync(IFormFile file, Guid printId);
 
         /// <summary>
-        /// Uploads a 3D model file to a print's media folder.
+        /// Gets all image URLs for a print.
         /// </summary>
-        Task<string> Upload3DModelAsync(IFormFile file, string mediaFolderPath);
+        List<string> GetPrintImages(Guid printId);
 
         /// <summary>
-        /// Gets all image files in a print's media folder.
+        /// Gets all 3D model URLs for a print.
         /// </summary>
-        List<string> GetPrintImages(string mediaFolderPath);
+        List<string> GetPrint3DModels(Guid printId);
 
         /// <summary>
-        /// Gets all 3D model files in a print's media folder.
+        /// Gets the first 3D model URL for a print (if exists).
         /// </summary>
-        List<string> GetPrint3DModels(string mediaFolderPath);
+        string? GetPrint3DModel(Guid printId);
 
         /// <summary>
-        /// Gets the first 3D model file in a print's media folder (if exists).
+        /// Deletes a single media file by ID.
         /// </summary>
-        string? GetPrint3DModel(string mediaFolderPath);
+        Task DeleteImageAsync(Guid mediaId);
 
         /// <summary>
-        /// Deletes a single image file.
+        /// Deletes all media files for a print.
         /// </summary>
-        Task DeleteImageAsync(string? filePath);
-
-        /// <summary>
-        /// Deletes an entire print's media folder and all its contents.
-        /// </summary>
-        Task DeletePrintMediaAsync(string mediaFolderPath);
+        Task DeletePrintMediaAsync(Guid printId);
 
         /// <summary>
         /// Recalculates sequence numbers for images after deletion.
         /// </summary>
-        Task RecalculateImageSequenceAsync(string mediaFolderPath);
+        Task RecalculateImageSequenceAsync(Guid printId);
 
         /// <summary>
-        /// Reorders images based on provided file paths.
+        /// Reorders images based on provided media IDs in order.
         /// </summary>
-        Task ReorderImagesAsync(string mediaFolderPath, string[] orderedPaths);
+        Task ReorderImagesAsync(Guid printId, Guid[] orderedMediaIds);
     }
 }

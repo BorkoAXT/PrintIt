@@ -75,7 +75,6 @@
             <form id="mainForm" asp-controller="Store" asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="divide-y divide-slate-100 dark:divide-slate-800">
 
                 <input type="hidden" asp-for="Id" />
-                <input type="hidden" asp-for="MediaFolderPath" />
 
                 <div asp-validation-summary="ModelOnly" class="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm"></div>
 
@@ -434,7 +433,11 @@
                 color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    removedImagePaths.push(imagePath);
+                    // Extract GUID from URL path like /media/guid/filename
+                    const guidMatch = imagePath.match(/\/media\/([a-f0-9-]+)/i);
+                    const mediaId = guidMatch ? guidMatch[1] : imagePath;
+                    
+                    removedImagePaths.push(mediaId);
                     existingImages = existingImages.filter(img => img !== imagePath);
                     updateAllImagesPreview();
                     updateImageCount();
@@ -579,7 +582,11 @@
                 color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    removedModelPaths.push(modelPath);
+                    // Extract GUID from URL path like /media/guid/filename
+                    const guidMatch = modelPath.match(/\/media\/([a-f0-9-]+)/i);
+                    const mediaId = guidMatch ? guidMatch[1] : modelPath;
+                    
+                    removedModelPaths.push(mediaId);
                     existingModels = existingModels.filter(m => m !== modelPath);
                     updateAllModelsPreview();
                     updateModelCount();

@@ -21,7 +21,6 @@ public class CartIntegrationTests : IClassFixture<PrintItFactory>
             MaterialType.PLA,
             100,          // weight
             10,           // price
-            "test.stl",   // file path
             PrintType.Accessory,
             new List<PrintColor> { PrintColor.Red, PrintColor.Blue }
         );

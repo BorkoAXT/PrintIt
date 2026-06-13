@@ -37,11 +37,11 @@
                     decimal unitPrice = item.Print?.Price ?? 0;
                     var uniqueId = item.Id;
 
-                    // Get the first image from the media folder or use placeholder
+                    // Get the first image or use placeholder
                     string imageUrl = "/images/placeholder.jpg";
-                    if (!string.IsNullOrEmpty(item.Print?.MediaFolderPath))
+                    if (item.Print != null)
                     {
-                        var images = FileService.GetPrintImages(item.Print.MediaFolderPath);
+                        var images = FileService.GetPrintImages(item.Print.Id);
                         imageUrl = images.FirstOrDefault() ?? "/images/placeholder.jpg";
                     }
 

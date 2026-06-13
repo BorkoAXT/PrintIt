@@ -1,6 +1,7 @@
 using Data;
 using Data.Repositories;
 using Entities.Models;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Services.Interfaces;
@@ -66,11 +67,25 @@ namespace Web
             }
 
             // =========================
-            // MVC + Razor Pages
+            // MVC + Razor Pages + Request Size Limits
             // =========================
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
             builder.Services.AddRazorPages();
             builder.Services.AddControllersWithViews();
+
+            // Configure request size limits (100 MB for 3D models + images)
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Limits.MaxRequestBodySize = 104857600; // 100 MB
+            });
+
+            // Also configure form options
+            builder.Services.Configure<FormOptions>(options =>
+            {
+                options.MultipartBodyLengthLimit = 104857600; // 100 MB
+                options.ValueLengthLimit = int.MaxValue;
+                options.KeyLengthLimit = int.MaxValue;
+            });
 
             // =========================
             // Cookie + Session

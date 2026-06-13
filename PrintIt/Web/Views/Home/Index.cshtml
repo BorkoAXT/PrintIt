@@ -25,13 +25,10 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                     @foreach (var item in Model)
                     {
-                        // Get the first image from the media folder or use placeholder
+                        // Get the first image or use placeholder
                         string imageUrl = "/images/placeholder.jpg";
-                        if (!string.IsNullOrEmpty(item.Print.MediaFolderPath))
-                        {
-                            var images = FileService.GetPrintImages(item.Print.MediaFolderPath);
-                            imageUrl = images.FirstOrDefault() ?? "/images/placeholder.jpg";
-                        }
+                        var images = FileService.GetPrintImages(item.Print.Id);
+                        imageUrl = images.FirstOrDefault() ?? "/images/placeholder.jpg";
 
                         <div class="group relative flex flex-col">
                             @* Image Container *@

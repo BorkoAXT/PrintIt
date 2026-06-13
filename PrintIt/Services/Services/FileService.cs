@@ -12,6 +12,10 @@ namespace Services.Services
     {
         private static readonly string[] _imageExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
         private static readonly string[] _modelExtensions = { ".stl", ".obj", ".step", ".stp" };
+        
+        // File size limits
+        private const long MaxImageSize = 10 * 1024 * 1024; // 10 MB
+        private const long Max3DModelSize = 100 * 1024 * 1024; // 100 MB
 
         private readonly ApplicationDbContext _db;
         private readonly IMemoryCache _cache;
@@ -31,33 +35,20 @@ namespace Services.Services
         }
 
         /// <summary>
-        /// Creates a virtual media path token for a print.
-        /// </summary>
-        public string CreatePrintMediaFolder(Guid printId, PrintType type)
-        {
-            string folder = type switch
-            {
-                PrintType.Figure => "Figures",
-                PrintType.FidgetToy => "FidgetToys",
-                PrintType.Accessory => "Accessories",
-                _ => "Misc"
-            };
-
-            return $"/media/{folder}/{printId}";
-        }
-
-        /// <summary>
         /// Uploads an image to database storage with sequence ordering.
         /// </summary>
-        public async Task<string> UploadPrintImageAsync(IFormFile file, string mediaFolderPath, int sequenceNumber)
+        public async Task<string> UploadPrintImageAsync(IFormFile file, Guid printId, int sequenceNumber)
         {
             if (file == null || file.Length == 0)
             {
                 throw new InvalidOperationException("Empty image file.");
             }
 
-            Guid printId = ParsePrintId(mediaFolderPath)
-                ?? throw new InvalidOperationException("Invalid media folder path.");
+            // Validate file size
+            if (file.Length > MaxImageSize)
+            {
+                throw new InvalidOperationException($"Image file is too large. Maximum size is {MaxImageSize / (1024 * 1024)} MB, but your file is {file.Length / (1024.0 * 1024.0):F1} MB.");
+            }
 
             string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!_imageExtensions.Contains(extension))
@@ -86,15 +77,18 @@ namespace Services.Services
         /// <summary>
         /// Uploads a 3D model file to database storage.
         /// </summary>
-        public async Task<string> Upload3DModelAsync(IFormFile file, string mediaFolderPath)
+        public async Task<string> Upload3DModelAsync(IFormFile file, Guid printId)
         {
             if (file == null || file.Length == 0)
             {
                 throw new InvalidOperationException("Empty 3D model file.");
             }
 
-            Guid printId = ParsePrintId(mediaFolderPath)
-                ?? throw new InvalidOperationException("Invalid media folder path.");
+            // Validate file size
+            if (file.Length > Max3DModelSize)
+            {
+                throw new InvalidOperationException($"3D model file is too large. Maximum size is {Max3DModelSize / (1024 * 1024)} MB, but your file is {file.Length / (1024.0 * 1024.0):F1} MB.");
+            }
 
             string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
 
@@ -124,17 +118,11 @@ namespace Services.Services
         /// <summary>
         /// Gets all image files for a print, ordered by sequence number.
         /// </summary>
-        public List<string> GetPrintImages(string mediaFolderPath)
+        public List<string> GetPrintImages(Guid printId)
         {
-            Guid? printId = ParsePrintId(mediaFolderPath);
-            if (!printId.HasValue)
-            {
-                return new();
-            }
-
             return _db.PrintMedia
                 .AsNoTracking()
-                .Where(pm => pm.PrintId == printId.Value && pm.MediaType == MediaType.Image)
+                .Where(pm => pm.PrintId == printId && pm.MediaType == MediaType.Image)
                 .OrderBy(pm => pm.SequenceNumber)
                 .ThenBy(pm => pm.CreatedOnUtc)
                 .ToList()
@@ -145,17 +133,11 @@ namespace Services.Services
         /// <summary>
         /// Gets all 3D model files for a print.
         /// </summary>
-        public List<string> GetPrint3DModels(string mediaFolderPath)
+        public List<string> GetPrint3DModels(Guid printId)
         {
-            Guid? printId = ParsePrintId(mediaFolderPath);
-            if (!printId.HasValue)
-            {
-                return new();
-            }
-
             return _db.PrintMedia
                 .AsNoTracking()
-                .Where(pm => pm.PrintId == printId.Value && pm.MediaType == MediaType.Model3D)
+                .Where(pm => pm.PrintId == printId && pm.MediaType == MediaType.Model3D)
                 .OrderBy(pm => pm.CreatedOnUtc)
                 .ToList()
                 .Select(BuildMediaUrl)
@@ -165,75 +147,64 @@ namespace Services.Services
         /// <summary>
         /// Gets the first 3D model file (if exists).
         /// </summary>
-        public string? GetPrint3DModel(string mediaFolderPath)
+        public string? GetPrint3DModel(Guid printId)
         {
-            var models = GetPrint3DModels(mediaFolderPath);
+            var models = GetPrint3DModels(printId);
             return models.FirstOrDefault();
         }
 
         /// <summary>
         /// Deletes a single media file from database storage.
         /// </summary>
-        public async Task DeleteImageAsync(string? filePath)
+        public async Task DeleteImageAsync(Guid mediaId)
         {
-            if (string.IsNullOrWhiteSpace(filePath) || filePath.Contains("placeholder"))
+            try
             {
-                return;
-            }
+                var media = await _db.PrintMedia.FirstOrDefaultAsync(pm => pm.Id == mediaId);
+                if (media == null)
+                {
+                    return;
+                }
 
-            Guid? mediaId = ParseMediaId(filePath);
-            if (!mediaId.HasValue)
-            {
-                return;
-            }
-
-            var media = await _db.PrintMedia.FirstOrDefaultAsync(pm => pm.Id == mediaId.Value);
-            if (media != null)
-            {
                 _db.PrintMedia.Remove(media);
                 await _db.SaveChangesAsync();
             }
-
-            _cache.Remove(filePath);
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to delete media file {mediaId}: {ex.Message}", ex);
+            }
         }
 
         /// <summary>
         /// Deletes all media files for a print.
         /// </summary>
-        public async Task DeletePrintMediaAsync(string mediaFolderPath)
+        public async Task DeletePrintMediaAsync(Guid printId)
         {
-            Guid? printId = ParsePrintId(mediaFolderPath);
-            if (!printId.HasValue)
+            try
             {
-                return;
+                var mediaItems = await _db.PrintMedia
+                    .Where(pm => pm.PrintId == printId)
+                    .ToListAsync();
+
+                if (mediaItems.Count > 0)
+                {
+                    _db.PrintMedia.RemoveRange(mediaItems);
+                    await _db.SaveChangesAsync();
+                }
             }
-
-            var mediaItems = await _db.PrintMedia
-                .Where(pm => pm.PrintId == printId.Value)
-                .ToListAsync();
-
-            if (mediaItems.Count > 0)
+            catch (Exception ex)
             {
-                _db.PrintMedia.RemoveRange(mediaItems);
-                await _db.SaveChangesAsync();
+                throw new InvalidOperationException($"Failed to delete media files for print {printId}: {ex.Message}", ex);
             }
-
-            _cache.Remove(mediaFolderPath);
         }
 
         /// <summary>
         /// Recalculates image sequence numbers after deletion.
         /// </summary>
-        public async Task RecalculateImageSequenceAsync(string mediaFolderPath)
+        public async Task RecalculateImageSequenceAsync(Guid printId)
         {
-            Guid? printId = ParsePrintId(mediaFolderPath);
-            if (!printId.HasValue)
-            {
-                return;
-            }
-
             var images = await _db.PrintMedia
-                .Where(pm => pm.PrintId == printId.Value && pm.MediaType == MediaType.Image)
+                .Where(pm => pm.PrintId == printId && pm.MediaType == MediaType.Image)
                 .OrderBy(pm => pm.SequenceNumber)
                 .ThenBy(pm => pm.CreatedOnUtc)
                 .ToListAsync();
@@ -248,18 +219,12 @@ namespace Services.Services
         }
 
         /// <summary>
-        /// Reorders images based on provided media URLs.
+        /// Reorders images based on provided media IDs in order.
         /// </summary>
-        public async Task ReorderImagesAsync(string mediaFolderPath, string[] orderedPaths)
+        public async Task ReorderImagesAsync(Guid printId, Guid[] orderedMediaIds)
         {
-            Guid? printId = ParsePrintId(mediaFolderPath);
-            if (!printId.HasValue)
-            {
-                return;
-            }
-
             var images = await _db.PrintMedia
-                .Where(pm => pm.PrintId == printId.Value && pm.MediaType == MediaType.Image)
+                .Where(pm => pm.PrintId == printId && pm.MediaType == MediaType.Image)
                 .ToListAsync();
 
             if (images.Count == 0)
@@ -267,16 +232,10 @@ namespace Services.Services
                 return;
             }
 
-            var orderedIds = orderedPaths
-                .Select(ParseMediaId)
-                .Where(id => id.HasValue)
-                .Select(id => id!.Value)
-                .Distinct()
-                .ToList();
-
+            var orderedIdsList = orderedMediaIds.Distinct().ToList();
             int sequence = 1;
 
-            foreach (var id in orderedIds)
+            foreach (var id in orderedIdsList)
             {
                 var media = images.FirstOrDefault(i => i.Id == id);
                 if (media != null)
@@ -285,59 +244,12 @@ namespace Services.Services
                 }
             }
 
-            foreach (var media in images.Where(i => !orderedIds.Contains(i.Id)).OrderBy(i => i.SequenceNumber).ThenBy(i => i.CreatedOnUtc))
+            foreach (var media in images.Where(i => !orderedIdsList.Contains(i.Id)).OrderBy(i => i.SequenceNumber).ThenBy(i => i.CreatedOnUtc))
             {
                 media.SequenceNumber = sequence++;
             }
 
             await _db.SaveChangesAsync();
-        }
-
-        private static Guid? ParsePrintId(string mediaFolderPath)
-        {
-            if (string.IsNullOrWhiteSpace(mediaFolderPath))
-            {
-                return null;
-            }
-
-            string[] parts = mediaFolderPath
-                .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-            if (parts.Length == 0)
-            {
-                return null;
-            }
-
-            return Guid.TryParse(parts[^1], out Guid printId) ? printId : null;
-        }
-
-        private static Guid? ParseMediaId(string mediaPath)
-        {
-            if (string.IsNullOrWhiteSpace(mediaPath))
-            {
-                return null;
-            }
-
-            string[] parts = mediaPath
-                .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-            for (int i = parts.Length - 1; i >= 0; i--)
-            {
-                string part = parts[i];
-
-                if (Guid.TryParse(part, out Guid id))
-                {
-                    return id;
-                }
-
-                int dotIndex = part.IndexOf('.');
-                if (dotIndex > 0 && Guid.TryParse(part[..dotIndex], out id))
-                {
-                    return id;
-                }
-            }
-
-            return null;
         }
 
         private static async Task<byte[]> ReadBytesAsync(IFormFile file)
